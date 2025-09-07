@@ -7,21 +7,23 @@ function getUserFromNextRequest(req: NextRequest) {
   return getUserFromReq({ headers: { cookie: cookieHeader } } as any);
 }
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
-  const id = Number(params.id);
-  if (Number.isNaN(id)) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const productId = Number(id);
+  if (Number.isNaN(productId)) {
     return NextResponse.json({ message: 'Invalid id' }, { status: 400 });
   }
-  const product = await prisma.product.findUnique({ where: { id } });
+  const product = await prisma.product.findUnique({ where: { id: productId } });
   if (!product) {
     return NextResponse.json({ message: 'Not found' }, { status: 404 });
   }
   return NextResponse.json(product);
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
-  const id = Number(params.id);
-  if (Number.isNaN(id)) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const productId = Number(id);
+  if (Number.isNaN(productId)) {
     return NextResponse.json({ message: 'Invalid id' }, { status: 400 });
   }
 
@@ -32,15 +34,16 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
 
   const { slug, title_en, title_de, desc_en, desc_de, price, stock, imageUrl } = await request.json();
   const updated = await prisma.product.update({
-    where: { id },
+    where: { id: productId },
     data: { slug, title_en, title_de, desc_en, desc_de, price: Number(price), stock: Number(stock), imageUrl }
   });
   return NextResponse.json(updated);
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
-  const id = Number(params.id);
-  if (Number.isNaN(id)) {
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const productId = Number(id);
+  if (Number.isNaN(productId)) {
     return NextResponse.json({ message: 'Invalid id' }, { status: 400 });
   }
 
@@ -49,6 +52,6 @@ export async function DELETE(request: NextRequest, { params }: { params: { id: s
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   }
 
-  await prisma.product.delete({ where: { id } });
+  await prisma.product.delete({ where: { id: productId } });
   return new NextResponse(null, { status: 204 });
 }
