@@ -4,11 +4,12 @@
   "description": "Modern e-commerce frontend with React, Next.js, and TailwindCSS",
   "private": true,
   "scripts": {
-    "dev": "next dev -p 3003",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
-  },
+  "dev": "next dev -p 3003",
+  "build": "prisma generate && next build",
+  "start": "next start",
+  "lint": "next lint",
+  "postinstall": "prisma generate"
+},
   "prisma": {
     "seed": "tsx prisma/seed.ts"
   },
