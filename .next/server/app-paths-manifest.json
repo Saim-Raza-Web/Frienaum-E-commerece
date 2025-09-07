@@ -1,7 +1,0 @@
-{
-  "/[lang]/page": "app/[lang]/page.js",
-  "/[lang]/login/page": "app/[lang]/login/page.js",
-  "/[lang]/products/page": "app/[lang]/products/page.js",
-  "/[lang]/product/[id]/page": "app/[lang]/product/[id]/page.js",
-  "/[lang]/merchant/page": "app/[lang]/merchant/page.js"
-}
