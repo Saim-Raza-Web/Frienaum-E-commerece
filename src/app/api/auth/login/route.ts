@@ -1,21 +1,54 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import bcrypt from 'bcryptjs';
-import { signToken } from '@/lib/auth';
-import { setAuthCookie } from '@/lib/cookies';
+import { NextRequest, NextResponse } from "next/server";
+import { prisma } from "@/lib/prisma";
+import bcrypt from "bcryptjs";
+import { signToken } from "@/lib/auth";
+import { setAuthCookie } from "@/lib/cookies";
 
 export async function POST(request: NextRequest) {
-  const { email, password } = await request.json();
+  try {
+    const { email, password } = await request.json();
 
-  const user = await prisma.user.findUnique({ where: { email } });
-  if (!user) return NextResponse.json({ message: 'Invalid credentials' }, { status: 401 });
+    // Check user
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      return NextResponse.json(
+        { message: "Invalid credentials" },
+        { status: 401 }
+      );
+    }
 
-  const ok = await bcrypt.compare(password, user.password);
-  if (!ok) return NextResponse.json({ message: 'Invalid credentials' }, { status: 401 });
+    // Verify password
+    const isValid = await bcrypt.compare(password, user.password);
+    if (!isValid) {
+      return NextResponse.json(
+        { message: "Invalid credentials" },
+        { status: 401 }
+      );
+    }
 
-  const token = signToken({ id: user.id, email: user.email, role: user.role });
-  const response = NextResponse.json({ role: user.role, name: user.name });
-  response.headers.set('Set-Cookie', setAuthCookie(token));
+    // Create token
+    const token = signToken({
+      id: user.id,
+      email: user.email,
+      role: user.role,
+    });
 
-  return response;
+    // Create response
+    const response = NextResponse.json({
+      success: true,
+      role: user.role,
+      name: user.name,
+    });
+
+    // Attach cookie
+    response.headers.append("Set-Cookie", setAuthCookie(token));
+
+    return response;
+  } catch (error) {
+    console.error("Login API error:", error);
+    return NextResponse.json(
+      { message: "Something went wrong" },
+      { status: 500 }
+    );
+  }
 }

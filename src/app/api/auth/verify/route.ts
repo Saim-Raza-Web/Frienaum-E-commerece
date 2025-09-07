@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { verifyToken } from '@/lib/auth';
+import { parse, serialize } from 'cookie';
+
 
 function getUserFromNextRequest(req: NextRequest) {
   const cookieHeader = req.headers.get('cookie') || '';
-  const cookies = require('cookie').parse(cookieHeader);
+  const cookies = parse(cookieHeader);
+
   const token = cookies.token;
   if (!token) return null;
+
   try {
     const payload = verifyToken(token);
     return payload;
@@ -29,7 +33,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (!user) {
-      return NextResponse.json({ message: 'User not found' }, { status: 401 });
+      return NextResponse.json({ message: 'User not found' }, { status: 404 });
     }
 
     return NextResponse.json({
@@ -39,6 +43,7 @@ export async function GET(request: NextRequest) {
       name: user.name
     });
   } catch (error) {
-    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
+    console.error('Error in /me route:', error);
+    return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
   }
 }

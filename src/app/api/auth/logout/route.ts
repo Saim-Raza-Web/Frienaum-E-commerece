@@ -1,8 +1,22 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { clearAuthCookie } from '@/lib/cookies';
+import { NextRequest, NextResponse } from "next/server";
+import { clearAuthCookie } from "@/lib/cookies";
 
 export async function POST(request: NextRequest) {
-  const response = NextResponse.json({ message: 'Logged out successfully' });
-  response.headers.set('Set-Cookie', clearAuthCookie());
-  return response;
+  try {
+    const response = NextResponse.json({
+      success: true,
+      message: "Logged out successfully",
+    });
+
+    // Attach cookie invalidation
+    response.headers.append("Set-Cookie", clearAuthCookie());
+
+    return response;
+  } catch (error) {
+    console.error("Logout API error:", error);
+    return NextResponse.json(
+      { success: false, message: "Something went wrong" },
+      { status: 500 }
+    );
+  }
 }
