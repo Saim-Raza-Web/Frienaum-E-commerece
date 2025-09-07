@@ -119,20 +119,44 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
-  // Check for existing session on mount (but don't auto-login)
+  // Check for existing session on mount by verifying token
   useEffect(() => {
-    const savedUser = localStorage.getItem('shopease_user');
-    if (savedUser) {
+    const checkAuthStatus = async () => {
       try {
-        const user = JSON.parse(savedUser);
-        dispatch({ type: 'SET_USER', payload: user });
+        // Check if we have a token in cookies by making a request to verify
+        const response = await fetch('/api/auth/verify', {
+          method: 'GET',
+          credentials: 'include', // Include cookies
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          // If token is valid, set the user
+          const user: User = {
+            id: data.id.toString(),
+            email: data.email,
+            firstName: data.name || 'User',
+            lastName: '',
+            role: data.role === 'ADMIN' ? 'admin' : data.role === 'MERCHANT' ? 'merchant' : 'customer',
+            avatar: '/api/placeholder/100/100',
+            createdAt: new Date().toISOString(),
+            lastLogin: new Date().toISOString()
+          };
+          localStorage.setItem('shopease_user', JSON.stringify(user));
+          dispatch({ type: 'SET_USER', payload: user });
+        } else {
+          // Token is invalid or expired
+          localStorage.removeItem('shopease_user');
+          dispatch({ type: 'SET_USER', payload: null });
+        }
       } catch (error) {
+        // If verification fails, clear localStorage and set user to null
         localStorage.removeItem('shopease_user');
         dispatch({ type: 'SET_USER', payload: null });
       }
-    } else {
-      dispatch({ type: 'SET_USER', payload: null });
-    }
+    };
+
+    checkAuthStatus();
   }, []);
 
   const login = useCallback(async (credentials: LoginCredentials): Promise<void> => {
