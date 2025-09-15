@@ -9,8 +9,8 @@ function getUserFromNextRequest(req: NextRequest) {
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const productId = Number(id);
-  if (Number.isNaN(productId)) {
+  const productId = id;
+  if (!productId) {
     return NextResponse.json({ message: 'Invalid id' }, { status: 400 });
   }
   const product = await prisma.product.findUnique({ where: { id: productId } });
@@ -22,8 +22,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const productId = Number(id);
-  if (Number.isNaN(productId)) {
+  const productId = id;
+  if (!productId) {
     return NextResponse.json({ message: 'Invalid id' }, { status: 400 });
   }
 
@@ -42,8 +42,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const productId = Number(id);
-  if (Number.isNaN(productId)) {
+  const productId = id;
+  if (!productId) {
     return NextResponse.json({ message: 'Invalid id' }, { status: 400 });
   }
 
