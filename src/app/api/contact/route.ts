@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma';
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,16 +22,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Normally you'd send email or save to DB here
-    console.log('📩 Contact form submission:', {
-      name,
-      email,
-      subject,
-      message,
+    // Save to database
+    const contactMessage = await prisma.contactMessage.create({
+      data: {
+        name: name.trim(),
+        email: email.trim(),
+        subject: subject.trim(),
+        message: message.trim(),
+      },
+    });
+
+    console.log('📩 Contact form submission saved:', {
+      id: contactMessage.id,
+      name: contactMessage.name,
+      email: contactMessage.email,
+      subject: contactMessage.subject,
+      message: contactMessage.message,
+      createdAt: contactMessage.createdAt,
     });
 
     return NextResponse.json(
-      { message: 'Message sent successfully' },
+      { message: 'Message sent successfully', id: contactMessage.id },
       { status: 200 }
     );
   } catch (error) {

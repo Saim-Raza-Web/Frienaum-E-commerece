@@ -25,6 +25,9 @@ export default function ProtectedRoute({
     // Only redirect if we're done loading and still not authenticated
     if (!isLoading && !isAuthenticated) {
       setShouldRedirect(true);
+    } else if (!isLoading && isAuthenticated) {
+      // Ensure we don't redirect if user becomes authenticated
+      setShouldRedirect(false);
     }
   }, [isLoading, isAuthenticated]);
 

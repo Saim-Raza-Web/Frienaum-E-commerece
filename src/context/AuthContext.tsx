@@ -119,39 +119,50 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [state, dispatch] = useReducer(authReducer, initialState);
 
-  // Check for existing session on mount by verifying token
+  // Check for existing session on mount
   useEffect(() => {
-    const checkAuthStatus = async () => {
-      try {
-        // Check if we have a token in cookies by making a request to verify
-        const response = await fetch('/api/auth/verify', {
-          method: 'GET',
-          credentials: 'include', // Include cookies
-        });
+    const checkAuthStatus = () => {
+      // First, try to get user from localStorage
+      const storedUser = localStorage.getItem('shopease_user');
+      if (storedUser) {
+        try {
+          const userFromStorage = JSON.parse(storedUser);
+          dispatch({ type: 'SET_USER', payload: userFromStorage });
 
-        if (response.ok) {
-          const data = await response.json();
-          // If token is valid, set the user
-          const user: User = {
-            id: data.id.toString(),
-            email: data.email,
-            firstName: data.name || 'User',
-            lastName: '',
-            role: data.role === 'ADMIN' ? 'admin' : data.role === 'MERCHANT' ? 'merchant' : 'customer',
-            avatar: '/api/placeholder/100/100',
-            createdAt: new Date().toISOString(),
-            lastLogin: new Date().toISOString()
-          };
-          localStorage.setItem('shopease_user', JSON.stringify(user));
-          dispatch({ type: 'SET_USER', payload: user });
-        } else {
-          // Token is invalid or expired
+          // Optionally verify the token in the background (don't block UI)
+          fetch('/api/auth/verify', {
+            method: 'GET',
+            credentials: 'include',
+          }).then(response => {
+            if (response.ok) {
+              return response.json();
+            } else {
+              throw new Error('Token invalid');
+            }
+          }).then(data => {
+            // Update user data if token is still valid
+            const user: User = {
+              id: data.id.toString(),
+              email: data.email,
+              firstName: data.name || 'User',
+              lastName: '',
+              role: data.role === 'ADMIN' ? 'admin' : data.role === 'MERCHANT' ? 'merchant' : 'customer',
+              avatar: '/api/placeholder/100/100',
+              createdAt: new Date().toISOString(),
+              lastLogin: new Date().toISOString()
+            };
+            localStorage.setItem('shopease_user', JSON.stringify(user));
+            dispatch({ type: 'SET_USER', payload: user });
+          }).catch(() => {
+            // Token is invalid, but keep the user in localStorage for now
+            // They can continue using the app until they try to access protected resources
+          });
+        } catch (e) {
+          // Invalid localStorage data, remove it
           localStorage.removeItem('shopease_user');
           dispatch({ type: 'SET_USER', payload: null });
         }
-      } catch (error) {
-        // If verification fails, clear localStorage and set user to null
-        localStorage.removeItem('shopease_user');
+      } else {
         dispatch({ type: 'SET_USER', payload: null });
       }
     };

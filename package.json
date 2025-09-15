@@ -4,26 +4,27 @@
   "description": "Modern e-commerce frontend with React, Next.js, and TailwindCSS",
   "private": true,
   "scripts": {
-  "dev": "next dev -p 3003",
-  "build": "prisma generate && next build",
-  "start": "next start",
-  "lint": "next lint",
-  "postinstall": "prisma generate"
-},
+    "dev": "next dev -p 3003",
+    "build": "prisma generate && next build",
+    "start": "next start",
+    "lint": "next lint",
+    "postinstall": "prisma generate"
+  },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
   },
   "dependencies": {
     "@formatjs/intl-localematcher": "^0.6.1",
-    "@prisma/client": "^6.15.0",
+    "@prisma/client": "^6.16.1",
     "bcryptjs": "^3.0.2",
     "cookie": "^1.0.2",
     "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.540.0",
+    "mongodb": "^6.19.0",
     "mysql2": "^3.14.4",
     "next": "^15.5.0",
     "next-intl": "^4.3.5",
-    "prisma": "^6.15.0",
+    "prisma": "^6.16.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0"
   },

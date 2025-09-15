@@ -6,6 +6,7 @@ const prisma = new PrismaClient();
 async function main() {
   const adminPass = await bcrypt.hash("Admin@12345", 10);
   const merchantPass = await bcrypt.hash("Merchant@12345", 10);
+  const customerPass = await bcrypt.hash("Customer@12345", 10);
 
   await prisma.user.upsert({
     where: { email: "admin@store.com" },
@@ -26,6 +27,17 @@ async function main() {
       password: merchantPass,
       name: "Merchant",
       role: "MERCHANT",
+    },
+  });
+
+  await prisma.user.upsert({
+    where: { email: "customer@store.com" },
+    update: {},
+    create: {
+      email: "customer@store.com",
+      password: customerPass,
+      name: "Customer",
+      role: "CUSTOMER",
     },
   });
 
@@ -206,7 +218,7 @@ async function main() {
     });
   }
 
-  console.log("Seeded admin, merchant & products.");
+  console.log("Seeded admin, merchant, customer & products.");
 }
 
 main().finally(() => prisma.$disconnect());
