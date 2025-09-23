@@ -41,7 +41,9 @@ type OrderWithItems = Order & {
 };
 
 export default function MerchantOrdersPage() {
-  const { data: session, status } = useSession();
+  const sessionData = useSession();
+  const session = sessionData?.data;
+  const status = sessionData?.status || 'loading';
   const router = useRouter();
   const [orders, setOrders] = useState<OrderWithItems[]>([]);
   const [loading, setLoading] = useState(true);
@@ -53,12 +55,12 @@ export default function MerchantOrdersPage() {
       return;
     }
 
-    if (status === 'authenticated' && session.user.role !== 'MERCHANT') {
+    if (status === 'authenticated' && session?.user?.role !== 'MERCHANT') {
       router.push('/');
       return;
     }
 
-    if (status === 'authenticated') {
+    if (status === 'authenticated' && session?.user) {
       fetchOrders();
     }
   }, [status, router, session]);
