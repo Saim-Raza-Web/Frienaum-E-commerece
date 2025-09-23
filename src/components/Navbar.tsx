@@ -37,11 +37,17 @@ const defaultTranslations: NavTranslations = {
 
 export default function Navbar() {
   const [isLanguageOpen, setIsLanguageOpen] = useState(false);
+  const [isClient, setIsClient] = useState(false);
   const pathname = usePathname() || '';
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [translations, setTranslations] = useState<NavTranslations>(defaultTranslations);
-  
+
+  // Prevent hydration mismatch by ensuring we're on client
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   // Extract current locale from pathname or use default 'en'
   const pathSegments = pathname.split('/').filter(Boolean);
   const currentLocale = isValidLocale(pathSegments[0]) ? pathSegments[0] : 'en';
@@ -78,29 +84,32 @@ export default function Navbar() {
   
   const changeLanguage = (newLang: string) => {
     if (!locales.includes(newLang as Locale)) return;
-    
+
     // Close the language selector
     setIsLanguageOpen(false);
-    
+
     // If we're already on this language, do nothing
     if (newLang === currentLocale) return;
-    
+
     // Get the current path without the locale
     const pathWithoutLocale = pathname.replace(/^\/[a-z]{2}(\/|$)/, '/');
-    
+
+    // Only use window.location.href on client-side to prevent hydration mismatch
+    if (isClient) {
       // Navigate to the same path with the new locale
       startTransition(() => {
         const newPath = `/${newLang}${pathWithoutLocale}`;
         // Navigate to the new path with the selected language
         window.location.href = newPath;
       });
+    }
   };
   
   // Helper function to create localized paths
   const createLocalizedPath = (path: string) => `/${currentLocale}${path}`;
   
   return (
-    <nav className="bg-white shadow-sm">
+    <nav className="bg-white shadow-sm" suppressHydrationWarning={true}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
@@ -111,6 +120,9 @@ export default function Navbar() {
                   alt="Feinraum Logo" 
                   className="w-full h-full object-contain"
                   onError={(e) => {
+                    // Only run on client to prevent hydration mismatch
+                    if (typeof window === 'undefined') return;
+
                     // Fallback to text if image fails to load
                     const target = e.target as HTMLImageElement;
                     target.onerror = null;

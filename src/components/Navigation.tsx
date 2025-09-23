@@ -57,7 +57,10 @@ export default function Navigation() {
     setIsUserMenuOpen(false);
     // Use setTimeout to ensure logout completes before redirect
     setTimeout(() => {
-      window.location.href = `/${lang}`;
+      // Only use window.location.href on client to prevent hydration mismatch
+      if (typeof window !== 'undefined') {
+        window.location.href = `/${lang}`;
+      }
     }, 100);
   };
 
@@ -70,7 +73,7 @@ export default function Navigation() {
   };
 
   return (
-    <nav className="bg-white shadow-sm border-b sticky top-0 z-40">
+    <nav className="bg-white shadow-sm border-b sticky top-0 z-40" suppressHydrationWarning={true}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}

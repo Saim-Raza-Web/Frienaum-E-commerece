@@ -5,9 +5,18 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
 import { useTranslation } from '@/i18n/TranslationProvider';
-import { Trash2, ArrowLeft, ShoppingBag } from 'lucide-react';
+import { Trash2, ArrowLeft, ShoppingBag, CreditCard } from 'lucide-react';
+import dynamic from 'next/dynamic';
+
+// Dynamically import the CheckoutPopup to avoid SSR issues
+const CheckoutPopup = dynamic(
+  () => import('@/components/CheckoutPopup'),
+  { ssr: false }
+);
 
 export default function CartPage() {
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const {
     cartItems,
     removeFromCart,
@@ -16,7 +25,6 @@ export default function CartPage() {
     itemCount,
     cartTotal
   } = useCart();
-  const [isLoading, setIsLoading] = useState(true);
   const { translate } = useTranslation();
   const pathname = usePathname();
   const currentLang = pathname?.split('/')[1] || 'en';
@@ -76,6 +84,10 @@ export default function CartPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <CheckoutPopup 
+        isOpen={isCheckoutOpen} 
+        onClose={() => setIsCheckoutOpen(false)} 
+      />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Header */}
         <div className="mb-8">
@@ -223,12 +235,14 @@ export default function CartPage() {
                   </div>
                 </div>
 
-                <Link
-                  href="/checkout"
-                  className="w-full btn-primary text-center py-3 text-lg"
+                <button
+                  onClick={() => setIsCheckoutOpen(true)}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white text-center py-3 px-4 rounded-lg text-lg font-medium flex items-center justify-center space-x-2"
+                  disabled={cartItems.length === 0}
                 >
-                  {translate('cart.proceedToCheckout')}
-                </Link>
+                  <CreditCard className="w-5 h-5" />
+                  <span>{translate('cart.proceedToCheckout')}</span>
+                </button>
 
                 <div className="mt-4 text-center">
                   <Link

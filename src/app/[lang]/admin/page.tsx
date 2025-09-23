@@ -36,6 +36,7 @@ type Product = {
   price: number;
   stock: number;
   imageUrl?: string | null;
+  category?: string;
   createdAt: string;
   updatedAt: string;
 };
@@ -52,15 +53,126 @@ function AdminDashboard() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [form, setForm] = useState<any>({
     slug:"", title_en:"", title_de:"", desc_en:"", desc_de:"",
-    price:"0", stock:"0", imageUrl:""
+    price:"0", stock:"0", imageUrl:"", category: "General"
   });
 
-  const systemStats = [
-    { label: translate('admin.totalUsers'), value: '2,847', icon: Users, change: '+12%', changeType: 'positive' },
-    { label: translate('admin.totalOrders'), value: '15,234', icon: ShoppingBag, change: '+8%', changeType: 'positive' },
-    { label: translate('admin.revenue'), value: '$89,432', icon: TrendingUp, change: '+23%', changeType: 'positive' },
-    { label: translate('admin.activeProducts'), value: products.length.toString(), icon: Package, change: '+5%', changeType: 'positive' }
-  ];
+  // Live system stats
+  const [stats, setStats] = useState({ totalUsers: 0, totalOrders: 0, revenue: 0, activeProducts: 0 });
+  const [statsLoading, setStatsLoading] = useState(false);
+  const [statsError, setStatsError] = useState('');
+
+  const loadStats = async () => {
+    try {
+      setStatsLoading(true);
+      setStatsError('');
+      const res = await fetch('/api/admin/stats', { credentials: 'include' });
+      if (!res.ok) throw new Error('Failed to fetch stats');
+      const data = await res.json();
+      setStats(data);
+    } catch (e: any) {
+      setStatsError(e?.message || 'Failed to load stats');
+    } finally {
+      setStatsLoading(false);
+    }
+  };
+
+  const deleteUser = async (userId: string) => {
+    if (!confirm('This will permanently delete the user and all their data (including merchant profile, products, orders). Continue?')) return;
+    try {
+      const res = await fetch(`/api/admin/users/${userId}`, { method: 'DELETE', credentials: 'include' });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Delete user failed');
+      }
+      await loadUsers();
+      alert('User deleted successfully');
+    } catch (e: any) {
+      alert(e?.message || 'Failed to delete user');
+    }
+  };
+
+  // View/Delete merchant handlers
+  const [viewing, setViewing] = useState<{open: boolean; loading: boolean; error: string; data: any | null}>({ open: false, loading: false, error: '', data: null });
+  const openViewMerchant = async (merchantId: string) => {
+    setViewing({ open: true, loading: true, error: '', data: null });
+    try {
+      const res = await fetch(`/api/admin/merchants/${merchantId}`, { credentials: 'include' });
+      if (!res.ok) throw new Error('Failed to load merchant');
+      const data = await res.json();
+      setViewing({ open: true, loading: false, error: '', data });
+    } catch (e: any) {
+      setViewing({ open: true, loading: false, error: e?.message || 'Failed to load merchant', data: null });
+    }
+  };
+  const closeViewMerchant = () => setViewing({ open: false, loading: false, error: '', data: null });
+
+  const deleteMerchant = async (merchantId: string) => {
+    if (!confirm('Are you sure you want to delete this merchant? This action cannot be undone.')) return;
+    try {
+      const res = await fetch(`/api/admin/merchants/${merchantId}`, { method: 'DELETE', credentials: 'include' });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Delete failed');
+      }
+      await loadUsers();
+      if (viewing.open) closeViewMerchant();
+      alert('Merchant deleted successfully');
+    } catch (e: any) {
+      alert(e?.message || 'Failed to delete merchant');
+    }
+  };
+
+  useEffect(() => {
+    if (activeTab === 'overview') {
+      loadStats();
+    }
+  }, [activeTab]);
+
+  // Users management state
+  type AdminUser = {
+    id: string;
+    name: string | null;
+    email: string;
+    role: 'ADMIN' | 'MERCHANT' | 'CUSTOMER';
+    createdAt: string;
+    merchantId: string | null;
+    merchantStatus: 'PENDING' | 'ACTIVE' | 'SUSPENDED' | null;
+    storeName: string | null;
+    isDeleted: boolean;
+  };
+  const [users, setUsers] = useState<AdminUser[]>([]);
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [usersError, setUsersError] = useState('');
+
+  const loadUsers = async () => {
+    try {
+      setUsersLoading(true);
+      setUsersError('');
+      const res = await fetch('/api/admin/users', { credentials: 'include' });
+      if (!res.ok) throw new Error('Failed to fetch users');
+      const data = await res.json();
+      setUsers(data);
+    } catch (e: any) {
+      setUsersError(e?.message || 'Failed to load users');
+    } finally {
+      setUsersLoading(false);
+    }
+  };
+
+  const setMerchantStatus = async (merchantId: string, status: 'PENDING' | 'ACTIVE' | 'SUSPENDED') => {
+    try {
+      const res = await fetch(`/api/admin/merchants/${merchantId}/status`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ status })
+      });
+      if (!res.ok) throw new Error('Failed to update status');
+      await loadUsers();
+    } catch (e: any) {
+      alert(e?.message || 'Status update failed');
+    }
+  };
 
   const recentUsers = [
     { id: 1, name: 'John Doe', email: 'john@example.com', role: 'customer', status: 'active', lastActive: '2 hours ago' },
@@ -102,6 +214,12 @@ function AdminDashboard() {
     }
   }, [activeTab]);
 
+  useEffect(() => {
+    if (activeTab === 'users') {
+      loadUsers();
+    }
+  }, [activeTab]);
+
   const saveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -117,7 +235,7 @@ function AdminDashboard() {
       });
 
       if (res.ok) {
-        setForm({ slug:"", title_en:"", title_de:"", desc_en:"", desc_de:"", price:"0", stock:"0", imageUrl:"" });
+        setForm({ slug:"", title_en:"", title_de:"", desc_en:"", desc_de:"", price:"0", stock:"0", imageUrl:"", category: "General" });
         setShowForm(false);
         setEditingProduct(null);
         loadProducts();
@@ -157,7 +275,8 @@ function AdminDashboard() {
       desc_de: product.desc_de,
       price: product.price.toString(),
       stock: product.stock.toString(),
-      imageUrl: product.imageUrl || ""
+      imageUrl: product.imageUrl || "",
+      category: product.category || "General"
     });
     setShowForm(true);
   };
@@ -169,7 +288,7 @@ function AdminDashboard() {
   );
 
   const resetForm = () => {
-    setForm({ slug:"", title_en:"", title_de:"", desc_en:"", desc_de:"", price:"0", stock:"0", imageUrl:"" });
+    setForm({ slug:"", title_en:"", title_de:"", desc_en:"", desc_de:"", price:"0", stock:"0", imageUrl:"", category: "General" });
     setEditingProduct(null);
     setShowForm(false);
   };
@@ -193,27 +312,38 @@ function AdminDashboard() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats Grid */}
+        {/* Stats Grid (live) */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          {systemStats.map((stat, index) => (
+          {[{
+              label: translate('admin.totalUsers'),
+              value: statsLoading ? '...' : stats.totalUsers.toString(),
+              icon: Users
+            }, {
+              label: translate('admin.totalOrders'),
+              value: statsLoading ? '...' : stats.totalOrders.toString(),
+              icon: ShoppingBag
+            }, {
+              label: translate('admin.revenue'),
+              value: statsLoading ? '...' : `€${stats.revenue.toFixed(2)}`,
+              icon: TrendingUp
+            }, {
+              label: translate('admin.activeProducts'),
+              value: statsLoading ? '...' : stats.activeProducts.toString(),
+              icon: Package
+            }].map((stat, index) => (
             <div key={index} className="bg-white rounded-lg shadow-sm p-6 border border-gray-200">
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">{stat.label}</p>
-                  <p className="text-2xl font-bold text-gray-900">{stat.value}</p>
+                  <p className="text-2xl font-bold text-gray-900">{statsError ? '-' : stat.value}</p>
                 </div>
                 <div className="p-3 bg-turquoise-100 rounded-lg">
                   <stat.icon className="w-6 h-6 text-turquoise-600" />
                 </div>
               </div>
-              <div className="mt-4">
-                <span className={`text-sm font-medium ${
-                  stat.changeType === 'positive' ? 'text-green-600' : 'text-red-600'
-                }`}>
-                  {stat.change}
-                </span>
-                <span className="text-sm text-gray-600 ml-1">{translate('admin.fromLastMonth')}</span>
-              </div>
+              {statsError && (
+                <div className="mt-4 text-xs text-red-600">{statsError}</div>
+              )}
             </div>
           ))}
         </div>
@@ -305,6 +435,109 @@ function AdminDashboard() {
               </div>
             )}
 
+            {/* View Merchant Modal */}
+            {viewing.open && (
+              <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
+                <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
+                  <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                    <h3 className="text-lg font-semibold text-gray-900">Merchant Details</h3>
+                    <button onClick={closeViewMerchant} className="text-gray-500 hover:text-gray-700">✕</button>
+                  </div>
+                  <div className="p-6 space-y-4">
+                    {viewing.loading ? (
+                      <div className="text-center text-gray-500 py-10">Loading...</div>
+                    ) : viewing.error ? (
+                      <div className="text-center text-red-600 py-10">{viewing.error}</div>
+                    ) : viewing.data ? (
+                      <div className="space-y-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                          <div>
+                            <p className="text-sm text-gray-500">Store Name</p>
+                            <p className="text-base font-medium text-gray-900">{viewing.data.storeName}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-500">Status</p>
+                            <p className="text-base font-medium text-gray-900">{viewing.data.status}</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-500">User</p>
+                            <p className="text-base font-medium text-gray-900">{viewing.data.user?.name} ({viewing.data.user?.email})</p>
+                          </div>
+                          <div>
+                            <p className="text-sm text-gray-500">Created</p>
+                            <p className="text-base font-medium text-gray-900">{new Date(viewing.data.createdAt).toLocaleString()}</p>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div className="bg-gray-50 rounded-lg p-4">
+                            <p className="text-sm text-gray-500">Products</p>
+                            <p className="text-xl font-semibold">{viewing.data.stats.productCount}</p>
+                          </div>
+                          <div className="bg-gray-50 rounded-lg p-4">
+                            <p className="text-sm text-gray-500">Orders</p>
+                            <p className="text-xl font-semibold">{viewing.data.stats.orderCount}</p>
+                          </div>
+                          <div className="bg-gray-50 rounded-lg p-4">
+                            <p className="text-sm text-gray-500">Revenue</p>
+                            <p className="text-xl font-semibold">€{Number(viewing.data.stats.revenue || 0).toFixed(2)}</p>
+                          </div>
+                        </div>
+
+                        <div>
+                          <h4 className="text-sm font-semibold text-gray-900 mb-2">Latest Products</h4>
+                          {viewing.data.latestProducts?.length ? (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                              {viewing.data.latestProducts.map((p: any) => (
+                                <div key={p.id} className="p-3 border rounded-lg flex items-center gap-3">
+                                  {p.imageUrl && <img src={p.imageUrl} alt={p.slug} className="w-12 h-12 object-cover rounded" />}
+                                  <div className="flex-1">
+                                    <p className="font-medium text-sm">{p.title_en}</p>
+                                    <p className="text-xs text-gray-500">€{p.price.toFixed(2)} • Stock: {p.stock}</p>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-sm text-gray-500">No products</p>
+                          )}
+                        </div>
+
+                        <div>
+                          <h4 className="text-sm font-semibold text-gray-900 mb-2">Latest Orders</h4>
+                          {viewing.data.latestOrders?.length ? (
+                            <div className="space-y-2">
+                              {viewing.data.latestOrders.map((o: any) => (
+                                <div key={o.id} className="p-3 border rounded-lg flex items-center justify-between">
+                                  <div className="text-sm text-gray-700">{o.status}</div>
+                                  <div className="text-sm font-medium">€{o.totalAmount.toFixed(2)}</div>
+                                  <div className="text-xs text-gray-500">{new Date(o.createdAt).toLocaleString()}</div>
+                                </div>
+                              ))}
+                            </div>
+                          ) : (
+                            <p className="text-sm text-gray-500">No orders</p>
+                          )}
+                        </div>
+
+                        <div className="flex justify-end gap-2 pt-2">
+                          {viewing.data?.id && (
+                            <button
+                              className="px-3 py-2 rounded-md border border-red-300 text-red-700 hover:bg-red-50"
+                              onClick={() => deleteMerchant(viewing.data.id)}
+                            >
+                              Delete Merchant
+                            </button>
+                          )}
+                          <button className="px-3 py-2 rounded-md border border-gray-300 hover:bg-gray-50" onClick={closeViewMerchant}>Close</button>
+                        </div>
+                      </div>
+                    ) : null}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* User Management Tab */}
             {activeTab === 'users' && (
               <div className="bg-white rounded-lg shadow-sm border border-gray-200">
@@ -313,57 +546,124 @@ function AdminDashboard() {
                 </div>
                 <div className="p-6">
                   <div className="overflow-x-auto">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('admin.user')}</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('admin.role')}</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('admin.status')}</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('admin.lastActive')}</th>
-                          <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('admin.actions')}</th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {recentUsers.map((user) => (
-                          <tr key={user.id}>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <div>
-                                <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                                <div className="text-sm text-gray-500">{user.email}</div>
-                              </div>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                                user.role === 'admin' ? 'bg-red-100 text-red-800' :
-                                user.role === 'merchant' ? 'bg-blue-100 text-blue-800' :
-                                'bg-gray-100 text-gray-800'
-                              }`}>
-                                {user.role}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap">
-                              <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                                user.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                              }`}>
-                                {user.status}
-                              </span>
-                            </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{user.lastActive}</td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                              <button className="text-turquoise-600 hover:text-turquoise-900 mr-3" onClick={() => alert('Edit functionality coming soon!')}>
-                                {translate('admin.edit')}
-                              </button>
-                              <button className="text-red-600 hover:text-red-900 mr-3" onClick={() => alert('Delete functionality coming soon!')}>
-                                {translate('admin.delete')}
-                              </button>
-                              <button className="text-blue-600 hover:text-blue-900" onClick={() => alert('View user details coming soon!')}>
-                                {translate('admin.view')}
-                              </button>
-                            </td>
+                    {usersLoading ? (
+                      <div className="py-8 text-center text-gray-500">Loading users...</div>
+                    ) : usersError ? (
+                      <div className="py-8 text-center text-red-600">{usersError}</div>
+                    ) : (
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('admin.user')}</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('admin.role')}</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Merchant</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('admin.status')}</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('admin.actions')}</th>
                           </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {users.map((u) => (
+                            <tr key={u.id}>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div>
+                                  <div className="text-sm font-medium text-gray-900">{u.name || '—'}</div>
+                                  <div className="text-sm text-gray-500">{u.email}</div>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div className="flex items-center gap-2">
+                                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                    u.role === 'ADMIN' ? 'bg-red-100 text-red-800' :
+                                    u.role === 'MERCHANT' ? 'bg-blue-100 text-blue-800' :
+                                    'bg-gray-100 text-gray-800'
+                                  }`}>
+                                    {u.role}
+                                  </span>
+                                  {u.isDeleted && (
+                                    <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-200 text-gray-700" title="User is deleted/disabled">
+                                      Deleted
+                                    </span>
+                                  )}
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                                {u.merchantId ? (
+                                  <span>
+                                    {(u.storeName || 'Merchant')}
+                                    {u.isDeleted && <span className="ml-2 text-xs text-gray-500">(disabled)</span>}
+                                  </span>
+                                ) : '—'}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                {u.merchantId ? (
+                                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                    u.isDeleted ? 'bg-gray-200 text-gray-700' : u.merchantStatus === 'ACTIVE' ? 'bg-green-100 text-green-800' :
+                                    u.merchantStatus === 'SUSPENDED' ? 'bg-red-100 text-red-800' :
+                                    'bg-yellow-100 text-yellow-800'
+                                  }`}>
+                                    {u.isDeleted ? 'DELETED' : u.merchantStatus}
+                                  </span>
+                                ) : (
+                                  <span className="text-xs text-gray-500">N/A</span>
+                                )}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                {u.merchantId ? (
+                                  <div className="flex items-center gap-2">
+                                    <button
+                                      className="px-3 py-1 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50"
+                                      onClick={() => setMerchantStatus(u.merchantId!, 'PENDING')}
+                                      disabled={u.merchantStatus === 'PENDING' || u.isDeleted}
+                                    >
+                                      Set Pending
+                                    </button>
+                                    <button
+                                      className="px-3 py-1 rounded-md bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
+                                      onClick={() => setMerchantStatus(u.merchantId!, 'ACTIVE')}
+                                      disabled={u.merchantStatus === 'ACTIVE' || u.isDeleted}
+                                    >
+                                      Approve
+                                    </button>
+                                    <button
+                                      className="px-3 py-1 rounded-md border border-blue-300 text-blue-700 hover:bg-blue-50"
+                                      onClick={() => openViewMerchant(u.merchantId!)}
+                                      disabled={u.isDeleted}
+                                    >
+                                      View
+                                    </button>
+                                    <button
+                                      className="px-3 py-1 rounded-md border border-red-300 text-red-700 hover:bg-red-50"
+                                      onClick={() => deleteMerchant(u.merchantId!)}
+                                      disabled={u.isDeleted}
+                                    >
+                                      Delete
+                                    </button>
+                                    <button
+                                      className="px-3 py-1 rounded-md border border-red-400 text-red-800 hover:bg-red-50"
+                                      onClick={() => deleteUser(u.id)}
+                                      title="Delete user and all related data"
+                                    >
+                                      Delete User
+                                    </button>
+                                  </div>
+                                ) : (
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-xs text-gray-400 mr-2">No merchant profile</span>
+                                    <button
+                                      className="px-3 py-1 rounded-md border border-red-400 text-red-800 hover:bg-red-50"
+                                      onClick={() => deleteUser(u.id)}
+                                      title="Delete user"
+                                    >
+                                      Delete User
+                                    </button>
+                                  </div>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
                   </div>
                 </div>
               </div>
@@ -583,6 +883,23 @@ function AdminDashboard() {
                               onChange={e=>setForm({...form, stock:e.target.value})}
                               placeholder="100"
                             />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                            <select
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent cursor-pointer"
+                              value={form.category}
+                              onChange={e=>setForm({...form, category:e.target.value})}
+                            >
+                              <option value="General">General</option>
+                              <option value="Electronics">Electronics</option>
+                              <option value="Fashion">Fashion</option>
+                              <option value="Home & Kitchen">Home & Kitchen</option>
+                              <option value="Beauty & Personal Care">Beauty & Personal Care</option>
+                              <option value="Sports & Outdoors">Sports & Outdoors</option>
+                              <option value="Books">Books</option>
+                              <option value="Toys & Games">Toys & Games</option>
+                            </select>
                           </div>
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">Image URL</label>

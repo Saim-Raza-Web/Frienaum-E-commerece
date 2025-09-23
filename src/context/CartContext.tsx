@@ -22,39 +22,35 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: ReactNode }) {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [isMounted, setIsMounted] = useState(false);
+  const [isClient, setIsClient] = useState(false);
 
-  // Load cart from localStorage on mount
+  // Ensure we only access localStorage on the client
   useEffect(() => {
-    if (typeof window === 'undefined') return;
-    
+    setIsClient(true);
+
+    // Load cart from localStorage only on client
     try {
       const savedCart = localStorage.getItem('cart');
       if (savedCart) {
         const parsedCart = JSON.parse(savedCart);
-        // Only update if there's a difference to prevent unnecessary re-renders
-        if (JSON.stringify(parsedCart) !== JSON.stringify(cartItems)) {
-          setCartItems(parsedCart);
-        }
+        setCartItems(parsedCart);
       }
     } catch (error) {
       console.error('Failed to load cart from localStorage', error);
       localStorage.removeItem('cart');
-    } finally {
-      setIsMounted(true);
     }
   }, []);
 
-  // Save cart to localStorage whenever it changes
+  // Save cart to localStorage whenever it changes (only on client)
   useEffect(() => {
-    if (!isMounted || typeof window === 'undefined') return;
-    
+    if (!isClient) return;
+
     try {
       localStorage.setItem('cart', JSON.stringify(cartItems));
     } catch (error) {
       console.error('Failed to save cart to localStorage', error);
     }
-  }, [cartItems, isMounted]);
+  }, [cartItems, isClient]);
 
   const addToCart = (product: Product, quantity: number = 1) => {
     setCartItems(prevItems => {

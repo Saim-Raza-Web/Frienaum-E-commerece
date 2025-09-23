@@ -31,6 +31,7 @@ export interface RegisterData {
   password: string;
   confirmPassword: string;
   role: 'customer' | 'merchant';
+  storeName?: string; // optional, required when role is merchant
 }
 
 export interface AuthState {

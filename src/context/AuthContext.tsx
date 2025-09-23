@@ -213,40 +213,52 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const register = useCallback(async (data: RegisterData): Promise<void> => {
     dispatch({ type: 'REGISTER_START' });
 
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    try {
+      // Validate passwords client-side first
+      if (data.password !== data.confirmPassword) {
+        dispatch({ type: 'REGISTER_FAILURE', payload: 'Passwords do not match' });
+        return;
+      }
 
-    // Check if user already exists
-    if (mockUsers.find(u => u.email === data.email)) {
-      dispatch({ type: 'REGISTER_FAILURE', payload: 'User with this email already exists' });
-      return;
+      const res = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName: data.firstName,
+          lastName: data.lastName,
+          email: data.email,
+          password: data.password,
+          role: data.role,
+          // If merchant, pass optional storeName (UI can provide it)
+          storeName: data.storeName,
+        }),
+      });
+
+      const payload = await res.json();
+      if (!res.ok) {
+        dispatch({ type: 'REGISTER_FAILURE', payload: payload?.message || 'Registration failed' });
+        return;
+      }
+
+      // Convert API user into frontend user
+      const user: User = {
+        id: payload.id,
+        email: payload.email,
+        firstName: (payload.name || '').split(' ')[0] || data.firstName,
+        lastName: (payload.name || '').split(' ').slice(1).join(' ') || data.lastName,
+        role: payload.role === 'ADMIN' ? 'admin' : payload.role === 'MERCHANT' ? 'merchant' : 'customer',
+        avatar: '/api/placeholder/100/100',
+        createdAt: new Date().toISOString(),
+        lastLogin: new Date().toISOString(),
+      };
+
+      // Persist session locally (this app uses localStorage-based auth context)
+      localStorage.setItem('shopease_user', JSON.stringify(user));
+
+      dispatch({ type: 'REGISTER_SUCCESS', payload: user });
+    } catch (e) {
+      dispatch({ type: 'REGISTER_FAILURE', payload: 'Network error. Please try again.' });
     }
-
-    // Check password confirmation
-    if (data.password !== data.confirmPassword) {
-      dispatch({ type: 'REGISTER_FAILURE', payload: 'Passwords do not match' });
-      return;
-    }
-
-    // Create new user
-    const newUser: User = {
-      id: (mockUsers.length + 1).toString(),
-      email: data.email,
-      firstName: data.firstName,
-      lastName: data.lastName,
-      role: data.role,
-      createdAt: new Date().toISOString(),
-      lastLogin: new Date().toISOString()
-    };
-
-    // Add to mock database
-    mockUsers.push(newUser);
-    mockPasswords[data.email] = data.password;
-
-    // Save to localStorage
-    localStorage.setItem('shopease_user', JSON.stringify(newUser));
-    
-    dispatch({ type: 'REGISTER_SUCCESS', payload: newUser });
   }, []);
 
   const logout = useCallback(async () => {

@@ -3,6 +3,69 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Sub-order for each merchant in a split order
+model SubOrder {
+  id           String       @id @default(auto()) @map("_id") @db.ObjectId
+  orderId      String       @db.ObjectId
+  merchantId   String       @db.ObjectId
+  subtotal     Float
+  commission   Float
+  payoutAmount Float
+  status       OrderStatus  @default(PENDING)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  order    Order    @relation(fields: [orderId], references: [id])
+  merchant Merchant @relation(fields: [merchantId], references: [id])
+  items    OrderItem[]
+
+  @@index([orderId])
+  @@index([merchantId])
+}
+
+model Payment {
+  id            String         @id @default(auto()) @map("_id") @db.ObjectId
+  orderId       String         @db.ObjectId
+  gateway       PaymentGateway
+  status        PaymentStatus
+  amount        Float
+  currency      String
+  transactionId String?
+  raw           Json?
+  createdAt     DateTime       @default(now())
+
+  order Order @relation(fields: [orderId], references: [id])
+
+  @@index([orderId])
+  @@index([status])
+  @@index([gateway])
+}
+
+model PayoutBalance {
+  id         String   @id @default(auto()) @map("_id") @db.ObjectId
+  merchantId String   @unique @db.ObjectId
+  available  Float    @default(0)
+  pending    Float    @default(0)
+  updatedAt  DateTime @updatedAt
+
+  merchant Merchant @relation(fields: [merchantId], references: [id])
+}
+
+model PayoutTransaction {
+  id          String       @id @default(auto()) @map("_id") @db.ObjectId
+  merchantId  String       @db.ObjectId
+  amount      Float
+  status      PayoutStatus @default(PENDING)
+  method      String
+  externalRef String?
+  createdAt   DateTime     @default(now())
+
+  merchant Merchant @relation(fields: [merchantId], references: [id])
+
+  @@index([merchantId])
+  @@index([status])
+}
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -13,29 +76,135 @@ enum Role {
   CUSTOMER
 }
 
+enum MerchantStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+}
+
+enum PaymentGateway {
+  STRIPE
+  PAYPAL
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCEEDED
+  FAILED
+  REFUNDED
+}
+
+enum PayoutStatus {
+  PENDING
+  PAID
+  FAILED
+}
+
 model User {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  email     String   @unique
-  password  String
-  name      String
-  role      Role     @default(CUSTOMER)
+  id       String  @id @default(auto()) @map("_id") @db.ObjectId
+  email    String  @unique
+  password String
+  name     String
+  role     Role    @default(CUSTOMER)
+  isDeleted Boolean @default(false)
+
+  // Optional one-to-one Merchant profile for users who are merchants
+  merchant Merchant?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
+model Merchant {
+  id        String          @id @default(auto()) @map("_id") @db.ObjectId
+  userId    String          @unique @db.ObjectId
+  user      User            @relation(fields: [userId], references: [id])
+  storeName String
+  status    MerchantStatus  @default(PENDING)
+  products  Product[]
+  orders    Order[]
+
+  // Back-relations for split orders and payouts
+  subOrders         SubOrder[]
+  payoutBalance     PayoutBalance?
+  payoutTransactions PayoutTransaction[]
+
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+}
+
 model Product {
-  id        String   @id @default(auto()) @map("_id") @db.ObjectId
-  slug      String   @unique
-  title_en  String
-  title_de  String
-  desc_en   String
-  desc_de   String
-  price     Float
-  stock     Int
-  imageUrl  String?
-  category  String   @default("Electronics")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  id         String     @id @default(auto()) @map("_id") @db.ObjectId
+  slug       String     @unique
+  title_en   String
+  title_de   String
+  desc_en    String
+  desc_de    String
+  price      Float
+  stock      Int
+  imageUrl   String?
+  category   String     @default("Electronics")
+
+  merchantId String     @db.ObjectId
+  merchant   Merchant   @relation(fields: [merchantId], references: [id])
+
+  orderItems OrderItem[]
+
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+}
+
+model OrderItem {
+  id        String @id @default(auto()) @map("_id") @db.ObjectId
+  orderId   String @db.ObjectId
+  productId String @db.ObjectId
+
+  quantity Int
+  price    Float
+
+  product Product @relation(fields: [productId], references: [id])
+  order   Order   @relation(fields: [orderId], references: [id])
+
+  // Split order linkage (one sub-order per merchant)
+  subOrderId String?   @db.ObjectId
+  subOrder   SubOrder? @relation(fields: [subOrderId], references: [id])
+
+  @@index([subOrderId])
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+model Order {
+  id              String       @id @default(auto()) @map("_id") @db.ObjectId
+  customerId      String       @db.ObjectId
+  merchantId      String       @db.ObjectId
+  merchant        Merchant     @relation(fields: [merchantId], references: [id])
+  status          OrderStatus  @default(PENDING)
+  totalAmount     Float
+  shippingAddress String
+  items           OrderItem[]
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  // Aggregated payment info for checkout
+  grandTotal Float
+  currency   String      @default("USD")
+  gatewayUsed   PaymentGateway?
+  paymentStatus PaymentStatus?
+
+  // Back-relations
+  subOrders SubOrder[]
+  payments  Payment[]
+
+  @@index([customerId])
+  @@index([merchantId])
+  @@index([status])
 }
 
 model ContactMessage {

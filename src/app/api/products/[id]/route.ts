@@ -35,7 +35,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   const { slug, title_en, title_de, desc_en, desc_de, price, stock, imageUrl } = await request.json();
   const updated = await prisma.product.update({
     where: { id: productId },
-    data: { slug, title_en, title_de, desc_en, desc_de, price: Number(price), stock: Number(stock), imageUrl }
+    data: { slug, title_en, title_de, desc_en, desc_de, price: Number(price), stock: Number(stock), imageUrl: imageUrl || undefined }
   });
   return NextResponse.json(updated);
 }

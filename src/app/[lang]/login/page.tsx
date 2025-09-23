@@ -22,7 +22,8 @@ export default function LoginPage() {
     email: '',
     password: '',
     confirmPassword: '',
-    role: 'customer' as 'customer' | 'merchant'
+    role: 'customer' as 'customer' | 'merchant',
+    storeName: ''
   });
 
   const { login, register, isAuthenticated, isLoading, error, clearError, user } = useAuth();
@@ -76,7 +77,8 @@ export default function LoginPage() {
       email: '',
       password: '',
       confirmPassword: '',
-      role: 'customer'
+      role: 'customer',
+      storeName: ''
     });
     clearError();
   }, [clearError]);
@@ -184,6 +186,27 @@ export default function LoginPage() {
                     </select>
                   </div>
                 </div>
+
+                {formData.role === 'merchant' && (
+                  <div className="sm:col-span-2">
+                    <label htmlFor="storeName" className="block text-sm font-medium text-gray-700">
+                      {translate('Store Name')}
+                    </label>
+                    <div className="mt-1 relative">
+                      <input
+                        id="storeName"
+                        name="storeName"
+                        type="text"
+                        required={!isLogin}
+                        value={formData.storeName}
+                        onChange={(e) => handleInputChange('storeName', e.target.value)}
+                        className="input-field pl-10"
+                        placeholder={translate('Enter your store name')}
+                      />
+                      <ShoppingBag className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    </div>
+                  </div>
+                )}
               </>
             )}
 

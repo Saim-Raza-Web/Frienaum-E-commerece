@@ -1,19 +1,12 @@
 'use client';
 
-import { ReactNode, useEffect, useState } from 'react';
-import { usePathname } from 'next/navigation';
+import { ReactNode } from 'react';
 
 export default function ClientLayout({ children }: { children: ReactNode }) {
-  const [mounted, setMounted] = useState(false);
-  const pathname = usePathname();
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    return null;
-  }
-
-  return <>{children}</>;
+  // Always render children, but with suppressHydrationWarning to prevent mismatches
+  return (
+    <div suppressHydrationWarning={true}>
+      {children}
+    </div>
+  );
 }

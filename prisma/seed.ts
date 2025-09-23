@@ -210,11 +210,37 @@ async function main() {
     }
   ];
 
+  // Ensure a Merchant profile exists for the merchant user and set it ACTIVE
+  const merchantUser = await prisma.user.findUnique({
+    where: { email: 'merchant@store.com' },
+    select: { id: true }
+  });
+
+  if (!merchantUser) {
+    throw new Error('Merchant user not found. Please make sure to create it first.');
+  }
+
+  const merchantProfile = await prisma.merchant.upsert({
+    where: { userId: merchantUser.id },
+    update: { status: 'ACTIVE' },
+    create: {
+      userId: merchantUser.id,
+      storeName: 'Default Merchant Store',
+      status: 'ACTIVE'
+    }
+  });
+
+  // Seed products owned by the Merchant profile (use Merchant.id)
   for (const product of products) {
     await prisma.product.upsert({
       where: { slug: product.slug },
-      update: {},
-      create: product,
+      update: {
+        merchantId: merchantProfile.id
+      },
+      create: {
+        ...product,
+        merchantId: merchantProfile.id
+      },
     });
   }
 

@@ -203,3 +203,36 @@ button, .btn {
 .fade-in {
   animation: fadeIn 0.3s ease-in-out;
 }
+
+/* Unified input styles used across forms */
+.input-field {
+  width: 100%;
+  padding: 0.625rem 0.75rem; /* 10px 12px */
+  border: 1px solid var(--color-gray-300);
+  border-radius: 0.5rem;
+  background-color: #fff;
+  outline: none;
+  transition: border-color 150ms ease, box-shadow 150ms ease, background-color 150ms ease;
+}
+
+.input-field:hover {
+  border-color: var(--color-gray-400);
+}
+
+.input-field:focus,
+.input-field:focus-visible {
+  outline: none;
+  border-color: var(--color-turquoise-500);
+  box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.45);
+}
+
+/* Ensure select adopts the same focus behavior */
+select.input-field:focus,
+select.input-field:focus-visible {
+  outline: none;
+  border-color: var(--color-turquoise-500);
+  box-shadow: 0 0 0 2px rgba(20, 184, 166, 0.45);
+}
+
+/* Textarea minimum height helper (used in modal) */
+.min-h-28 { min-height: 7rem; }
