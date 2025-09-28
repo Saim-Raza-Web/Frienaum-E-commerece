@@ -111,6 +111,13 @@ model User {
   // Optional one-to-one Merchant profile for users who are merchants
   merchant Merchant?
 
+  // Customer-related relations
+  addresses        Address[]
+  customerProfile  CustomerProfile?
+  merchantCustomers MerchantCustomer[]
+  // Orders placed by this user as a customer
+  ordersAsCustomer Order[]        @relation("CustomerOrders")
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -123,6 +130,9 @@ model Merchant {
   status    MerchantStatus  @default(PENDING)
   products  Product[]
   orders    Order[]
+
+  // Customers linked to this merchant
+  merchantCustomers MerchantCustomer[]
 
   // Back-relations for split orders and payouts
   subOrders         SubOrder[]
@@ -185,9 +195,13 @@ model Order {
   customerId      String       @db.ObjectId
   merchantId      String       @db.ObjectId
   merchant        Merchant     @relation(fields: [merchantId], references: [id])
+  customer        User         @relation("CustomerOrders", fields: [customerId], references: [id])
   status          OrderStatus  @default(PENDING)
   totalAmount     Float
   shippingAddress String
+  // Optional normalized shipping address reference
+  shippingAddressId String?    @db.ObjectId
+  shippingAddressRef Address?  @relation("OrderShippingAddress", fields: [shippingAddressId], references: [id])
   items           OrderItem[]
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
@@ -205,6 +219,65 @@ model Order {
   @@index([customerId])
   @@index([merchantId])
   @@index([status])
+}
+
+// Normalized address records for users (customers)
+model Address {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String   @db.ObjectId
+  label       String?
+  name        String?
+  phone       String?
+  line1       String
+  line2       String?
+  city        String
+  state       String?
+  postalCode  String
+  country     String
+  isDefault   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id])
+  // Back-relations
+  shippingOrders    Order[]            @relation("OrderShippingAddress")
+  defaultForProfile CustomerProfile?   @relation("DefaultAddressProfile")
+
+  @@index([userId])
+}
+
+// Extra per-customer profile metadata
+model CustomerProfile {
+  id               String   @id @default(auto()) @map("_id") @db.ObjectId
+  userId           String   @unique @db.ObjectId
+  phone            String?
+  defaultAddressId String?  @unique @db.ObjectId
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  user             User     @relation(fields: [userId], references: [id])
+  defaultAddress   Address? @relation("DefaultAddressProfile", fields: [defaultAddressId], references: [id])
+}
+
+// Join model to represent a merchant's customers with per-merchant stats
+model MerchantCustomer {
+  id           String   @id @default(auto()) @map("_id") @db.ObjectId
+  merchantId   String   @db.ObjectId
+  customerId   String   @db.ObjectId
+  tags         String[]
+  notes        String?
+  totalOrders  Int      @default(0)
+  totalSpent   Float    @default(0)
+  lastOrderAt  DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  merchant     Merchant @relation(fields: [merchantId], references: [id])
+  customer     User     @relation(fields: [customerId], references: [id])
+
+  @@unique([merchantId, customerId])
+  @@index([merchantId])
+  @@index([customerId])
 }
 
 model ContactMessage {

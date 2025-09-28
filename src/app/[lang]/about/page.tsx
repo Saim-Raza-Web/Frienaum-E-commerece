@@ -1,11 +1,16 @@
 'use client';
 
 import React from 'react';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Users, Award, Globe, Heart, Shield, Truck } from 'lucide-react';
 import { useTranslation } from '@/i18n/TranslationProvider';
 
 export default function AboutPage() {
   const { translate } = useTranslation();
+  const pathname = usePathname() || '';
+  const segments = pathname.split('/');
+  const lang = segments[1] || 'en';
   
   const features = [
     {
@@ -242,18 +247,18 @@ export default function AboutPage() {
             {translate('ctaDescription')}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <a
-              href="/products"
+            <Link
+              href={`/${lang}/products`}
               className="bg-white text-turquoise-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
             >
               {translate('startShopping')}
-            </a>
-            <a
-              href="/contact"
+            </Link>
+            <Link
+              href={`/${lang}/contact`}
               className="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-turquoise-600 transition-colors"
             >
               {translate('contactUs')}
-            </a>
+            </Link>
           </div>
         </div>
       </div>

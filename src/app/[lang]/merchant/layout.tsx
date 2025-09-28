@@ -2,28 +2,22 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
+import { useAuth } from '@/context/AuthContext';
 import { useTranslation } from '@/i18n/TranslationProvider';
 import {
   Home,
-  Package,
-  ShoppingBag,
-  Users,
-  BarChart as BarChartIcon,
-  Settings,
   LogOut,
   Menu,
   X,
-  Bell,
-  Search,
   UserCircle,
-  ChevronDown,
 } from 'lucide-react';
 
 interface NavigationItem {
   name: string;
   href: string;
   icon: React.ComponentType<{ className?: string }>;
+  tab: 'overview' | 'products' | 'orders';
 }
 
 export default function MerchantLayout({
@@ -34,24 +28,29 @@ export default function MerchantLayout({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { translate } = useTranslation();
+  const { logout } = useAuth();
 
+  const lang = pathname?.split('/')?.[1] || 'en';
   const navigation: NavigationItem[] = [
-    { name: 'merchant.dashboard', href: '/merchant/dashboard', icon: Home },
-    { name: 'merchant.products', href: '/merchant/products', icon: Package },
-    { name: 'merchant.orders', href: '/merchant/orders', icon: ShoppingBag },
-    { name: 'merchant.customerManagement', href: '/merchant/customers', icon: Users },
-    { name: 'merchant.businessAnalytics', href: '/merchant/analytics', icon: BarChartIcon },
-    { name: 'settings', href: '/merchant/settings', icon: Settings },
+    { name: 'merchant.dashboard', href: `/${lang}/merchant?tab=overview`, icon: Home, tab: 'overview' },
   ];
 
-  const isActive = (href: string) => {
-    return pathname === href;
+  const isActive = (item: NavigationItem) => {
+    const currentTab = searchParams?.get('tab') || 'overview';
+    return pathname?.startsWith(`/${lang}/merchant`) && currentTab === item.tab;
   };
 
-  const handleLogout = () => {
-    // Handle logout logic here
-    router.push('/login');
+  const handleLogout = async () => {
+    setSidebarOpen(false);
+    // Navigate to main page first to unmount any protected merchant routes
+    try { sessionStorage.setItem('logoutRedirect', '1'); } catch {}
+    router.replace(`/${lang}`);
+    // Defer logout to next tick to avoid race with ProtectedRoute redirects
+    setTimeout(() => {
+      logout();
+    }, 300);
   };
 
   return (
@@ -78,19 +77,19 @@ export default function MerchantLayout({
                 key={item.name}
                 href={item.href}
                 className={`group flex items-center px-3 py-3 text-sm font-medium rounded-md ${
-                  isActive(item.href)
+                  isActive(item)
                     ? 'bg-blue-50 text-blue-600 font-medium'
                     : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                 } transition-colors duration-200`}
               >
                 <item.icon
                   className={`mr-3 h-5 w-5 flex-shrink-0 ${
-                    isActive(item.href) ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500'
+                    isActive(item) ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500'
                   }`}
                   aria-hidden="true"
                 />
                 {translate(item.name)}
-                {isActive(item.href) && (
+                {isActive(item) && (
                   <span className="ml-auto w-1 h-6 bg-blue-600 rounded-l-md"></span>
                 )}
               </Link>
@@ -119,12 +118,7 @@ export default function MerchantLayout({
               </div>
             </div>
           </div>
-          <div className="border-t border-gray-200 p-4">
-            <button className="group flex w-full items-center rounded-md px-3 py-2 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900">
-              <LogOut className="mr-3 h-5 w-5 text-gray-400 group-hover:text-gray-500" />
-              {translate('logout')}
-            </button>
-          </div>
+          
         </div>
       </div>
 
@@ -141,41 +135,7 @@ export default function MerchantLayout({
               <span className="sr-only">Open sidebar</span>
               <Menu className="h-6 w-6" aria-hidden="true" />
             </button>
-            
-            {/* Search bar */}
-            <div className="flex flex-1 justify-between px-4">
-              <div className="flex flex-1 max-w-2xl">
-                <div className="flex w-full max-w-lg lg:max-w-xs">
-                  <label htmlFor="search" className="sr-only">
-                    Search
-                  </label>
-                  <div className="relative w-full">
-                    <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                      <Search className="h-5 w-5 text-gray-400" aria-hidden="true" />
-                    </div>
-                    <input
-                      id="search"
-                      name="search"
-                      className="block w-full rounded-md border-0 bg-gray-50 py-1.5 pl-10 pr-3 text-gray-900 ring-1 ring-inset ring-gray-300 placeholder:text-gray-400 focus:ring-2 focus:ring-inset focus:ring-blue-500 sm:text-sm sm:leading-6"
-                      placeholder="Search..."
-                      type="search"
-                    />
-                  </div>
-                </div>
-              </div>
-              
-              {/* Right side icons */}
-              <div className="ml-4 flex items-center md:ml-6">
-                <button
-                  type="button"
-                  className="rounded-full bg-white p-1 text-gray-400 hover:text-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 relative"
-                >
-                  <span className="sr-only">View notifications</span>
-                  <Bell className="h-6 w-6" aria-hidden="true" />
-                  <span className="absolute top-0 right-0 block h-2 w-2 rounded-full bg-red-500 ring-2 ring-white"></span>
-                </button>
-              </div>
-            </div>
+            <div className="flex-1" />
           </div>
 
           <main className="flex-1 overflow-y-auto bg-gray-50 p-4 sm:p-6 lg:p-8">

@@ -1,20 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/authOptions';
 import { prisma } from '@/lib/prisma';
+import { getUserFromReq } from '@/lib/apiAuth';
+
+function getUserFromNextRequest(req: NextRequest) {
+  const cookieHeader = req.headers.get('cookie') || '';
+  return getUserFromReq({ headers: { cookie: cookieHeader } } as any);
+}
 
 export async function PATCH(
   request: NextRequest,
   context: any
 ) {
   try {
-    const session = await getServerSession(authOptions);
-    
-    if (!session?.user) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
+    const user = getUserFromNextRequest(request);
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    if (session.user.role !== 'MERCHANT') {
+    if (user.role !== 'MERCHANT' && user.role !== 'ADMIN') {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -27,7 +28,7 @@ export async function PATCH(
 
     // Resolve merchant record from the logged-in user's id
     const merchant = await prisma.merchant.findUnique({
-      where: { userId: session.user.id },
+      where: { userId: user.id },
       select: { id: true },
     });
 

@@ -5,6 +5,7 @@ import { ShoppingCart, User, Search, ChevronDown, Globe } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState, useEffect, useTransition } from 'react';
 import { locales, type Locale, getTranslations, isValidLocale } from '../i18n/config';
+import { useCart } from '@/context/CartContext';
 
 // Import the Translation type from config
 import type { Translation } from '../i18n/config';
@@ -38,10 +39,12 @@ const defaultTranslations: NavTranslations = {
 export default function Navbar() {
   const [isLanguageOpen, setIsLanguageOpen] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   const pathname = usePathname() || '';
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [translations, setTranslations] = useState<NavTranslations>(defaultTranslations);
+  const { itemCount } = useCart();
 
   // Prevent hydration mismatch by ensuring we're on client
   useEffect(() => {
@@ -94,15 +97,11 @@ export default function Navbar() {
     // Get the current path without the locale
     const pathWithoutLocale = pathname.replace(/^\/[a-z]{2}(\/|$)/, '/');
 
-    // Only use window.location.href on client-side to prevent hydration mismatch
-    if (isClient) {
-      // Navigate to the same path with the new locale
-      startTransition(() => {
-        const newPath = `/${newLang}${pathWithoutLocale}`;
-        // Navigate to the new path with the selected language
-        window.location.href = newPath;
-      });
-    }
+    // Navigate to the same path with the new locale using router.push for SPA behavior
+    startTransition(() => {
+      const newPath = `/${newLang}${pathWithoutLocale}`;
+      router.push(newPath);
+    });
   };
   
   // Helper function to create localized paths
@@ -165,6 +164,13 @@ export default function Navbar() {
                   <input
                     id="search"
                     name="search"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && searchQuery.trim()) {
+                        router.push(createLocalizedPath(`/products?search=${encodeURIComponent(searchQuery.trim())}`));
+                      }
+                    }}
                     className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-turquoise-500 focus:border-turquoise-500 sm:text-sm"
                     placeholder="Search"
                     type="search"
@@ -210,8 +216,8 @@ export default function Navbar() {
                   </div>
                 </div>
                 
-                <Link 
-                  href={createLocalizedPath('/search')} 
+                <Link
+                  href={createLocalizedPath('/products')}
                   className="text-gray-700 hover:text-turquoise-600 p-2 -m-2"
                   aria-label={translations.navigation.search}
                 >
@@ -225,7 +231,11 @@ export default function Navbar() {
                 >
                   <span className="sr-only">{translations.navigation.cart}</span>
                   <ShoppingCart className="h-5 w-5" />
-                  <span className="absolute -top-1 -right-1 bg-turquoise-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">0</span>
+                  {itemCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-turquoise-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                      {itemCount > 99 ? '99+' : itemCount}
+                    </span>
+                  )}
                 </Link>
                 <Link 
                   href={createLocalizedPath('/profile')} 

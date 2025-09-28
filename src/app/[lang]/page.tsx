@@ -1,11 +1,10 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { useCart } from '@/context/CartContext';
 import { useTranslation } from '@/i18n/TranslationProvider';
-import { products, categories } from '@/lib/dummyData';
 import { Product } from '@/types';
 import { ArrowRight, Star, Truck, Shield, Clock } from 'lucide-react';
 
@@ -24,12 +23,65 @@ function HomePage({ params }: HomePageProps) {
   const { addToCart } = useCart();
   const { translate } = useTranslation();
   const router = useRouter();
-  
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [categories, setCategories] = useState<{ id: string; name: string; productCount: number }[]>([]);
+
+  useEffect(() => {
+    fetchFeaturedProducts();
+  }, []);
+
+  const fetchFeaturedProducts = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/products');
+      if (!response.ok) {
+        throw new Error('Failed to fetch products');
+      }
+      const productsData = await response.json();
+
+      // Transform API data to match Product interface
+      const transformedProducts: Product[] = productsData.map((product: any) => ({
+        id: product.id.toString(),
+        name: product.title_en,
+        description: product.desc_en,
+        price: product.price,
+        originalPrice: product.price,
+        images: [product.imageUrl || '/images/placeholder.jpg'],
+        category: product.category || 'Uncategorized',
+        rating: 4.5,
+        reviewCount: 0,
+        inStock: product.stock > 0,
+        tags: []
+      }));
+
+      // Take first 6 products as featured
+      setFeaturedProducts(transformedProducts.slice(0, 6));
+
+      // Build categories from all products
+      const categoryMap = new Map<string, number>();
+      transformedProducts.forEach(p => {
+        const cat = p.category || 'Uncategorized';
+        categoryMap.set(cat, (categoryMap.get(cat) || 0) + 1);
+      });
+      const builtCategories = Array.from(categoryMap.entries())
+        .map(([name, productCount], idx) => ({ id: String(idx + 1), name, productCount }))
+        .sort((a, b) => b.productCount - a.productCount);
+      setCategories(builtCategories);
+    } catch (err) {
+      console.error('Error fetching products:', err);
+      setError('Failed to load products');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleAddToCart = (product: Product) => {
     addToCart(product);
   };
 
-  const featuredProducts = products.slice(0, 6);
+  // categories are built from products fetch above
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -102,13 +154,20 @@ function HomePage({ params }: HomePageProps) {
           
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
             {categories.map((category) => (
-              <div key={category.id} className="group cursor-pointer">
+              <div
+                key={category.id}
+                className="group cursor-pointer"
+                onClick={() => router.push(`/${lang}/products?category=${encodeURIComponent(category.name)}`)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === 'Enter') router.push(`/${lang}/products?category=${encodeURIComponent(category.name)}`); }}
+              >
                 <div className="bg-white rounded-lg p-6 text-center shadow-md hover:shadow-lg transition-shadow duration-200">
                   <div className="w-16 h-16 bg-gradient-to-br from-turquoise-100 to-primary-100 rounded-full mx-auto mb-4 flex items-center justify-center">
                     <span className="text-2xl">📱</span>
                   </div>
                   <h3 className="font-semibold text-gray-900 mb-2">
-                    {translate(category.name)}
+                    {category.name}
                   </h3>
                   <p className="text-sm text-gray-600 mb-3">
                     {category.productCount} {translate('products')}
@@ -137,13 +196,40 @@ function HomePage({ params }: HomePageProps) {
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
-            {featuredProducts.map((product) => (
-              <ProductCard
-                key={product.id}
-                product={product}
-                onAddToCart={handleAddToCart}
-              />
-            ))}
+            {loading ? (
+              // Loading skeletons
+              Array.from({ length: 6 }).map((_, index) => (
+                <div key={index} className="bg-white rounded-lg shadow-md overflow-hidden">
+                  <div className="w-full h-48 bg-gray-200 animate-pulse"></div>
+                  <div className="p-4">
+                    <div className="h-4 bg-gray-200 animate-pulse mb-2"></div>
+                    <div className="h-4 bg-gray-200 animate-pulse w-2/3"></div>
+                  </div>
+                </div>
+              ))
+            ) : error ? (
+              <div className="col-span-full text-center py-8">
+                <p className="text-red-600 mb-4">{error}</p>
+                <button
+                  onClick={fetchFeaturedProducts}
+                  className="btn-primary"
+                >
+                  Try Again
+                </button>
+              </div>
+            ) : featuredProducts.length === 0 ? (
+              <div className="col-span-full text-center py-8">
+                <p className="text-gray-600">No products available</p>
+              </div>
+            ) : (
+              featuredProducts.map((product) => (
+                <ProductCard
+                  key={product.id}
+                  product={product}
+                  onAddToCart={handleAddToCart}
+                />
+              ))
+            )}
           </div>
           
           <div className="text-center mt-12">

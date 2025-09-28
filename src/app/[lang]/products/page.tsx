@@ -1,13 +1,18 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import ProductCard from '@/components/ProductCard';
 import { useCart } from '@/context/CartContext';
-import { categories } from '@/lib/dummyData';
 import { Product } from '@/types';
 import { Filter, Search, Loader2 } from 'lucide-react';
 import { useTranslation } from '@/i18n/TranslationProvider';
+
+interface Category {
+  id: string;
+  name: string;
+  productCount: number;
+}
 
 export default function ProductsPage() {
   const searchParams = useSearchParams();
@@ -16,24 +21,27 @@ export default function ProductsPage() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const firstMatchRef = useRef<HTMLDivElement | null>(null);
 
-  // Fetch products from API
+  // Fetch products and categories from API
   useEffect(() => {
-    const fetchProducts = async () => {
+    const fetchData = async () => {
       setLoading(true);
       setError('');
       try {
-        const response = await fetch('/api/products');
-        if (!response.ok) {
+        // Fetch products
+        const productsResponse = await fetch('/api/products');
+        if (!productsResponse.ok) {
           throw new Error('Failed to fetch products');
         }
-        const data = await response.json();
+        const productsData = await productsResponse.json();
 
         // Transform API data to match Product interface
-        const transformedProducts: Product[] = data.map((product: any) => ({
+        const transformedProducts: Product[] = productsData.map((product: any) => ({
           id: product.id.toString(),
           name: product.title_en,
           description: product.desc_en,
@@ -48,21 +56,44 @@ export default function ProductsPage() {
         }));
 
         setProducts(transformedProducts);
+
+        // Generate categories from products
+        const categoryMap = new Map<string, number>();
+        transformedProducts.forEach(product => {
+          const category = product.category;
+          categoryMap.set(category, (categoryMap.get(category) || 0) + 1);
+        });
+
+        const categoriesData: Category[] = Array.from(categoryMap.entries()).map(([name, productCount], index) => ({
+          id: (index + 1).toString(),
+          name,
+          productCount
+        }));
+
+        setCategories(categoriesData);
       } catch (err) {
         setError('Failed to load products');
-        console.error('Error fetching products:', err);
+        console.error('Error fetching data:', err);
       } finally {
         setLoading(false);
       }
     };
 
-    fetchProducts();
+    fetchData();
   }, []);
 
   useEffect(() => {
     const categoryParam = searchParams?.get('category');
     if (categoryParam) {
       setSelectedCategory(categoryParam);
+    }
+  }, [searchParams]);
+
+  // Pick up the search query from URL (?search=...) when landing from Navbar
+  useEffect(() => {
+    const q = searchParams?.get('search') || '';
+    if (q) {
+      setSearchQuery(q);
     }
   }, [searchParams]);
 
@@ -82,6 +113,13 @@ export default function ProductsPage() {
 
     setFilteredProducts(filtered);
   }, [selectedCategory, searchQuery, products]);
+
+  // After filtering with a search query, scroll to the first matching product for better UX
+  useEffect(() => {
+    if (searchQuery && firstMatchRef.current) {
+      firstMatchRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [filteredProducts, searchQuery]);
 
   const handleAddToCart = (product: Product) => {
     addToCart(product);
@@ -210,12 +248,13 @@ export default function ProductsPage() {
             {!loading && !error && (
               <>
                 <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
-                  {filteredProducts.map((product) => (
-                    <ProductCard
-                      key={product.id}
-                      product={product}
-                      onAddToCart={handleAddToCart}
-                    />
+                  {filteredProducts.map((product, idx) => (
+                    <div key={product.id} ref={idx === 0 ? firstMatchRef : undefined}>
+                      <ProductCard
+                        product={product}
+                        onAddToCart={handleAddToCart}
+                      />
+                    </div>
                   ))}
                 </div>
 

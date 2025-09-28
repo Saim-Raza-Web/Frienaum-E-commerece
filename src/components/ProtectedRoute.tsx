@@ -33,6 +33,14 @@ export default function ProtectedRoute({
 
   useEffect(() => {
     if (shouldRedirect) {
+      // If a logout flow set a temporary flag, skip redirecting to login once
+      try {
+        const skip = sessionStorage.getItem('logoutRedirect') === '1';
+        if (skip) {
+          sessionStorage.removeItem('logoutRedirect');
+          return;
+        }
+      } catch {}
       // Don't redirect if we're already on the home page
       const pathSegments = pathname?.split('/').filter(Boolean) || [];
       const currentLang = pathSegments[0] || 'en';

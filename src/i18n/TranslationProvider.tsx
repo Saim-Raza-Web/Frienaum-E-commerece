@@ -47,6 +47,11 @@ export const TranslationProvider = ({ children, initialLocale }: TranslationProv
     const keys = key.split('.');
     let value: any = translations;
 
+    // Check if translations is loaded
+    if (!translations || Object.keys(translations).length === 0) {
+      return key; // Return key as fallback if translations not loaded yet
+    }
+
     for (const k of keys) {
       if (value && typeof value === 'object' && k in value) {
         value = value[k];

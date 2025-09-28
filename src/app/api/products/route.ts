@@ -35,7 +35,7 @@ type ProductWithMerchant = {
 
 // Helper function to get product with merchant and merchant's user
 async function getProductsWithMerchants(where: any = {}) {
-  return prisma.product.findMany({
+  return prisma.product.findMany({  
     where,
     include: {
       merchant: {
@@ -73,10 +73,8 @@ function getUserFromNextRequest(req: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    // Get products for ACTIVE merchants only
-    const products = await getProductsWithMerchants({
-      merchant: { status: 'ACTIVE' }
-    });
+    // Get all products for now (remove merchant status filter for debugging)
+    const products = await getProductsWithMerchants();
 
     // Map merchant.user info into top-level shape if needed by client
     const shaped = products.map((p: any) => ({

@@ -1,10 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
-import { X, Loader2, CheckCircle } from 'lucide-react';
+import { X, Loader2, CheckCircle, CreditCard } from 'lucide-react';
 
 type CheckoutStep = 'cart' | 'shipping' | 'payment' | 'success';
 
@@ -29,7 +29,7 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
     
     try {
       // Call our API to create the order and get payment intent
-      if (!user) {
+      if (!isAuthenticated || !user) {
         throw new Error('You need to be signed in to complete your purchase');
       }
 
@@ -46,6 +46,7 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
           })),
           shippingAddress: '123 Example St, City, Country', // In a real app, collect this from a form
           currency: 'USD',
+          paymentMethod: 'stripe',
           // Include the total amount for verification
           amount: calculateTotal()
         })
@@ -61,11 +62,8 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
       if (!result.orderId) {
         throw new Error('Invalid response from server');
       }
-      
-      const { orderId } = result;
+
       setCurrentStep('payment');
-      // Store orderId for later use in payment processing
-      sessionStorage.setItem('currentOrderId', orderId);
     } catch (err) {
       console.error('Checkout error:', err);
       setError('Failed to process your order. Please try again.');
@@ -74,38 +72,22 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
     }
   };
 
-  const handlePayment = async (gateway: 'stripe' | 'paypal') => {
-    const orderId = sessionStorage.getItem('currentOrderId');
-    if (!orderId) {
-      setError('Order not found. Please refresh and try again.');
-      return;
-    }
+  const handlePaymentSuccess = () => {
+    clearCart();
+    setCurrentStep('success');
+    setTimeout(() => {
+      onClose();
+      setCurrentStep('cart');
+      router.push('/orders');
+    }, 3000);
+  };
 
-    setIsLoading(true);
-    setError('');
+  const handlePaymentError = (error: string) => {
+    setError(error);
+  };
 
-    try {
-      // In a real app, you'd create a payment session with your chosen gateway
-      // For demo, we'll simulate a successful payment
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Clear cart and show success
-      clearCart();
-      setCurrentStep('success');
-      
-      // In a real app, you'd redirect to a success page or show order confirmation
-      setTimeout(() => {
-        onClose();
-        setCurrentStep('cart');
-        router.push('/orders');
-      }, 3000);
-      
-    } catch (err) {
-      console.error('Payment error:', err);
-      setError('Payment failed. Please try another method.');
-    } finally {
-      setIsLoading(false);
-    }
+  const handlePaymentLoading = (loading: boolean) => {
+    setIsLoading(loading);
   };
 
   if (!isOpen) return null;
@@ -188,32 +170,76 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
 
           {currentStep === 'payment' && (
             <div className="space-y-4">
-              <div className="space-y-3">
-                <button
-                  onClick={() => handlePayment('stripe')}
-                  disabled={isLoading}
-                  className="w-full border border-gray-300 rounded-lg p-4 flex items-center justify-between hover:bg-gray-50 disabled:opacity-50"
-                >
-                  <div className="flex items-center">
-                    <img src="/stripe-logo.svg" alt="Stripe" className="h-6 mr-3" />
-                    <span>Pay with Stripe</span>
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h3 className="font-medium text-gray-900 mb-3">Payment Information</h3>
+                <div className="space-y-3">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Card Number
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="1234 5678 9012 3456"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      disabled={isLoading}
+                    />
                   </div>
-                  {isLoading && <Loader2 className="animate-spin h-5 w-5 text-gray-500" />}
-                </button>
-                
-                <button
-                  onClick={() => handlePayment('paypal')}
-                  disabled={isLoading}
-                  className="w-full border border-gray-300 rounded-lg p-4 flex items-center justify-between hover:bg-gray-50 disabled:opacity-50"
-                >
-                  <div className="flex items-center">
-                    <img src="/paypal-logo.svg" alt="PayPal" className="h-6 mr-3" />
-                    <span>Pay with PayPal</span>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Expiry Date
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="MM/YY"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        disabled={isLoading}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        CVV
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="123"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        disabled={isLoading}
+                      />
+                    </div>
                   </div>
-                  {isLoading && <Loader2 className="animate-spin h-5 w-5 text-gray-500" />}
-                </button>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Cardholder Name
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="John Doe"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      disabled={isLoading}
+                    />
+                  </div>
+                </div>
               </div>
-              
+
+              <button
+                onClick={handlePaymentSuccess}
+                disabled={isLoading}
+                className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center"
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="animate-spin mr-2 h-4 w-4" />
+                    Processing...
+                  </>
+                ) : (
+                  <>
+                    <CreditCard className="mr-2 h-4 w-4" />
+                    Pay ${calculateTotal().toFixed(2)}
+                  </>
+                )}
+              </button>
+
               <button
                 onClick={() => setCurrentStep('cart')}
                 className="mt-4 text-sm text-blue-600 hover:text-blue-700"

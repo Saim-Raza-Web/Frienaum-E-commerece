@@ -1,20 +1,71 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Search, Grid, List } from 'lucide-react';
-import { categories } from '@/lib/dummyData';
+import { Search, Grid, List, Loader2 } from 'lucide-react';
+import { categories as dummyCategories } from '@/lib/dummyData';
 import { useTranslation } from '@/i18n/TranslationProvider';
+import { Product } from '@/types';
 
 export default function CategoriesPage() {
   const { translate } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const pathname = usePathname();
   const currentLang = pathname?.split('/')[1] || 'en';
 
-  const filteredCategories = categories.filter(category =>
+  // Fetch products from API
+  useEffect(() => {
+    const fetchProducts = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch('/api/products');
+        if (!response.ok) {
+          throw new Error('Failed to fetch products');
+        }
+        const data = await response.json();
+
+        // Transform API data to match Product interface
+        const transformedProducts: Product[] = data.map((product: any) => ({
+          id: product.id.toString(),
+          name: product.title_en,
+          description: product.desc_en,
+          price: product.price,
+          originalPrice: product.price,
+          images: [product.imageUrl || '/images/placeholder.jpg'],
+          category: product.category || 'Uncategorized',
+          rating: 4.5,
+          reviewCount: 0,
+          inStock: product.stock > 0,
+          tags: []
+        }));
+
+        setProducts(transformedProducts);
+      } catch (err) {
+        console.error('Error fetching products:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
+  // Calculate actual product counts for each category
+  const categoriesWithCounts = dummyCategories.map(category => {
+    const categoryProducts = products.filter(product =>
+      product.category.toLowerCase() === category.name.toLowerCase()
+    );
+    return {
+      ...category,
+      productCount: categoryProducts.length
+    };
+  });
+
+  const filteredCategories = categoriesWithCounts.filter(category =>
     category.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -72,7 +123,7 @@ export default function CategoriesPage() {
             {filteredCategories.map((category) => (
               <Link
                 key={category.id}
-                href={`/${currentLang}/products?category=${category.id}`}
+                href={`/${currentLang}/products?category=${encodeURIComponent(category.name)}`}
                 className="group"
               >
                 <div className="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow duration-200">
@@ -103,7 +154,7 @@ export default function CategoriesPage() {
             {filteredCategories.map((category) => (
               <Link
                 key={category.id}
-                href={`/${currentLang}/products?category=${category.id}`}
+                href={`/${currentLang}/products?category=${encodeURIComponent(category.name)}`}
                 className="group block"
               >
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow duration-200">

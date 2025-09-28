@@ -142,10 +142,9 @@ export default function LoginPage() {
                         required={!isLogin}
                         value={formData.firstName}
                         onChange={(e) => handleInputChange('firstName', e.target.value)}
-                        className="input-field pl-10"
-                        placeholder={translate('Enter your first name')}
+                        className="input-field pl-4"
+                        placeholder={translate('John')}
                       />
-                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                     </div>
                   </div>
 
@@ -161,10 +160,9 @@ export default function LoginPage() {
                         required={!isLogin}
                         value={formData.lastName}
                         onChange={(e) => handleInputChange('lastName', e.target.value)}
-                        className="input-field pl-10"
-                        placeholder={translate('Enter your last name')}
+                        className="input-field pl-4"
+                        placeholder={translate('Doe')}
                       />
-                      <User className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                     </div>
                   </div>
                 </div>
@@ -200,8 +198,8 @@ export default function LoginPage() {
                         required={!isLogin}
                         value={formData.storeName}
                         onChange={(e) => handleInputChange('storeName', e.target.value)}
-                        className="input-field pl-10"
-                        placeholder={translate('Enter your store name')}
+                        className="input-field pl-4"
+                        placeholder=""
                       />
                       <ShoppingBag className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                     </div>
@@ -223,10 +221,9 @@ export default function LoginPage() {
                   required
                   value={formData.email}
                   onChange={(e) => handleInputChange('email', e.target.value)}
-                  className="input-field pl-10"
-                  placeholder={translate('Enter your email')}
+                  className="input-field pl-12"
+                  placeholder={translate('john@example.com')}
                 />
-                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               </div>
             </div>
 
@@ -243,10 +240,9 @@ export default function LoginPage() {
                   required
                   value={formData.password}
                   onChange={(e) => handleInputChange('password', e.target.value)}
-                  className="input-field pl-10 pr-10"
-                  placeholder={translate('Enter your password')}
+                  className="input-field pl-12"
+                  placeholder={translate('••••••••')}
                 />
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
@@ -271,10 +267,9 @@ export default function LoginPage() {
                     required={!isLogin}
                     value={formData.confirmPassword}
                     onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-                    className="input-field pl-10 pr-10"
-                    placeholder={translate('Confirm your password')}
+                    className="input-field pl-12 pr-10"
+                    placeholder={translate('••••••••')}
                   />
-                  <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}

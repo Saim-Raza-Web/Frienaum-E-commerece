@@ -1,25 +1,48 @@
-import Stripe from 'stripe';
 import { v4 as uuidv4 } from 'uuid';
 import { prisma } from './prisma';
 import { PaymentGateway, PaymentStatus, PayoutStatus } from '@prisma/client';
 
+// Mock payment service for testing - no real API keys required
 export class PaymentService {
-  private stripe: Stripe;
+  private stripe: any; // Mock Stripe instance
   private commissionRate = 0.2; // 20% commission
 
   constructor() {
-    if (!process.env.STRIPE_SECRET_KEY) {
-      throw new Error('STRIPE_SECRET_KEY is not set');
-    }
-    this.stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-      apiVersion: '2025-08-27.basil',
-    });
+    // Mock Stripe - no real API key needed for testing
+    this.stripe = {
+      paymentIntents: {
+        create: async (params: any) => {
+          // Simulate Stripe payment intent creation
+          return {
+            id: `pi_mock_${uuidv4()}`,
+            client_secret: `pi_mock_${uuidv4()}_secret_${uuidv4()}`,
+            amount: params.amount,
+            currency: params.currency,
+            status: 'requires_payment_method',
+            metadata: params.metadata,
+          };
+        },
+        retrieve: async (paymentIntentId: string) => {
+          // Simulate Stripe payment intent retrieval
+          return {
+            id: paymentIntentId,
+            status: 'succeeded',
+            amount: 1000, // Mock amount
+            currency: 'usd',
+            metadata: {},
+          };
+        },
+      },
+    };
   }
 
   async createPaymentIntent(amount: number, currency: string, metadata: Record<string, any> = {}) {
     // Convert amount to cents for Stripe
     const amountInCents = Math.round(amount * 100);
-    
+
+    // Simulate network delay
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
     return this.stripe.paymentIntents.create({
       amount: amountInCents,
       currency: currency.toLowerCase(),
@@ -36,9 +59,9 @@ export class PaymentService {
     amount: number,
     currency: string
   ) {
-    // Verify the payment with Stripe
+    // Mock payment verification
     const paymentIntent = await this.stripe.paymentIntents.retrieve(paymentIntentId);
-    
+
     if (paymentIntent.status !== 'succeeded') {
       throw new Error('Payment not succeeded');
     }
@@ -77,7 +100,7 @@ export class PaymentService {
         // Update merchant's available balance
         prisma.payoutBalance.upsert({
           where: { merchantId: subOrder.merchantId },
-          update: { 
+          update: {
             available: { increment: subOrder.payoutAmount },
             pending: { increment: 0 },
           },
@@ -87,7 +110,7 @@ export class PaymentService {
             pending: 0,
           },
         }),
-        
+
         // Create transaction record
         prisma.payoutTransaction.create({
           data: {
@@ -101,16 +124,16 @@ export class PaymentService {
     }
   }
 
-  // PayPal methods would be implemented similarly
+  // PayPal methods - also mocked for testing
   async createPayPalOrder(amount: number, currency: string, metadata: Record<string, any> = {}) {
-    // Implementation for PayPal order creation
-    // This would call the PayPal API
-    return { id: `PAYPAL-${uuidv4()}` };
+    // Simulate PayPal order creation
+    await new Promise(resolve => setTimeout(resolve, 1000));
+    return { id: `PAYPAL-${uuidv4()}`, status: 'CREATED' };
   }
 
   async capturePayPalOrder(orderId: string, amount: number, currency: string) {
-    // Implementation for PayPal order capture
-    // This would call the PayPal API
+    // Simulate PayPal order capture
+    await new Promise(resolve => setTimeout(resolve, 1000));
     return { status: 'COMPLETED', id: orderId };
   }
 }

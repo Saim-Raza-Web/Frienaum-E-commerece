@@ -51,12 +51,12 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
         <div className="p-4">
           {/* Category */}
           <p className="text-sm text-turquoise-600 font-medium mb-1">
-            {translate(product.category)}
+            {product.category}
           </p>
           
           {/* Product Name */}
           <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-turquoise-600 transition-colors">
-            {translate(product.name)}
+            {product.name}
           </h3>
           
           {/* Rating */}

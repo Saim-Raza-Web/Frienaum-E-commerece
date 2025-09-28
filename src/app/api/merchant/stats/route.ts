@@ -44,20 +44,18 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    // Get total number of orders
+    // Get total number of orders (all orders, not just delivered)
     const orderCount = await prisma.order.count({
       where: {
-        merchantId: merchant.id,
-        status: OrderStatus.DELIVERED
+        merchantId: merchant.id
       }
     });
 
-    // Get number of unique customers
+    // Get number of unique customers (from all orders, not just delivered)
     const uniqueCustomers = await prisma.order.groupBy({
       by: ['customerId'],
       where: {
-        merchantId: merchant.id,
-        status: OrderStatus.DELIVERED
+        merchantId: merchant.id
       }
     });
 

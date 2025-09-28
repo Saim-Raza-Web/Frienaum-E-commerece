@@ -1,22 +1,27 @@
-import jwt from "jsonwebtoken";
-import type { User } from "@prisma/client";
+import jwt from 'jsonwebtoken';
+import { SignOptions } from 'jsonwebtoken';
 
-const JWT_SECRET = process.env.JWT_SECRET!;
+const JWT_SECRET = process.env.JWT_SECRET || 'dev-secret-change-in-production';
 
-export type JWTPayload = {
+export interface TokenPayload {
   id: string;
   email: string;
-  role: "ADMIN" | "MERCHANT" | "CUSTOMER";
-};
-
-export function signToken(user: Pick<User, "id" | "email" | "role">) {
-  return jwt.sign(
-    { id: String(user.id), email: user.email, role: user.role } as JWTPayload,
-    JWT_SECRET,
-    { expiresIn: "7d" }
-  );
+  role: 'ADMIN' | 'MERCHANT' | 'CUSTOMER';
+  iat?: number;
+  exp?: number;
 }
 
-export function verifyToken(token: string) {
-  return jwt.verify(token, JWT_SECRET) as JWTPayload;
+export function signToken(payload: Omit<TokenPayload, 'iat' | 'exp'>, options?: SignOptions): string {
+  return jwt.sign(payload, JWT_SECRET, {
+    expiresIn: '7d',
+    ...options,
+  });
+}
+
+export function verifyToken(token: string): TokenPayload {
+  try {
+    return jwt.verify(token, JWT_SECRET) as TokenPayload;
+  } catch (error) {
+    throw new Error('Invalid token');
+  }
 }

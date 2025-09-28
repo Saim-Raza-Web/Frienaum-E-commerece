@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import { Package } from 'lucide-react';
 
 type OrderStatus = 'PENDING' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';
 
@@ -137,35 +138,46 @@ export default function MerchantOrdersPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 p-6">
-        <div className="max-w-7xl mx-auto">
-          <h1 className="text-2xl font-bold mb-6">Loading orders...</h1>
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p>Loading orders...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6">
-      <div className="max-w-7xl mx-auto">
-        <h1 className="text-2xl font-bold mb-6">Order Management</h1>
-        
+    <div className="p-6">
+      <div className="mb-6">
+        <h1 className="text-3xl font-bold text-gray-900">Your Orders</h1>
+        <p className="text-gray-600 mt-2">Manage and track your merchant orders</p>
+      </div>
+
+      <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h2 className="text-lg font-medium text-gray-900">Recent Orders</h2>
+        </div>
+
         {orders.length === 0 ? (
-          <div className="bg-white rounded-lg shadow p-6 text-center">
-            <p className="text-gray-500">No orders found</p>
+          <div className="text-center py-12">
+            <Package className="mx-auto h-12 w-12 text-gray-400" />
+            <h3 className="mt-2 text-sm font-medium text-gray-900">No orders</h3>
+            <p className="mt-1 text-sm text-gray-500">
+              Get started by receiving your first order.
+            </p>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="divide-y divide-gray-200">
             {orders.map((order) => {
               const nextStatus = getNextStatus(order.status);
-              
               return (
-                <div key={order.id} className="bg-white rounded-lg shadow overflow-hidden">
-                  <div className="p-4 border-b flex justify-between items-center">
+                <div key={order.id} className="p-6">
+                  <div className="flex justify-between items-start mb-4">
                     <div>
-                      <span className="text-sm text-gray-500">Order #{order.id.slice(-6).toUpperCase()}</span>
+                      <h3 className="text-lg font-medium text-gray-900">Order #{order.id.slice(-8)}</h3>
                       <div className="flex items-center mt-1">
-                        <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(order.status)}`}>
+                        <span className={`inline-flex px-2 py-1 text-xs rounded-full ${getStatusColor(order.status)}`}>
                           {order.status}
                         </span>
                         <span className="ml-2 text-sm text-gray-500">
