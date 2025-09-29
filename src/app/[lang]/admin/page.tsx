@@ -61,6 +61,44 @@ function AdminDashboard() {
   const [statsLoading, setStatsLoading] = useState(false);
   const [statsError, setStatsError] = useState('');
 
+  // Orders management state
+  type AdminOrder = {
+    id: string;
+    status: 'PENDING' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';
+    totalAmount: number;
+    grandTotal: number;
+    currency: string;
+    shippingAddress: string;
+    createdAt: string;
+    updatedAt: string;
+    items: Array<{
+      id: string;
+      quantity: number;
+      price: number;
+      product: {
+        id: string;
+        slug: string;
+        title_en: string;
+        title_de: string;
+        imageUrl: string | null;
+      };
+    }>;
+    merchant: {
+      storeName: string;
+      user: {
+        name: string | null;
+        email: string;
+      };
+    };
+    customer: {
+      name: string | null;
+      email: string;
+    };
+  };
+  const [orders, setOrders] = useState<AdminOrder[]>([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [ordersError, setOrdersError] = useState('');
+
   const loadStats = async () => {
     try {
       setStatsLoading(true);
@@ -159,6 +197,21 @@ function AdminDashboard() {
     }
   };
 
+  const loadOrders = async () => {
+    try {
+      setOrdersLoading(true);
+      setOrdersError('');
+      const res = await fetch('/api/admin/orders', { credentials: 'include' });
+      if (!res.ok) throw new Error('Failed to fetch orders');
+      const data = await res.json();
+      setOrders(data);
+    } catch (e: any) {
+      setOrdersError(e?.message || 'Failed to load orders');
+    } finally {
+      setOrdersLoading(false);
+    }
+  };
+
   const setMerchantStatus = async (merchantId: string, status: 'PENDING' | 'ACTIVE' | 'SUSPENDED') => {
     try {
       const res = await fetch(`/api/admin/merchants/${merchantId}/status`, {
@@ -217,6 +270,12 @@ function AdminDashboard() {
   useEffect(() => {
     if (activeTab === 'users') {
       loadUsers();
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab === 'orders') {
+      loadOrders();
     }
   }, [activeTab]);
 
@@ -676,10 +735,69 @@ function AdminDashboard() {
                   <h2 className="text-xl font-semibold text-gray-900">{translate('admin.orderManagement')}</h2>
                 </div>
                 <div className="p-6">
-                  <div className="text-center py-12">
-                    <ShoppingBag className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">{translate('admin.orderManagement')}</h3>
-                    <p className="text-gray-600">{translate('admin.viewManageOrders')}</p>
+                  <div className="overflow-x-auto">
+                    {ordersLoading ? (
+                      <div className="py-8 text-center text-gray-500">Loading orders...</div>
+                    ) : ordersError ? (
+                      <div className="py-8 text-center text-red-600">{ordersError}</div>
+                    ) : (
+                      <table className="min-w-full divide-y divide-gray-200">
+                        <thead className="bg-gray-50">
+                          <tr>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Amount</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Merchant</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created At</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="bg-white divide-y divide-gray-200">
+                          {orders.map((order) => (
+                            <tr key={order.id}>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                {order.id.slice(-8)}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                  order.status === 'DELIVERED' ? 'bg-green-100 text-green-800' :
+                                  order.status === 'SHIPPED' ? 'bg-blue-100 text-blue-800' :
+                                  order.status === 'PROCESSING' ? 'bg-yellow-100 text-yellow-800' :
+                                  order.status === 'CANCELLED' ? 'bg-red-100 text-red-800' :
+                                  'bg-gray-100 text-gray-800'
+                                }`}>
+                                  {order.status}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                €{order.grandTotal.toFixed(2)}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div>
+                                  <div className="text-sm font-medium text-gray-900">{order.customer.name || '—'}</div>
+                                  <div className="text-sm text-gray-500">{order.customer.email}</div>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap">
+                                <div>
+                                  <div className="text-sm font-medium text-gray-900">{order.merchant.storeName}</div>
+                                  <div className="text-sm text-gray-500">{order.merchant.user.name || order.merchant.user.email}</div>
+                                </div>
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {new Date(order.createdAt).toLocaleDateString()}
+                              </td>
+                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                <button className="text-blue-600 hover:text-blue-900">
+                                  View Details
+                                </button>
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    )}
                   </div>
                 </div>
               </div>

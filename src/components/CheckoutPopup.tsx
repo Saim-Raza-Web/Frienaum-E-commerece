@@ -1,15 +1,17 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
+import { isValidLocale, type Locale } from '@/i18n/config';
 import { X, Loader2, CheckCircle, CreditCard } from 'lucide-react';
 
 type CheckoutStep = 'cart' | 'shipping' | 'payment' | 'success';
 
 export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const router = useRouter();
+  const pathname = usePathname();
   const { user, isAuthenticated } = useAuth();
   const { cartItems, clearCart, cartTotal } = useCart();
   const [currentStep, setCurrentStep] = useState<CheckoutStep>('cart');
@@ -78,7 +80,10 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
     setTimeout(() => {
       onClose();
       setCurrentStep('cart');
-      router.push('/orders');
+      // Extract current locale from pathname and redirect to localized orders page
+      const pathSegments = pathname?.split('/').filter(Boolean) || [];
+      const currentLocale = isValidLocale(pathSegments[0]) ? pathSegments[0] : 'en'; // Default to 'en' if no valid locale found
+      router.push(`/${currentLocale}/orders`);
     }, 3000);
   };
 
