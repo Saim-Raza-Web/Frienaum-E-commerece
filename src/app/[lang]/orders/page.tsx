@@ -246,6 +246,7 @@ export default function OrdersPage() {
 
 // Modal container for rating form
 function RatingModal({ target, onClose, onSubmitted }: { target: { productId: string; orderItemId: string } | null; onClose: () => void; onSubmitted: () => void; }) {
+  const { translate } = useTranslation();
   if (!target) return null;
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
