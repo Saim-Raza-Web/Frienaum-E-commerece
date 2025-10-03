@@ -55,6 +55,7 @@ function AdminDashboard() {
     slug:"", title_en:"", title_de:"", desc_en:"", desc_de:"",
     price:"0", stock:"0", imageUrl:"", category: "General"
   });
+  const [isUploading, setIsUploading] = useState(false);
 
   // Live system stats
   const [stats, setStats] = useState({ totalUsers: 0, totalOrders: 0, revenue: 0, activeProducts: 0 });
@@ -212,6 +213,21 @@ function AdminDashboard() {
     }
   };
 
+  const deleteOrder = async (orderId: string) => {
+    if (!confirm('Are you sure you want to delete this order? This action cannot be undone.')) return;
+    try {
+      const res = await fetch(`/api/admin/orders/${orderId}`, { method: 'DELETE', credentials: 'include' });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Delete failed');
+      }
+      await loadOrders();
+      alert('Order deleted successfully');
+    } catch (e: any) {
+      alert(e?.message || 'Failed to delete order');
+    }
+  };
+
   const setMerchantStatus = async (merchantId: string, status: 'PENDING' | 'ACTIVE' | 'SUSPENDED') => {
     try {
       const res = await fetch(`/api/admin/merchants/${merchantId}/status`, {
@@ -234,12 +250,42 @@ function AdminDashboard() {
     { id: 4, name: 'Emily Brown', email: 'emily@example.com', role: 'merchant', status: 'active', lastActive: '1 week ago' }
   ];
 
+  // Helper: get current UI language from URL (fallback en)
+  const getCurrentLang = () => {
+    if (typeof window === 'undefined') return 'en';
+    const match = window.location.pathname.match(/^\/([a-z]{2})(\/|$)/);
+    return match ? match[1] : 'en';
+  };
+
+  // Helper: localized relative time
+  const formatRelativeTime = (date: Date) => {
+    const lang = getCurrentLang();
+    const rtf = new Intl.RelativeTimeFormat(lang, { numeric: 'auto' });
+    const diffMs = date.getTime() - Date.now();
+    const diffMin = Math.round(diffMs / 60000);
+    const diffHour = Math.round(diffMs / 3600000);
+    const diffDay = Math.round(diffMs / 86400000);
+    if (Math.abs(diffMin) < 60) return rtf.format(diffMin, 'minute');
+    if (Math.abs(diffHour) < 24) return rtf.format(diffHour, 'hour');
+    return rtf.format(diffDay, 'day');
+  };
+
+  // Recent system alerts with timestamps for localized relative time
   const systemAlerts = [
-    { id: 1, type: 'warning', message: 'admin.alerts.highServerLoad', time: '5 minutes ago' },
-    { id: 2, type: 'info', message: 'admin.alerts.databaseBackup', time: '1 hour ago' },
-    { id: 3, type: 'error', message: 'admin.alerts.paymentGateway', time: '2 hours ago' },
-    { id: 4, type: 'success', message: 'admin.alerts.securityUpdate', time: '1 day ago' }
+    { id: 1, type: 'warning', message: 'admin.alerts.highServerLoad', ts: Date.now() - 5 * 60 * 1000 },
+    { id: 2, type: 'info', message: 'admin.alerts.databaseBackup', ts: Date.now() - 60 * 60 * 1000 },
+    { id: 3, type: 'error', message: 'admin.alerts.paymentGateway', ts: Date.now() - 2 * 60 * 60 * 1000 },
+    { id: 4, type: 'success', message: 'admin.alerts.securityUpdate', ts: Date.now() - 24 * 60 * 60 * 1000 }
   ];
+
+  // Format currency amounts in USD
+  const formatUSD = (amount: number) => {
+    try {
+      return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount || 0);
+    } catch {
+      return `$${(amount || 0).toFixed(2)}`;
+    }
+  };
 
   const tabs = [
     { id: 'overview', label: translate('admin.overview'), icon: BarChart3 },
@@ -290,6 +336,7 @@ function AdminDashboard() {
       const res = await fetch(url, {
         method,
         headers: {"Content-Type":"application/json"},
+        credentials: 'include',
         body: JSON.stringify(form)
       });
 
@@ -313,7 +360,7 @@ function AdminDashboard() {
     if (!confirm("Are you sure you want to delete this product? This action cannot be undone.")) return;
 
     try {
-      const res = await fetch(`/api/products/${id}`, { method:"DELETE" });
+      const res = await fetch(`/api/products/${id}`, { method:"DELETE", credentials: 'include' });
       if (res.ok) {
         loadProducts();
       } else {
@@ -383,7 +430,7 @@ function AdminDashboard() {
               icon: ShoppingBag
             }, {
               label: translate('admin.revenue'),
-              value: statsLoading ? '...' : `€${stats.revenue.toFixed(2)}`,
+              value: statsLoading ? '...' : formatUSD(stats.revenue),
               icon: TrendingUp
             }, {
               label: translate('admin.activeProducts'),
@@ -433,41 +480,6 @@ function AdminDashboard() {
             {/* Overview Tab */}
             {activeTab === 'overview' && (
               <div className="space-y-6">
-                {/* System Health */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-                  <div className="px-6 py-4 border-b border-gray-200">
-                    <h2 className="text-xl font-semibold text-gray-900">{translate('admin.systemHealth')}</h2>
-                  </div>
-                  <div className="p-6">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                      <div className="text-center">
-                        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                          <Activity className="w-8 h-8 text-green-600" />
-                        </div>
-                        <h3 className="font-semibold text-gray-900">{translate('admin.cpuUsage')}</h3>
-                        <p className="text-2xl font-bold text-green-600">23%</p>
-                        <p className="text-sm text-gray-600">{translate('admin.normal')}</p>
-                      </div>
-                      <div className="text-center">
-                        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                          <BarChart3 className="w-8 h-8 text-blue-600" />
-                        </div>
-                        <h3 className="font-semibold text-gray-900">{translate('admin.memory')}</h3>
-                        <p className="text-2xl font-bold text-blue-600">67%</p>
-                        <p className="text-sm text-gray-600">{translate('admin.good')}</p>
-                      </div>
-                      <div className="text-center">
-                        <div className="w-16 h-16 bg-yellow-100 rounded-full flex items-center justify-center mx-auto mb-3">
-                          <Package className="w-8 h-8 text-yellow-600" />
-                        </div>
-                        <h3 className="font-semibold text-gray-900">{translate('admin.storage')}</h3>
-                        <p className="text-2xl font-bold text-yellow-600">45%</p>
-                        <p className="text-sm text-gray-600">{translate('admin.available')}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
                 {/* Recent Activity */}
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200">
                   <div className="px-6 py-4 border-b border-gray-200">
@@ -484,7 +496,7 @@ function AdminDashboard() {
                           }`}></div>
                           <div className="flex-1">
                             <p className="text-sm font-medium text-gray-900">{translate(alert.message)}</p>
-                            <p className="text-xs text-gray-500">{alert.time}</p>
+                            <p className="text-xs text-gray-500">{formatRelativeTime(new Date(alert.ts))}</p>
                           </div>
                         </div>
                       ))}
@@ -539,7 +551,7 @@ function AdminDashboard() {
                           </div>
                           <div className="bg-gray-50 rounded-lg p-4">
                             <p className="text-sm text-gray-500">Revenue</p>
-                            <p className="text-xl font-semibold">€{Number(viewing.data.stats.revenue || 0).toFixed(2)}</p>
+                            <p className="text-xl font-semibold">{formatUSD(Number(viewing.data.stats.revenue || 0))}</p>
                           </div>
                         </div>
 
@@ -552,7 +564,7 @@ function AdminDashboard() {
                                   {p.imageUrl && <img src={p.imageUrl} alt={p.slug} className="w-12 h-12 object-cover rounded" />}
                                   <div className="flex-1">
                                     <p className="font-medium text-sm">{p.title_en}</p>
-                                    <p className="text-xs text-gray-500">€{p.price.toFixed(2)} • Stock: {p.stock}</p>
+                                    <p className="text-xs text-gray-500">{formatUSD(p.price)} • Stock: {p.stock}</p>
                                   </div>
                                 </div>
                               ))}
@@ -569,7 +581,7 @@ function AdminDashboard() {
                               {viewing.data.latestOrders.map((o: any) => (
                                 <div key={o.id} className="p-3 border rounded-lg flex items-center justify-between">
                                   <div className="text-sm text-gray-700">{o.status}</div>
-                                  <div className="text-sm font-medium">€{o.totalAmount.toFixed(2)}</div>
+                                  <div className="text-sm font-medium">{formatUSD(o.totalAmount)}</div>
                                   <div className="text-xs text-gray-500">{new Date(o.createdAt).toLocaleString()}</div>
                                 </div>
                               ))}
@@ -767,11 +779,11 @@ function AdminDashboard() {
                                   order.status === 'CANCELLED' ? 'bg-red-100 text-red-800' :
                                   'bg-gray-100 text-gray-800'
                                 }`}>
-                                  {order.status}
+                                  {translate(`status.${order.status.toLowerCase()}`)}
                                 </span>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                €{order.grandTotal.toFixed(2)}
+                                {formatUSD(order.grandTotal)}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <div>
@@ -789,9 +801,17 @@ function AdminDashboard() {
                                 {new Date(order.createdAt).toLocaleDateString()}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                <button className="text-blue-600 hover:text-blue-900">
-                                  View Details
-                                </button>
+                                <div className="flex items-center gap-3">
+                                  <button className="text-blue-600 hover:text-blue-900">
+                                    View Details
+                                  </button>
+                                  <button
+                                    className="text-red-600 hover:text-red-800"
+                                    onClick={() => deleteOrder(order.id)}
+                                  >
+                                    {translate('admin.delete')}
+                                  </button>
+                                </div>
                               </td>
                             </tr>
                           ))}
@@ -807,15 +827,15 @@ function AdminDashboard() {
             {activeTab === 'products' && (
               <div className="space-y-6">
                 {/* Header with Add Button */}
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h2 className="text-xl font-semibold text-gray-900">{translate('admin.productManagement')}</h2>
-                      <p className="text-gray-600">Manage your product catalog</p>
+                      <h2 className="text-2xl font-bold text-gray-900">{translate('admin.productManagement')}</h2>
+                      <p className="text-gray-600 text-sm">Manage your product catalog</p>
                     </div>
                     <button
                       onClick={() => setShowForm(true)}
-                      className="inline-flex items-center px-6 py-3 bg-turquoise-600 text-white font-semibold rounded-lg hover:bg-turquoise-700 transition-all duration-200"
+                      className="inline-flex items-center px-5 py-2.5 bg-turquoise-600 text-white font-semibold rounded-md hover:bg-turquoise-700 transition-all duration-200"
                     >
                       <Plus className="w-5 h-5 mr-2" />
                       Add Product
@@ -856,14 +876,14 @@ function AdminDashboard() {
                     ) : filteredProducts.length === 0 ? (
                       <div className="text-center py-12">
                         <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                        <h3 className="text-lg font-medium text-gray-900 mb-2">No products found</h3>
-                        <p className="text-gray-600 mb-6">
+                        <h3 className="text-xl font-semibold text-gray-900 mb-2">No products found</h3>
+                        <p className="text-gray-600 mb-6 text-sm">
                           {searchTerm ? 'Try adjusting your search terms.' : 'Get started by adding your first product.'}
                         </p>
                         {!searchTerm && (
                           <button
                             onClick={() => setShowForm(true)}
-                            className="inline-flex items-center px-6 py-3 bg-turquoise-600 text-white font-semibold rounded-lg hover:bg-turquoise-700"
+                            className="inline-flex items-center px-5 py-2.5 bg-turquoise-600 text-white font-semibold rounded-md hover:bg-turquoise-700"
                           >
                             <Plus className="w-5 h-5 mr-2" />
                             Add Your First Product
@@ -875,13 +895,15 @@ function AdminDashboard() {
                         {filteredProducts.map(p=>(
                           <div key={p.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
                             {p.imageUrl && (
-                              <img src={p.imageUrl} alt={p.slug} className="w-full h-48 object-cover" />
+                              <div className="w-full h-48 bg-gray-100">
+                                <img src={p.imageUrl} alt={p.slug} className="w-full h-full object-contain" />
+                              </div>
                             )}
                             <div className="p-6">
                               <div className="flex items-start justify-between mb-4">
                                 <div className="flex-1">
-                                  <h3 className="font-semibold text-lg text-gray-900 mb-1">{p.title_en}</h3>
-                                  <p className="text-sm text-gray-600 mb-2">{p.title_de}</p>
+                                  <h3 className="font-semibold text-lg text-gray-900 mb-1 truncate" title={p.title_en}>{p.title_en}</h3>
+                                  <p className="text-sm text-gray-600 mb-2 truncate" title={p.title_de}>{p.title_de}</p>
                                   <p className="text-xs text-gray-500">Slug: {p.slug}</p>
                                 </div>
                                 <div className="flex space-x-2">
@@ -905,12 +927,12 @@ function AdminDashboard() {
                               <div className="space-y-2">
                                 <div className="flex items-center justify-between">
                                   <span className="text-sm text-gray-600">Price:</span>
-                                  <span className="font-semibold text-lg text-green-600">€{p.price.toFixed(2)}</span>
+                                  <span className="font-semibold text-lg text-green-600">{formatUSD(p.price)}</span>
                                 </div>
                                 <div className="flex items-center justify-between">
                                   <span className="text-sm text-gray-600">Stock:</span>
                                   <span className={`font-semibold ${p.stock > 0 ? 'text-green-600' : 'text-red-600'}`}>
-                                    {p.stock} {p.stock === 1 ? 'item' : 'items'}
+                                    {p.stock}
                                   </span>
                                 </div>
                               </div>
@@ -931,7 +953,7 @@ function AdminDashboard() {
                 {/* Add/Edit Form Modal */}
                 {showForm && (
                   <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+                    <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl md:max-w-3xl mx-4 max-h-[90vh] overflow-y-auto">
                       <div className="px-6 py-4 border-b border-gray-200">
                         <div className="flex items-center justify-between">
                           <h2 className="text-xl font-semibold text-gray-900">
@@ -980,7 +1002,7 @@ function AdminDashboard() {
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Price (€)</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Price (USD)</label>
                             <input
                               type="number"
                               step="0.01"
@@ -1020,14 +1042,86 @@ function AdminDashboard() {
                             </select>
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Image URL</label>
-                            <input
-                              type="url"
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent"
-                              value={form.imageUrl}
-                              onChange={e=>setForm({...form, imageUrl:e.target.value})}
-                              placeholder="https://example.com/image.jpg"
-                            />
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Product Image</label>
+                            <div className="space-y-2">
+                              <div className="relative w-full h-48 bg-gray-100 rounded flex items-center justify-center overflow-hidden">
+                                {form.imageUrl ? (
+                                  <>
+                                    <img src={form.imageUrl} alt="preview" className="max-h-full object-contain" />
+                                    <button
+                                      type="button"
+                                      className="absolute top-2 right-2 p-1.5 rounded-full bg-white/90 border hover:bg-white shadow"
+                                      onClick={() => setForm({ ...form, imageUrl: '' })}
+                                      title="Remove image"
+                                    >
+                                      <X className="w-4 h-4 text-gray-700" />
+                                    </button>
+                                  </>
+                                ) : (
+                                  <span className="text-gray-400 text-sm">No image</span>
+                                )}
+                              </div>
+                              <div
+                                className="flex items-center gap-3"
+                                onDragOver={(e)=>e.preventDefault()}
+                                onDrop={async (e)=>{
+                                  e.preventDefault();
+                                  const file = e.dataTransfer.files?.[0];
+                                  if (!file) return;
+                                  const fd = new FormData();
+                                  fd.append('file', file);
+                                  try {
+                                    setIsUploading(true);
+                                    const res = await fetch('/api/upload', { method: 'POST', body: fd });
+                                    const data = await res.json();
+                                    if (!res.ok || !data.url) {
+                                      alert(data.error || 'Upload failed');
+                                    } else {
+                                      setForm({ ...form, imageUrl: data.url });
+                                    }
+                                  } finally {
+                                    setIsUploading(false);
+                                  }
+                                }}
+                              >
+                                <input
+                                  type="url"
+                                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent"
+                                  value={form.imageUrl}
+                                  onChange={e=>setForm({...form, imageUrl:e.target.value})}
+                                  placeholder="https://example.com/image.jpg"
+                                />
+                                <label className="inline-flex items-center gap-2 px-3 py-2 border rounded-lg cursor-pointer hover:bg-gray-50">
+                                  <Upload className="w-4 h-4" />
+                                  <span>{isUploading ? 'Uploading...' : (form.imageUrl ? 'Change' : 'Upload')}</span>
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={async (e) => {
+                                      const file = e.target.files?.[0];
+                                      if (!file) return;
+                                      const formData = new FormData();
+                                      formData.append('file', file);
+                                      try {
+                                        setIsUploading(true);
+                                        const res = await fetch('/api/upload', { method: 'POST', body: formData });
+                                        const data = await res.json();
+                                        if (!res.ok || !data.url) {
+                                          alert(data.error || 'Upload failed');
+                                          return;
+                                        }
+                                        setForm({ ...form, imageUrl: data.url });
+                                      } catch (err) {
+                                        alert('Upload failed');
+                                      } finally {
+                                        setIsUploading(false);
+                                      }
+                                    }}
+                                  />
+                                </label>
+                              </div>
+                            </div>
                           </div>
                         </div>
                         <div>
@@ -1056,7 +1150,7 @@ function AdminDashboard() {
                             onClick={resetForm}
                             className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
                           >
-                            Cancel
+                            {isUploading ? 'Cancel Upload' : 'Cancel'}
                           </button>
                           <button
                             type="submit"
@@ -1078,13 +1172,39 @@ function AdminDashboard() {
             {activeTab === 'analytics' && (
               <div className="bg-white rounded-lg shadow-sm border border-gray-200">
                 <div className="px-6 py-4 border-b border-gray-200">
-                  <h2 className="text-xl font-semibold text-gray-900">{translate('admin.analyticsDashboard')}</h2>
+                  <h2 className="text-xl font-semibold text-gray-900">{translate('admin.analyticsSection.title')}</h2>
                 </div>
-                <div className="p-6">
-                  <div className="text-center py-12">
-                    <TrendingUp className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">{translate('admin.analyticsDashboard')}</h3>
-                    <p className="text-gray-600">{translate('admin.comprehensiveAnalytics')}</p>
+                <div className="p-6 space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="p-4 border rounded-lg">
+                      <p className="text-sm text-gray-600">{translate('admin.analyticsSection.ordersToday')}</p>
+                      <p className="text-2xl font-bold text-gray-900">{stats.totalOrders}</p>
+                    </div>
+                    <div className="p-4 border rounded-lg">
+                      <p className="text-sm text-gray-600">{translate('admin.analyticsSection.revenue')}</p>
+                      <p className="text-2xl font-bold text-gray-900">{formatUSD(stats.revenue)}</p>
+                    </div>
+                    <div className="p-4 border rounded-lg">
+                      <p className="text-sm text-gray-600">{translate('admin.analyticsSection.activeMerchants')}</p>
+                      <p className="text-2xl font-bold text-gray-900">{users.filter(u=>u.merchantStatus==='ACTIVE').length}</p>
+                    </div>
+                  </div>
+                  <div className="p-4 border rounded-lg">
+                    <h3 className="text-md font-semibold text-gray-900 mb-3">{translate('admin.analyticsSection.topProducts')}</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                      {products.slice(0,4).map(p => (
+                        <div key={p.id} className="flex items-center gap-3">
+                          {p.imageUrl && <img src={p.imageUrl} alt={p.slug} className="w-10 h-10 object-cover rounded" />}
+                          <div className="flex-1">
+                            <div className="text-sm font-medium text-gray-900 truncate" title={p.title_en}>{p.title_en}</div>
+                            <div className="text-xs text-gray-500">{formatUSD(p.price)} • {p.stock} in stock</div>
+                          </div>
+                        </div>
+                      ))}
+                      {products.length === 0 && (
+                        <div className="text-sm text-gray-500">No products</div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>
@@ -1094,20 +1214,123 @@ function AdminDashboard() {
             {activeTab === 'settings' && (
               <div className="bg-white rounded-lg shadow-sm border border-gray-200">
                 <div className="px-6 py-4 border-b border-gray-200">
-                  <h2 className="text-xl font-semibold text-gray-900">{translate('admin.systemSettings')}</h2>
+                  <h2 className="text-xl font-semibold text-gray-900">{translate('admin.settings.title')}</h2>
                 </div>
-                <div className="p-6">
-                  <div className="text-center py-12">
-                    <Settings className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">{translate('admin.systemSettings')}</h3>
-                    <p className="text-gray-600">{translate('admin.configurePlatformSettings')}</p>
-                  </div>
-                </div>
+                <SettingsForm />
               </div>
             )}
           </div>
         </div>
       </div>
+    </div>
+  );
+}
+
+function SettingsForm() {
+  const { translate } = useTranslation();
+  const [loading, setLoading] = React.useState(true);
+  const [saving, setSaving] = React.useState(false);
+  const [error, setError] = React.useState('');
+  const [form, setForm] = React.useState({ storeName: '', currency: 'EUR', defaultLanguage: 'en' });
+
+  React.useEffect(() => {
+    const load = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch('/api/admin/settings', { credentials: 'include' });
+        const data = await res.json();
+        setForm({
+          storeName: data.storeName || '',
+          currency: data.currency || 'EUR',
+          defaultLanguage: data.defaultLanguage || 'en'
+        });
+      } catch (e: any) {
+        setError(e?.message || 'Failed to load');
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
+
+  const onSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setSaving(true);
+      setError('');
+      const res = await fetch('/api/admin/settings', {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form)
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(()=>({}));
+        throw new Error(data.error || 'Save failed');
+      }
+      // saved
+      alert(translate('admin.settings.saved'));
+    } catch (e: any) {
+      setError(e?.message || 'Save failed');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="p-6">
+      {loading ? (
+        <div className="text-gray-600">{translate('admin.settings.loading')}</div>
+      ) : (
+        <form onSubmit={onSave} className="max-w-xl space-y-5">
+          {error && <div className="text-sm text-red-600">{error}</div>}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">{translate('admin.settings.storeName')}</label>
+            <input
+              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent"
+              value={form.storeName}
+              onChange={(e)=>setForm({ ...form, storeName: e.target.value })}
+              placeholder="EStore"
+            />
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{translate('admin.settings.currency')}</label>
+              <select
+                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent"
+                value={form.currency}
+                onChange={(e)=>setForm({ ...form, currency: e.target.value })}
+              >
+                <option value="EUR">EUR</option>
+                <option value="USD">USD</option>
+                <option value="GBP">GBP</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{translate('admin.settings.defaultLanguage')}</label>
+              <select
+                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent"
+                value={form.defaultLanguage}
+                onChange={(e)=>setForm({ ...form, defaultLanguage: e.target.value })}
+              >
+                <option value="en">English</option>
+                <option value="de">Deutsch</option>
+                <option value="es">Español</option>
+                <option value="fr">Français</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <button
+              type="submit"
+              disabled={saving}
+              className="px-5 py-2.5 bg-turquoise-600 text-white rounded-md hover:bg-turquoise-700 disabled:opacity-50"
+            >
+              {saving ? 'Saving...' : translate('admin.settings.save')}
+            </button>
+          </div>
+        </form>
+      )}
     </div>
   );
 }

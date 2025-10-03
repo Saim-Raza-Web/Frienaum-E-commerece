@@ -79,6 +79,7 @@
     "comprehensiveInsights": "Informations complètes et métriques de performance de l'entreprise",
     "merchantAccount": "Compte Marchand"
   },
+  "orders": "Commandes",
   "settings": "Paramètres",
   "cart": {
     "loading": "Chargement du panier...",

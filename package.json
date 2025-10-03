@@ -8,7 +8,8 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "db:wipe": "tsx scripts/wipe-db.ts"
   },
   "type": "module",
   "prisma": {
@@ -32,6 +33,7 @@
     "next": "^15.5.0",
     "next-auth": "^4.24.11",
     "next-intl": "^4.3.5",
+    "nodemailer": "^6.10.1",
     "prisma": "^6.16.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
@@ -41,6 +43,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@types/negotiator": "^0.6.4",
     "@types/node": "^20.19.16",
+    "@types/nodemailer": "^7.0.2",
     "@types/react": "^18.3.24",
     "@types/react-dom": "^18.3.7",
     "autoprefixer": "^10.4.14",

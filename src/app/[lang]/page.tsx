@@ -50,8 +50,8 @@ function HomePage({ params }: HomePageProps) {
         originalPrice: product.price,
         images: [product.imageUrl || '/images/placeholder.jpg'],
         category: product.category || 'Uncategorized',
-        rating: 4.5,
-        reviewCount: 0,
+        rating: Number(product.averageRating || 0),
+        reviewCount: Number(product.ratingCount || 0),
         inStock: product.stock > 0,
         tags: []
       }));
@@ -210,16 +210,13 @@ function HomePage({ params }: HomePageProps) {
             ) : error ? (
               <div className="col-span-full text-center py-8">
                 <p className="text-red-600 mb-4">{error}</p>
-                <button
-                  onClick={fetchFeaturedProducts}
-                  className="btn-primary"
-                >
-                  Try Again
+                <button onClick={fetchFeaturedProducts} className="btn-primary">
+                  {translate('tryAgain')}
                 </button>
               </div>
             ) : featuredProducts.length === 0 ? (
               <div className="col-span-full text-center py-8">
-                <p className="text-gray-600">No products available</p>
+                <p className="text-gray-600">{translate('noProductsAvailable')}</p>
               </div>
             ) : (
               featuredProducts.map((product) => (

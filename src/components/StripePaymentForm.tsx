@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
-import { useStripe, useElements, CardElement } from '@stripe/react-stripe-js';
-import { Loader2, CreditCard } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { useStripe, useElements, PaymentElement } from '@stripe/react-stripe-js';
+import { CreditCard } from 'lucide-react';
 
 interface StripePaymentFormProps {
   clientSecret: string;
@@ -12,24 +12,6 @@ interface StripePaymentFormProps {
   onError: (error: string) => void;
   onLoading: (loading: boolean) => void;
 }
-
-const CARD_ELEMENT_OPTIONS = {
-  style: {
-    base: {
-      color: '#32325d',
-      fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
-      fontSmoothing: 'antialiased',
-      fontSize: '16px',
-      '::placeholder': {
-        color: '#aab7c4',
-      },
-    },
-    invalid: {
-      color: '#fa755a',
-      iconColor: '#fa755a',
-    },
-  },
-};
 
 export default function StripePaymentForm({
   clientSecret,
@@ -41,80 +23,104 @@ export default function StripePaymentForm({
 }: StripePaymentFormProps) {
   const stripe = useStripe();
   const elements = useElements();
-  const [cardError, setCardError] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Return URL used if 3DS or other next actions are required
+  const returnUrl = useMemo(() => {
+    if (typeof window === 'undefined') return undefined;
+    // Redirect back to the current page; component will auto-complete after return
+    return window.location.href;
+  }, []);
+
+  // If we arrived back from a redirect, finish the flow by checking PI status
+  useEffect(() => {
+    let isMounted = true;
+    const finalizeIfSucceeded = async () => {
+      if (!stripe || !clientSecret) return;
+      try {
+        const { paymentIntent } = await stripe.retrievePaymentIntent(clientSecret);
+        if (paymentIntent && paymentIntent.status === 'succeeded') {
+          onLoading(true);
+          const response = await fetch('/api/checkout/confirm', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ paymentIntentId: paymentIntent.id }),
+          });
+          if (!response.ok) {
+            const data = await response.json().catch(() => ({}));
+            throw new Error(data.error || 'Failed to confirm payment');
+          }
+          if (!isMounted) return;
+          onSuccess();
+        }
+      } catch (err: any) {
+        if (!isMounted) return;
+        setErrorMessage(err?.message || 'Failed to finalize payment');
+        onError(err?.message || 'Failed to finalize payment');
+      } finally {
+        onLoading(false);
+      }
+    };
+    void finalizeIfSucceeded();
+    return () => {
+      isMounted = false;
+    };
+  }, [stripe, clientSecret, orderId, onSuccess, onError, onLoading]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-
     if (!stripe || !elements) {
-      onError('Stripe has not loaded yet.');
-      return;
-    }
-
-    const cardElement = elements.getElement(CardElement);
-    if (!cardElement) {
-      onError('Card element not found.');
+      onError('Stripe is not ready yet.');
       return;
     }
 
     onLoading(true);
-    setCardError(null);
-
+    setErrorMessage(null);
     try {
-      // For mock payments, we'll simulate a successful payment
-      // In a real app, this would call stripe.confirmCardPayment
-
-      // Simulate payment processing delay
-      await new Promise(resolve => setTimeout(resolve, 2000));
-
-      // Simulate successful payment
-      const mockPaymentIntentId = `pi_mock_${Date.now()}`;
-
-      // Confirm the payment on our backend
-      const response = await fetch('/api/checkout/confirm', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          paymentIntentId: mockPaymentIntentId,
-          orderId,
-        }),
+      const { error, paymentIntent } = await stripe.confirmPayment({
+        elements,
+        confirmParams: returnUrl ? { return_url: returnUrl } : undefined,
+        redirect: 'if_required',
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to confirm payment');
+      if (error) {
+        const message = error.message || 'Payment failed';
+        setErrorMessage(message);
+        onError(message);
+        return;
       }
 
-      onSuccess();
-    } catch (err) {
-      console.error('Payment error:', err);
-      onError(err instanceof Error ? err.message : 'Payment failed');
+      if (paymentIntent && paymentIntent.status === 'succeeded') {
+        const response = await fetch('/api/checkout/confirm', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ paymentIntentId: paymentIntent.id }),
+        });
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}));
+          throw new Error(data.error || 'Failed to confirm payment');
+        }
+        onSuccess();
+      } else {
+        // If redirect occurred, the effect above will handle finalization after return
+      }
+    } catch (err: any) {
+      const message = err?.message || 'Payment failed';
+      setErrorMessage(message);
+      onError(message);
     } finally {
       onLoading(false);
     }
   };
 
-  const handleCardChange = (event: any) => {
-    setCardError(event.error ? event.error.message : null);
-  };
-
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">
-          Card Information
-        </label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">Payment details</label>
         <div className="border border-gray-300 rounded-lg p-3 focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-blue-500">
-          <CardElement
-            options={CARD_ELEMENT_OPTIONS}
-            onChange={handleCardChange}
-          />
+          <PaymentElement options={{ layout: 'tabs' }} />
         </div>
-        {cardError && (
-          <p className="text-red-500 text-sm mt-1">{cardError}</p>
-        )}
+        {errorMessage && <p className="text-red-500 text-sm mt-1">{errorMessage}</p>}
       </div>
 
       <div className="bg-gray-50 p-3 rounded-lg">

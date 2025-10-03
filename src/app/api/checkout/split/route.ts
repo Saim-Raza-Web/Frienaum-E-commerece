@@ -7,7 +7,16 @@ import { verifyToken } from '@/lib/auth';
 
 type CheckoutRequest = {
   cart: CartItemInput[];
-  shippingAddress: string;
+  shippingAddress: {
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    address: string;
+    state: string;
+    zipCode: string;
+    country: string;
+  };
   currency: string;
   paymentMethod: 'stripe' | 'paypal';
   returnUrl: string;
@@ -18,7 +27,8 @@ export async function POST(req: NextRequest) {
     // Get token from cookie
     const token = req.cookies.get('token')?.value;
     if (!token) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      console.error('No token found in cookies');
+      return NextResponse.json({ error: 'Unauthorized: No token found' }, { status: 401 });
     }
 
     // Verify token
@@ -26,122 +36,70 @@ export async function POST(req: NextRequest) {
     try {
       payload = verifyToken(token);
     } catch (error) {
+      console.error('Invalid token:', error);
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
     const userId = payload.id;
 
-    const body: CheckoutRequest = await req.json().catch(() => ({} as any));
+    const body: CheckoutRequest = await req.json().catch((err) => {
+      console.error('Failed to parse JSON body:', err);
+      return {} as any;
+    });
     const { cart, shippingAddress, currency = 'USD', paymentMethod, returnUrl } = body;
 
     if (!cart || !Array.isArray(cart) || cart.length === 0) {
-      return NextResponse.json({ error: 'Cart is empty' }, { status: 400 });
+      console.error('Cart is empty or invalid:', cart);
+      return NextResponse.json({ error: 'Cart is empty or invalid' }, { status: 400 });
     }
 
     if (!shippingAddress) {
+      console.error('Shipping address is missing');
       return NextResponse.json({ error: 'Shipping address is required' }, { status: 400 });
     }
 
     if (!paymentMethod || !['stripe', 'paypal'].includes(paymentMethod)) {
+      console.error('Invalid payment method:', paymentMethod);
       return NextResponse.json({ error: 'Invalid payment method' }, { status: 400 });
     }
 
-    if (!Array.isArray(cart) || cart.length === 0) {
-      return NextResponse.json({ error: 'Cart is empty' }, { status: 400 });
+    let split;
+    try {
+      split = await splitCart(cart);
+    } catch (err) {
+      console.error('Error splitting cart:', err);
+      const response = {
+        error: err instanceof Error ? err.message : 'Failed to split cart',
+      };
+      return NextResponse.json(response, { status: 500 });
     }
 
-    // Build split summary
-    const split = await splitCart(cart);
-
-    if (split.subOrders.length === 0) {
+    if (!split.subOrders.length) {
+      console.error('No valid items in cart after split:', split);
       return NextResponse.json({ error: 'No valid items in cart' }, { status: 400 });
-    }
-
-    // Create a transaction to ensure data consistency
-    const order = await prisma.$transaction(async (tx) => {
-      // First, create the order without subOrders to satisfy the foreign key constraint
-      const order = await tx.order.create({
-        data: {
-          customerId: userId,
-          merchantId: split.subOrders[0].merchantId, // Legacy field
-          status: OrderStatus.PENDING,
-          totalAmount: split.grandTotal,
-          shippingAddress,
-          grandTotal: split.grandTotal,
-          currency,
-        },
-      });
-
-      // Then create sub-orders with their items
-      for (const so of split.subOrders) {
-        // First create the sub-order
-        const subOrder = await tx.subOrder.create({
-          data: {
-            orderId: order.id,
-            merchantId: so.merchantId,
-            subtotal: so.subtotal,
-            commission: so.commission,
-            payoutAmount: so.payoutAmount,
-            status: 'PENDING',
-          },
-        });
-
-        // Then create order items for this sub-order
-        for (const item of so.items) {
-          // First, get the product to ensure it exists and get its details
-          const product = await tx.product.findUnique({
-            where: { id: item.productId },
-          });
-          
-          if (!product) {
-            throw new Error(`Product not found: ${item.productId}`);
-          }
-          
-          await tx.orderItem.create({
-            data: {
-              subOrderId: subOrder.id,
-              orderId: order.id,
-              productId: item.productId,
-              quantity: item.quantity,
-              price: item.price,
-            },
-          });
-        }
-      }
-
-      // Fetch the order with all related data
-      return tx.order.findUnique({
-        where: { id: order.id },
-        include: {
-          subOrders: {
-            include: {
-              items: true,
-            },
-          },
-        },
-      });
-    });
-
-    if (!order) {
-      throw new Error('Failed to create order');
     }
 
     // Process payment based on the selected method
     let paymentResult;
     const metadata = {
-      orderId: order.id,
       customerId: userId,
+      cartItems: JSON.stringify(cart),
+      shippingAddress: JSON.stringify(shippingAddress),
+      splitData: JSON.stringify(split),
+      currency,
+      paymentMethod,
+      returnUrl,
     };
 
     try {
       if (paymentMethod === 'stripe') {
-        // Create Stripe payment intent
+        // Create Stripe payment intent first
         const paymentIntent = await paymentService.createPaymentIntent(
-          order.grandTotal,
-          order.currency,
+          split.grandTotal,
+          currency,
           metadata
         );
-        
+
         paymentResult = {
           clientSecret: paymentIntent.client_secret,
           requiresAction: paymentIntent.status === 'requires_action',
@@ -150,11 +108,11 @@ export async function POST(req: NextRequest) {
       } else if (paymentMethod === 'paypal') {
         // Create PayPal order
         const paypalOrder = await paymentService.createPayPalOrder(
-          order.grandTotal,
-          order.currency,
+          split.grandTotal,
+          currency,
           metadata
         );
-        
+
         paymentResult = {
           orderId: paypalOrder.id,
           returnUrl,
@@ -162,35 +120,53 @@ export async function POST(req: NextRequest) {
       }
 
       return NextResponse.json({
-        orderId: order.id,
-        status: 'PENDING_PAYMENT',
+        status: 'PAYMENT_REQUIRED',
         payment: {
           method: paymentMethod,
           ...paymentResult,
         },
+        // Include cart and shipping info for order creation after payment
+        cartData: {
+          cart,
+          shippingAddress,
+          split,
+          currency,
+          paymentMethod,
+          returnUrl,
+        },
       });
     } catch (error) {
       console.error('Payment processing error:', error);
-      // Update order status to failed
-      await prisma.order.update({
-        where: { id: order?.id },
-        data: { 
-          status: OrderStatus.CANCELLED,
-          // Add any additional fields that exist in your schema
-          updatedAt: new Date(),
+      const anyErr: any = error;
+      const raw = anyErr?.raw || anyErr;
+      const response = {
+        error: anyErr?.message || raw?.message || 'Payment processing failed',
+        details: {
+          type: raw?.type,
+          code: raw?.code,
+          decline_code: raw?.decline_code,
+          param: raw?.param,
+          doc_url: raw?.doc_url,
+          requestId: anyErr?.requestId || raw?.requestId || raw?.headers?.['request-id'],
         },
-      });
-      
-      return NextResponse.json(
-        { error: 'Payment processing failed' },
-        { status: 500 }
-      );
+      };
+      return NextResponse.json(response, { status: 500 });
     }
   } catch (error) {
     console.error('Checkout error:', error);
-    return NextResponse.json(
-      { error: 'Failed to process checkout' },
-      { status: 500 }
-    );
+    const anyErr: any = error;
+    const raw = anyErr?.raw || anyErr;
+    const response = {
+      error: anyErr?.message || raw?.message || 'Failed to process checkout',
+      details: {
+        type: raw?.type,
+        code: raw?.code,
+        decline_code: raw?.decline_code,
+        param: raw?.param,
+        doc_url: raw?.doc_url,
+        requestId: anyErr?.requestId || raw?.requestId || raw?.headers?.['request-id'],
+      },
+    };
+    return NextResponse.json(response, { status: 500 });
   }
 }

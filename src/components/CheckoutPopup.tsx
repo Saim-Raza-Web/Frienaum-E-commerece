@@ -5,7 +5,11 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { isValidLocale, type Locale } from '@/i18n/config';
-import { X, Loader2, CheckCircle, CreditCard } from 'lucide-react';
+import { X, Loader2, CheckCircle, CreditCard, Truck } from 'lucide-react';
+import { Address } from '@/types';
+import StripePaymentForm from './StripePaymentForm';
+import { Elements } from '@stripe/react-stripe-js';
+import { loadStripe } from '@stripe/stripe-js';
 
 type CheckoutStep = 'cart' | 'shipping' | 'payment' | 'success';
 
@@ -17,18 +21,190 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
   const [currentStep, setCurrentStep] = useState<CheckoutStep>('cart');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  
+  const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+  if (!stripePublishableKey) {
+    console.error('NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY environment variable is required');
+  }
+
+  const [stripePromise] = useState(() => stripePublishableKey ? loadStripe(stripePublishableKey) : null);
+  const [paymentData, setPaymentData] = useState<{
+    clientSecret: string;
+    paymentIntentId: string;
+    cartData?: any;
+  } | null>(null);
+
+  // Shipping address state
+  const [shippingAddress, setShippingAddress] = useState<Address>({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    address: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    country: 'United States'
+  });
+  const [addressErrors, setAddressErrors] = useState<Partial<Address>>({});
+
   // Calculate tax and shipping
   const calculateTax = () => cartTotal * 0.08; // 8% tax
   const calculateShipping = () => cartTotal > 50 ? 0 : 5.99; // Free shipping over $50
   const calculateTotal = () => cartTotal + calculateTax() + calculateShipping();
 
-  const handleProceedToPayment = async () => {
+  // Address validation
+  const validateAddress = (): boolean => {
+    const errors: Partial<Address> = {};
+
+    if (!shippingAddress.firstName.trim()) errors.firstName = 'First name is required';
+    if (!shippingAddress.lastName.trim()) errors.lastName = 'Last name is required';
+    if (!shippingAddress.email.trim()) {
+      errors.email = 'Email is required';
+    } else if (!/\S+@\S+\.\S+/.test(shippingAddress.email)) {
+      errors.email = 'Email is invalid';
+    }
+    if (!shippingAddress.phone.trim()) errors.phone = 'Phone number is required';
+    if (!shippingAddress.address.trim()) errors.address = 'Address is required';
+    if (!shippingAddress.city.trim()) errors.city = 'City is required';
+    if (!shippingAddress.state.trim()) errors.state = 'State is required';
+    if (!shippingAddress.zipCode.trim()) errors.zipCode = 'ZIP code is required';
+
+    setAddressErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  // Handle address input changes
+  const handleAddressChange = (field: keyof Address, value: string) => {
+    setShippingAddress(prev => ({ ...prev, [field]: value }));
+    // Clear error when user starts typing
+    if (addressErrors[field]) {
+      setAddressErrors(prev => ({ ...prev, [field]: undefined }));
+    }
+  };
+
+  // Build a minimal, safe shipping address using user data or fallbacks
+  const buildMinimalShippingAddress = (): Address => {
+    const firstNameFromUser = (user?.firstName || '').trim();
+    const lastNameFromUser = (user?.lastName || '').trim();
+    const firstName = firstNameFromUser || 'Customer';
+    const lastName = lastNameFromUser || 'User';
+    return {
+      firstName,
+      lastName,
+      email: user?.email || shippingAddress.email || 'customer@example.com',
+      phone: shippingAddress.phone || '0000000000',
+      address: shippingAddress.address || 'N/A',
+      city: shippingAddress.city || 'N/A',
+      state: shippingAddress.state || 'NA',
+      zipCode: shippingAddress.zipCode || '00000',
+      country: shippingAddress.country || 'United States',
+    };
+  };
+
+  // One-click proceed to payment: create order immediately with minimal address
+  const handleQuickCheckout = async () => {
     if (cartItems.length === 0) return;
-    
+
     setIsLoading(true);
     setError('');
-    
+
+    try {
+      if (!isAuthenticated || !user) {
+        throw new Error('You need to be signed in to complete your purchase');
+      }
+
+      const minimalAddress = buildMinimalShippingAddress();
+      const response = await fetch('/api/checkout/split', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cart: cartItems.map((item) => ({ productId: item.product.id, quantity: item.quantity })),
+          shippingAddress: minimalAddress,
+          paymentMethod: 'stripe',
+          amount: calculateTotal(),
+          currency: 'USD',
+        }),
+      });
+
+      if (!response.ok) {
+        let errorMessage = `Failed to create order (HTTP ${response.status})`;
+        const requestId = response.headers.get('request-id') || response.headers.get('Request-Id') || '';
+        try {
+          const cloned = response.clone();
+          const json = await cloned.json();
+          const parts: Array<string> = [];
+
+          if (json && typeof json === 'object') {
+            // Extract error details from various possible structures
+            if (json.error) parts.push(String(json.error));
+            if (json.message) parts.push(String(json.message));
+            if (json.details?.type) parts.push(String(json.details.type));
+            if (json.details?.code) parts.push(String(json.details.code));
+            if (json.details?.decline_code) parts.push(String(json.details.decline_code));
+            if (json.details?.param) parts.push(String(json.details.param));
+            if (json.details?.doc_url) parts.push(String(json.details.doc_url));
+
+            // For Stripe errors, check for specific fields
+            if (json.type) parts.push(String(json.type));
+            if (json.code) parts.push(String(json.code));
+            if (json.param) parts.push(String(json.param));
+            if (json.decline_code) parts.push(String(json.decline_code));
+
+            // Log the full error object for debugging
+            console.error('API Error Details:', json);
+          }
+
+          if (requestId) parts.push(`request-id:${requestId}`);
+          if (response.statusText) parts.push(response.statusText);
+
+          if (parts.length > 0) {
+            errorMessage = parts.join(' | ');
+          } else {
+            // Fallback to raw text if JSON had no useful fields
+            const text = await response.text();
+            if (text) errorMessage = `${errorMessage} | ${text}`;
+          }
+        } catch (parseError) {
+          try {
+            const text = await response.text();
+            const parts = [errorMessage, text, requestId ? `request-id:${requestId}` : ''].filter(Boolean);
+            errorMessage = parts.join(' | ');
+            console.error('API Error TEXT:', text);
+          } catch (_) {
+            // If all parsing fails, use the basic error message
+          }
+        }
+        throw new Error(errorMessage);
+      }
+
+      const result = await response.json();
+      if (result.status !== 'PAYMENT_REQUIRED' || !result.payment?.clientSecret) {
+        throw new Error('Invalid response from server');
+      }
+
+      // Save payment data for Stripe Elements
+      setPaymentData({
+        clientSecret: result.payment.clientSecret,
+        paymentIntentId: result.payment.paymentIntentId,
+        cartData: result.cartData
+      });
+      setCurrentStep('payment');
+    } catch (err: any) {
+      console.error('Checkout error:', err);
+      setError(err?.message || 'Failed to process your order. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle proceed to payment from shipping
+  const handleProceedToPaymentFromShipping = async () => {
+    if (!validateAddress()) return;
+
+    setIsLoading(true);
+    setError('');
+
     try {
       // Call our API to create the order and get payment intent
       if (!isAuthenticated || !user) {
@@ -38,32 +214,142 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
       const response = await fetch('/api/checkout/split', {
         method: 'POST',
         credentials: 'include', // This ensures cookies are sent with the request
-        headers: { 
-          'Content-Type': 'application/json'
+        headers: {
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          cart: cartItems.map(item => ({
+          cart: cartItems.map((item) => ({
             productId: item.product.id,
-            quantity: item.quantity
+            quantity: item.quantity,
           })),
-          shippingAddress: '123 Example St, City, Country', // In a real app, collect this from a form
+          shippingAddress,
           currency: 'USD',
           paymentMethod: 'stripe',
           // Include the total amount for verification
-          amount: calculateTotal()
-        })
+          amount: calculateTotal(),
+        }),
       });
-      
+
+      if (!response.ok) {
+        let errorMessage = `Failed to create order (HTTP ${response.status})`;
+        const requestId = response.headers.get('request-id') || response.headers.get('Request-Id') || '';
+        try {
+          const cloned = response.clone();
+          const json = await cloned.json();
+          const parts: Array<string> = [];
+
+          if (json && typeof json === 'object') {
+            // Extract error details from various possible structures
+            if (json.error) parts.push(String(json.error));
+            if (json.message) parts.push(String(json.message));
+            if (json.details?.type) parts.push(String(json.details.type));
+            if (json.details?.code) parts.push(String(json.details.code));
+            if (json.details?.decline_code) parts.push(String(json.details.decline_code));
+            if (json.details?.param) parts.push(String(json.details.param));
+            if (json.details?.doc_url) parts.push(String(json.details.doc_url));
+
+            // For Stripe errors, check for specific fields
+            if (json.type) parts.push(String(json.type));
+            if (json.code) parts.push(String(json.code));
+            if (json.param) parts.push(String(json.param));
+            if (json.decline_code) parts.push(String(json.decline_code));
+
+            // Log the full error object for debugging
+            console.error('API Error Details:', json);
+          }
+
+          if (requestId) parts.push(`request-id:${requestId}`);
+          if (response.statusText) parts.push(response.statusText);
+
+          if (parts.length > 0) {
+            errorMessage = parts.join(' | ');
+          } else {
+            // Fallback to raw text if JSON had no useful fields
+            const text = await response.text();
+            if (text) errorMessage = `${errorMessage} | ${text}`;
+          }
+        } catch (parseError) {
+          try {
+            const text = await response.text();
+            const parts = [errorMessage, text, requestId ? `request-id:${requestId}` : ''].filter(Boolean);
+            errorMessage = parts.join(' | ');
+            console.error('API Error TEXT:', text);
+          } catch (_) {
+            // If all parsing fails, use the basic error message
+          }
+        }
+        throw new Error(errorMessage);
+      }
+
+      const result = await response.json();
+      if (result.status !== 'PAYMENT_REQUIRED' || !result.payment?.clientSecret) {
+        throw new Error('Invalid response from server');
+      }
+
+      // Save payment data for Stripe Elements
+      setPaymentData({
+        clientSecret: result.payment.clientSecret,
+        paymentIntentId: result.payment.paymentIntentId,
+        cartData: result.cartData
+      });
+
+      setCurrentStep('payment');
+    } catch (err: any) {
+      console.error('Checkout error:', err);
+      setError(err?.message || 'Failed to process your order. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleProceedToPayment = async () => {
+    if (cartItems.length === 0) return;
+
+    setIsLoading(true);
+    setError('');
+
+    try {
+      // Call our API to create the order and get payment intent
+      if (!isAuthenticated || !user) {
+        throw new Error('You need to be signed in to complete your purchase');
+      }
+
+      const response = await fetch('/api/checkout/split', {
+        method: 'POST',
+        credentials: 'include', // This ensures cookies are sent with the request
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          cart: cartItems.map((item) => ({
+            productId: item.product.id,
+            quantity: item.quantity,
+          })),
+          shippingAddress,
+          currency: 'USD',
+          paymentMethod: 'stripe',
+          // Include the total amount for verification
+          amount: calculateTotal(),
+        }),
+      });
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         console.error('API Error:', errorData);
         throw new Error(errorData.error || 'Failed to create order');
       }
-      
+
       const result = await response.json();
-      if (!result.orderId) {
+      if (result.status !== 'PAYMENT_REQUIRED' || !result.payment?.clientSecret) {
         throw new Error('Invalid response from server');
       }
+
+      // Save payment data for Stripe Elements
+      setPaymentData({
+        clientSecret: result.payment.clientSecret,
+        paymentIntentId: result.payment.paymentIntentId,
+        cartData: result.cartData
+      });
 
       setCurrentStep('payment');
     } catch (err) {
@@ -104,6 +390,7 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold">
               {currentStep === 'cart' && 'Review Your Order'}
+              {currentStep === 'shipping' && 'Shipping Address'}
               {currentStep === 'payment' && 'Select Payment Method'}
               {currentStep === 'success' && 'Order Placed!'}
             </h2>
@@ -154,12 +441,12 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
                   </div>
                   <div className="flex justify-between font-bold text-lg pt-2 border-t border-gray-200 mt-2">
                     <span>Total:</span>
-                    <span>${calculateTotal().toFixed(2)}</span>
+                    <span>${calculateTotal().toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 })}</span>
                   </div>
                 </div>
                 <button
-                  onClick={handleProceedToPayment}
-                  disabled={isLoading || cartItems.length === 0}
+                  onClick={() => setCurrentStep('shipping')}
+                  disabled={cartItems.length === 0 || isLoading}
                   className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center"
                 >
                   {isLoading ? (
@@ -167,90 +454,264 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
                       <Loader2 className="animate-spin mr-2 h-4 w-4" />
                       Processing...
                     </>
-                  ) : 'Proceed to Payment'}
+                  ) : (
+                    <>
+                      <CreditCard className="mr-2 h-4 w-4" />
+                      Proceed to Payment
+                    </>
+                  )}
                 </button>
               </div>
             </div>
           )}
 
-          {currentStep === 'payment' && (
+          {currentStep === 'shipping' && (
             <div className="space-y-4">
               <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="font-medium text-gray-900 mb-3">Payment Information</h3>
+                <h3 className="font-medium text-gray-900 mb-3">Shipping Information</h3>
                 <div className="space-y-3">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Card Number
-                    </label>
-                    <input
-                      type="text"
-                      placeholder="1234 5678 9012 3456"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      disabled={isLoading}
-                    />
-                  </div>
+                  {/* Personal Information */}
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Expiry Date
+                        First Name *
                       </label>
                       <input
                         type="text"
-                        placeholder="MM/YY"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value={shippingAddress.firstName}
+                        onChange={(e) => handleAddressChange('firstName', e.target.value)}
+                        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          addressErrors.firstName ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                        placeholder="John"
                         disabled={isLoading}
                       />
+                      {addressErrors.firstName && (
+                        <p className="text-red-500 text-xs mt-1">{addressErrors.firstName}</p>
+                      )}
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        CVV
+                        Last Name *
                       </label>
                       <input
                         type="text"
-                        placeholder="123"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        value={shippingAddress.lastName}
+                        onChange={(e) => handleAddressChange('lastName', e.target.value)}
+                        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          addressErrors.lastName ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                        placeholder="Doe"
                         disabled={isLoading}
                       />
+                      {addressErrors.lastName && (
+                        <p className="text-red-500 text-xs mt-1">{addressErrors.lastName}</p>
+                      )}
                     </div>
                   </div>
+
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Cardholder Name
+                      Email Address *
+                    </label>
+                    <input
+                      type="email"
+                      value={shippingAddress.email}
+                      onChange={(e) => handleAddressChange('email', e.target.value)}
+                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        addressErrors.email ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                      placeholder="john@example.com"
+                      disabled={isLoading}
+                    />
+                    {addressErrors.email && (
+                      <p className="text-red-500 text-xs mt-1">{addressErrors.email}</p>
+                    )}
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Phone Number *
+                    </label>
+                    <input
+                      type="tel"
+                      value={shippingAddress.phone}
+                      onChange={(e) => handleAddressChange('phone', e.target.value)}
+                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        addressErrors.phone ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                      placeholder="(555) 123-4567"
+                      disabled={isLoading}
+                    />
+                    {addressErrors.phone && (
+                      <p className="text-red-500 text-xs mt-1">{addressErrors.phone}</p>
+                    )}
+                  </div>
+
+                  {/* Address */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Street Address *
                     </label>
                     <input
                       type="text"
-                      placeholder="John Doe"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      value={shippingAddress.address}
+                      onChange={(e) => handleAddressChange('address', e.target.value)}
+                      className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        addressErrors.address ? 'border-red-500' : 'border-gray-300'
+                      }`}
+                      placeholder="123 Main St"
                       disabled={isLoading}
                     />
+                    {addressErrors.address && (
+                      <p className="text-red-500 text-xs mt-1">{addressErrors.address}</p>
+                    )}
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        City *
+                      </label>
+                      <input
+                        type="text"
+                        value={shippingAddress.city}
+                        onChange={(e) => handleAddressChange('city', e.target.value)}
+                        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          addressErrors.city ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                        placeholder="New York"
+                        disabled={isLoading}
+                      />
+                      {addressErrors.city && (
+                        <p className="text-red-500 text-xs mt-1">{addressErrors.city}</p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        State *
+                      </label>
+                      <input
+                        type="text"
+                        value={shippingAddress.state}
+                        onChange={(e) => handleAddressChange('state', e.target.value)}
+                        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          addressErrors.state ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                        placeholder="NY"
+                        disabled={isLoading}
+                      />
+                      {addressErrors.state && (
+                        <p className="text-red-500 text-xs mt-1">{addressErrors.state}</p>
+                      )}
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                        ZIP Code *
+                      </label>
+                      <input
+                        type="text"
+                        value={shippingAddress.zipCode}
+                        onChange={(e) => handleAddressChange('zipCode', e.target.value)}
+                        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                          addressErrors.zipCode ? 'border-red-500' : 'border-gray-300'
+                        }`}
+                        placeholder="10001"
+                        disabled={isLoading}
+                      />
+                      {addressErrors.zipCode && (
+                        <p className="text-red-500 text-xs mt-1">{addressErrors.zipCode}</p>
+                      )}
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Country
+                    </label>
+                    <select
+                      value={shippingAddress.country}
+                      onChange={(e) => handleAddressChange('country', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      disabled={isLoading}
+                    >
+                      <option value="United States">United States</option>
+                      <option value="Canada">Canada</option>
+                      <option value="United Kingdom">United Kingdom</option>
+                      <option value="Germany">Germany</option>
+                      <option value="France">France</option>
+                    </select>
                   </div>
                 </div>
               </div>
 
-              <button
-                onClick={handlePaymentSuccess}
-                disabled={isLoading}
-                className="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center"
-              >
-                {isLoading ? (
-                  <>
-                    <Loader2 className="animate-spin mr-2 h-4 w-4" />
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    <CreditCard className="mr-2 h-4 w-4" />
-                    Pay ${calculateTotal().toFixed(2)}
-                  </>
-                )}
-              </button>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setCurrentStep('cart')}
+                  className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-300 disabled:opacity-50"
+                  disabled={isLoading}
+                >
+                  ← Back
+                </button>
+                <button
+                  onClick={handleProceedToPaymentFromShipping}
+                  disabled={isLoading}
+                  className="flex-1 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center justify-center"
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="animate-spin mr-2 h-4 w-4" />
+                      Processing...
+                    </>
+                  ) : (
+                    <>
+                      <CreditCard className="mr-2 h-4 w-4" />
+                      Proceed to Payment
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {currentStep === 'payment' && paymentData && stripePromise && (
+            <div className="space-y-4">
+              <Elements stripe={stripePromise} options={{ clientSecret: paymentData.clientSecret }}>
+                <StripePaymentForm
+                  clientSecret={paymentData.clientSecret}
+                  orderId="" // Order will be created after payment
+                  amount={Math.round(calculateTotal() * 100)} // Convert to cents
+                  onSuccess={handlePaymentSuccess}
+                  onError={handlePaymentError}
+                  onLoading={handlePaymentLoading}
+                />
+              </Elements>
 
               <button
-                onClick={() => setCurrentStep('cart')}
+                onClick={() => setCurrentStep('shipping')}
                 className="mt-4 text-sm text-blue-600 hover:text-blue-700"
                 disabled={isLoading}
               >
-                ← Back to cart
+                ← Back to shipping
+              </button>
+            </div>
+          )}
+
+          {currentStep === 'payment' && paymentData && !stripePromise && (
+            <div className="space-y-4">
+              <div className="bg-red-50 text-red-700 p-4 rounded-md">
+                <h3 className="font-medium mb-2">Payment Unavailable</h3>
+                <p className="text-sm">
+                  Stripe payment system is not properly configured. Please contact support or try again later.
+                </p>
+              </div>
+
+              <button
+                onClick={() => setCurrentStep('shipping')}
+                className="mt-4 text-sm text-blue-600 hover:text-blue-700"
+                disabled={isLoading}
+              >
+                ← Back to shipping
               </button>
             </div>
           )}

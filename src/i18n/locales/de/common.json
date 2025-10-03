@@ -48,6 +48,8 @@
   "newsletterDesc": "Abonnieren Sie unseren Newsletter für die neuesten Produkte und exklusive Angebote",
   "enterEmail": "Geben Sie Ihre E-Mail ein",
   "subscribe": "Abonnieren",
+  "tryAgain": "Erneut versuchen",
+  "noProductsAvailable": "Keine Produkte verfügbar",
   "categoryProductCount": "{count} Produkte",
   "Latest gadgets and electronic devices": "Neueste Gadgets und elektronische Geräte",
   "Trendy clothing and accessories": "Modische Kleidung und Accessoires",
@@ -239,6 +241,7 @@
   "merchantToolsDesc": "Greifen Sie auf Ihr Händler-Dashboard zu, um Ihre Produkte und Bestellungen zu verwalten.",
   "merchantDashboard": "Händler-Dashboard",
   "adminTools": "Admin-Tools",
+  "orders": "Bestellungen",
   "logout": "Abmelden",
   "signIn": "Anmelden",
   "adminToolsDesc": "Greifen Sie auf das Admin-Dashboard zu, um die Plattform zu verwalten.",
@@ -298,6 +301,23 @@
       "databaseBackup": "Datenbanksicherung abgeschlossen",
       "paymentGateway": "Zahlungsgateway-Timeout",
       "securityUpdate": "Neues Sicherheitsupdate installiert"
+    },
+    "settings": {
+      "title": "Systemeinstellungen",
+      "general": "Allgemein",
+      "storeName": "Shop-Name",
+      "currency": "Währung",
+      "defaultLanguage": "Standardsprache",
+      "save": "Einstellungen speichern",
+      "saved": "Einstellungen gespeichert",
+      "loading": "Einstellungen werden geladen..."
+    },
+    "analytics": {
+      "title": "Analytik",
+      "ordersToday": "Bestellungen heute",
+      "revenueToday": "Umsatz heute",
+      "activeMerchants": "Aktive Händler",
+      "topProducts": "Top-Produkte"
     }
   },
   "profile": {
@@ -343,6 +363,7 @@
     "delivered": "Geliefert",
     "shipped": "Versandt",
     "processing": "In Bearbeitung",
+    "cancelled": "Storniert",
     "outOfStock": "Nicht auf Lager"
   },
   "merchant": {
@@ -350,6 +371,7 @@
     "manageProducts": "Verwalten Sie Ihre Produkte und verfolgen Sie Ihr Geschäft",
     "exportData": "Daten exportieren",
     "addProduct": "Produkt hinzufügen",
+    "loading": "Wird geladen...",
     "totalSales": "Gesamtumsatz",
     "orders": "Bestellungen",
     "customers": "Kunden",
@@ -448,5 +470,31 @@
     "writeReview": "Bewertung schreiben",
     "noReviewsYet": "Noch keine Bewertungen",
     "firstReviewMessage": "Seien Sie der Erste, der dieses Produkt bewertet!"
+  }
+  ,
+  "rating": {
+    "customerReviews": "Kundenbewertungen",
+    "basedOnReviews": "Basierend auf {count} Bewertungen",
+    "noReviewsYet": "Noch keine Bewertungen",
+    "pleaseSelectRating": "Bitte wählen Sie eine Bewertung aus",
+    "ratingSubmitted": "Danke! Ihre Bewertung wurde übermittelt.",
+    "submitError": "Beim Senden Ihrer Bewertung ist ein Fehler aufgetreten"
+  },
+  "ordersPage": {
+    "pleaseLogin": "Bitte melden Sie sich an, um Ihre Bestellungen anzuzeigen",
+    "logIn": "Anmelden",
+    "errorLoading": "Fehler beim Laden der Bestellungen",
+    "myOrders": "Meine Bestellungen",
+    "trackHistory": "Verfolgen Sie Ihre Bestellhistorie und den Status",
+    "noOrdersYet": "Noch keine Bestellungen",
+    "noOrdersYetDesc": "Sie haben noch keine Bestellungen aufgegeben.",
+    "startShopping": "Einkaufen starten",
+    "order": "Bestellung",
+    "placedOn": "Bestellt am {date}",
+    "fromMerchant": "Vom Händler",
+    "subtotal": "Zwischensumme",
+    "quantity": "Menge",
+    "rated": "Bewertet",
+    "rateProduct": "Produkt bewerten"
   }
 }

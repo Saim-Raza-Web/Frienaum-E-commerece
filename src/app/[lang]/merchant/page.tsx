@@ -53,10 +53,19 @@ function MerchantDashboard() {
     category: 'General'
   });
 
-  // State for view and edit modals
+  // State for image upload
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
+  const [uploadingImage, setUploadingImage] = useState(false);
+
+  // State for edit image upload
+  const [selectedImageEdit, setSelectedImageEdit] = useState<File | null>(null);
+  const [imagePreviewEdit, setImagePreviewEdit] = useState<string>('');
+  const [uploadingImageEdit, setUploadingImageEdit] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
+  const [updating, setUpdating] = useState(false);
   const [editingProduct, setEditingProduct] = useState({
     slug: '',
     title_en: '',
@@ -68,13 +77,17 @@ function MerchantDashboard() {
     imageUrl: '',
     category: 'General'
   });
-  const [updating, setUpdating] = useState(false);
+  // State for orders
+  const [orders, setOrders] = useState<any[]>([]);
+  const [ordersLoading, setOrdersLoading] = useState(false);
+  const [ordersError, setOrdersError] = useState<string | null>(null);
 
   // State for customers
   const [customers, setCustomers] = useState<any[]>([]);
   const [customersLoading, setCustomersLoading] = useState(false);
   const [customersError, setCustomersError] = useState<string | null>(null);
-  // Customer detail modal state
+
+  // State for customer detail modal
   const [showCustomerModal, setShowCustomerModal] = useState(false);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
   const [customerDetail, setCustomerDetail] = useState<any | null>(null);
@@ -83,15 +96,36 @@ function MerchantDashboard() {
   const [customerTags, setCustomerTags] = useState('');
   const [customerSaving, setCustomerSaving] = useState(false);
 
-  // State for orders
-  const [orders, setOrders] = useState<any[]>([]);
-  const [ordersLoading, setOrdersLoading] = useState(false);
-  const [ordersError, setOrdersError] = useState<string | null>(null);
+  // Helper function to transform order status for merchant view
+  const getMerchantOrderStatus = (status: string) => {
+    // Orders start as PENDING after payment - merchants see them as PENDING (needs processing)
+    // No transformation needed since orders are actually PENDING after successful payment
+    return status;
+  };
+
+  const getMerchantOrderStatusColor = (status: string) => {
+    const merchantStatus = getMerchantOrderStatus(status);
+    switch (merchantStatus) {
+      case 'PENDING': return 'bg-yellow-100 text-yellow-800';
+      case 'PROCESSING': return 'bg-blue-100 text-blue-800';
+      case 'SHIPPED': return 'bg-purple-100 text-purple-800';
+      case 'DELIVERED': return 'bg-green-100 text-green-800';
+      case 'CANCELLED': return 'bg-red-100 text-red-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
   // Order detail modal state
   const [selectedOrder, setSelectedOrder] = useState<any | null>(null);
   const [showOrderModal, setShowOrderModal] = useState(false);
   const [orderStatusDraft, setOrderStatusDraft] = useState<string>('');
   const [updatingOrderStatus, setUpdatingOrderStatus] = useState(false);
+
+  // State for order item editing
+  const [showEditOrderModal, setShowEditOrderModal] = useState(false);
+  const [editingOrder, setEditingOrder] = useState<any>(null);
+  const [editingOrderItems, setEditingOrderItems] = useState<any[]>([]);
+  const [updatingOrderItems, setUpdatingOrderItems] = useState(false);
 
   // Initialize stats with loading state
   const [stats, setStats] = useState([
@@ -183,33 +217,149 @@ function MerchantDashboard() {
   };
 
   const saveOrderStatus = async () => {
-    if (!selectedOrder) return;
+    if (!selectedOrder || !orderStatusDraft) return;
+
     try {
       setUpdatingOrderStatus(true);
-      const res = await fetch(`/api/merchant/orders/${selectedOrder.id}`, {
+
+      const response = await fetch(`/api/merchant/orders/${selectedOrder.id}`, {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: orderStatusDraft }),
+        headers: {
+          'Content-Type': 'application/json',
+        },
         credentials: 'include',
+        body: JSON.stringify({
+          status: orderStatusDraft,
+        }),
       });
-      if (!res.ok) throw new Error('Failed to update order');
-      const updated = await res.json();
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Please log in to update order status');
+        }
+        let errorMessage = 'Failed to update order status';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch (parseError) {
+          errorMessage = response.statusText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
 
       // Update the order in the local state
-      setSelectedOrder(updated);
-      // Update the orders list to reflect the change
       setOrders(prevOrders =>
         prevOrders.map(order =>
-          order.id === updated.id ? { ...order, status: updated.status } : order
+          order.id === selectedOrder.id
+            ? { ...order, status: orderStatusDraft }
+            : order
         )
       );
-      await fetchOrdersData();
-      closeOrderModal();
-    } catch (e) {
-      console.error(e);
-      alert('Could not update order status');
+
+      // Update the selected order
+      setSelectedOrder((prev: any) => prev ? { ...prev, status: orderStatusDraft } : null);
+
+      alert('Order status updated successfully');
+    } catch (err) {
+      console.error('Error updating order status:', err);
     } finally {
-      setUpdatingOrderStatus(false);
+      setUpdatingOrderItems(false);
+    }
+  };
+
+  const saveOrderItems = async () => {
+    if (!editingOrder || !editingOrderItems.length) return;
+
+    try {
+      setUpdatingOrderItems(true);
+
+      // Calculate new total based on updated items
+      const newTotal = editingOrderItems.reduce((sum: number, item: any) => {
+        return sum + (item.quantity * item.price);
+      }, 0);
+
+      // Update order items
+      const response = await fetch(`/api/merchant/orders/${editingOrder.id}/items`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          items: editingOrderItems,
+          totalAmount: newTotal,
+        }),
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Please log in to update order items');
+        }
+        let errorMessage = 'Failed to update order items';
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorMessage;
+        } catch (parseError) {
+          errorMessage = response.statusText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+
+      // Refresh orders after update
+      await fetchOrdersData();
+
+      // Close the edit modal and go back to order view
+      setShowEditOrderModal(false);
+      setEditingOrder(null);
+      setEditingOrderItems([]);
+
+      alert('Order items updated successfully');
+    } catch (err) {
+      console.error('Error updating order items:', err);
+      setError(err instanceof Error ? err.message : 'Failed to update order items');
+    } finally {
+      setUpdatingOrderItems(false);
+    }
+  };
+
+  const deleteOrder = async (orderId: string) => {
+    console.log('Attempting to delete order:', orderId);
+
+    if (!confirm('Are you sure you want to delete this order? This action cannot be undone.')) return;
+
+    try {
+      const response = await fetch(`/api/merchant/orders/${orderId}`, {
+        method: 'DELETE',
+        credentials: 'include' // Include cookies for session
+      });
+
+      console.log('Delete response status:', response.status);
+      console.log('Delete response ok:', response.ok);
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Please log in to delete orders');
+        }
+        let errorMessage = 'Failed to delete order';
+        try {
+          const responseText = await response.text();
+          console.log('Error response text:', responseText);
+          const errorData = JSON.parse(responseText);
+          errorMessage = errorData.error || errorMessage;
+        } catch (parseError) {
+          console.log('Failed to parse error response as JSON:', parseError);
+          // If response isn't JSON, use status text or default message
+          errorMessage = response.statusText || errorMessage;
+        }
+        throw new Error(errorMessage);
+      }
+
+      // Remove order from local state
+      setOrders(prevOrders => prevOrders.filter(order => order.id !== orderId));
+      alert('Order deleted successfully');
+    } catch (err) {
+      console.error('Error deleting order:', err);
+      setError(err instanceof Error ? err.message : 'Failed to delete order');
     }
   };
 
@@ -490,6 +640,8 @@ function MerchantDashboard() {
         imageUrl: product.imageUrl || '',
         category: product.category || 'General'
       });
+      // Set image preview for existing image
+      setImagePreviewEdit(product.imageUrl || '');
       setShowEditModal(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load product for editing');
@@ -514,13 +666,128 @@ function MerchantDashboard() {
       imageUrl: '',
       category: 'General'
     });
+    // Clear image upload state
+    setSelectedImage(null);
+    setImagePreview('');
+    setUploadingImage(false);
   };
 
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setError('Please select an image file.');
+      return;
+    }
+
+    // Validate file size (5MB limit)
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      setError('Image size must be less than 5MB.');
+      return;
+    }
+
+    setSelectedImage(file);
+    setError('');
+
+    // Create preview URL
+    const previewUrl = URL.createObjectURL(file);
+    setImagePreview(previewUrl);
+
+    // Upload the image
+    try {
+      setUploadingImage(true);
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to upload image');
+      }
+
+      const result = await response.json();
+
+      // Update the newProduct state with the uploaded image URL
+      setNewProduct(prev => ({ ...prev, imageUrl: result.url }));
+
+    } catch (err) {
+      console.error('Image upload error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to upload image');
+      setSelectedImage(null);
+      setImagePreview('');
+    } finally {
+      setUploadingImage(false);
+    }
+  }
+  const handleImageUploadEdit = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setError('Please select an image file.');
+      return;
+    }
+
+    // Validate file size (5MB limit)
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      setError('Image size must be less than 5MB.');
+      return;
+    }
+
+    setSelectedImageEdit(file);
+    setError('');
+
+    // Create preview URL
+    const previewUrl = URL.createObjectURL(file);
+    setImagePreviewEdit(previewUrl);
+
+    // Upload the image
+    try {
+      setUploadingImageEdit(true);
+
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to upload image');
+      }
+
+      const result = await response.json();
+
+      // Update the editingProduct state with the uploaded image URL
+      setEditingProduct(prev => ({ ...prev, imageUrl: result.url }));
+
+    } catch (err) {
+      console.error('Image upload error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to upload image');
+      setSelectedImageEdit(null);
+      setImagePreviewEdit('');
+    } finally {
+      setUploadingImageEdit(false);
+    }
+  }
   const closeViewModal = () => {
     setShowViewModal(false);
     setSelectedProduct(null);
   };
-
   const closeEditModal = () => {
     setShowEditModal(false);
     setSelectedProduct(null);
@@ -536,6 +803,10 @@ function MerchantDashboard() {
       category: 'General'
     });
     setUpdating(false);
+    // Clear edit image upload state
+    setSelectedImageEdit(null);
+    setImagePreviewEdit('');
+    setUploadingImageEdit(false);
   };
 
   const updateProduct = async (e: React.FormEvent) => {
@@ -770,7 +1041,7 @@ function MerchantDashboard() {
                         {ordersLoading ? (
                           <div className="flex items-center justify-center py-8">
                             <Loader2 className="w-6 h-6 animate-spin text-turquoise-600 mr-2" />
-                            <span className="text-gray-600">Loading orders...</span>
+                            <span className="text-gray-600">{translate('merchant.loading')}</span>
                           </div>
                         ) : ordersError ? (
                           <div className="text-center py-8">
@@ -779,12 +1050,12 @@ function MerchantDashboard() {
                               onClick={() => fetchOrdersData()}
                               className="btn-primary"
                             >
-                              Try Again
+                              {translate('tryAgain')}
                             </button>
                           </div>
                         ) : orders.length === 0 ? (
                           <div className="text-center py-8">
-                            <p className="text-gray-600">No orders yet</p>
+                            <p className="text-gray-600">{translate('ordersPage.noOrdersYet')}</p>
                           </div>
                         ) : (
                           orders.slice(0, 4).map((order: any) => (
@@ -797,12 +1068,9 @@ function MerchantDashboard() {
                               <div className="text-right">
                                 <p className="font-semibold text-gray-900">${order.grandTotal}</p>
                                 <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                                  order.status === 'COMPLETED' ? 'bg-green-100 text-green-800' :
-                                  order.status === 'SHIPPED' ? 'bg-blue-100 text-blue-800' :
-                                  order.status === 'PROCESSING' ? 'bg-yellow-100 text-yellow-800' :
-                                  'bg-gray-100 text-gray-800'
+                                  getMerchantOrderStatusColor(order.status)
                                 }`}>
-                                  {order.status}
+                                  {getMerchantOrderStatus(order.status)}
                                 </span>
                               </div>
                             </div>
@@ -864,9 +1132,115 @@ function MerchantDashboard() {
               </div>
             </div>
             <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-end gap-3">
+              <button onClick={() => {
+                setEditingOrder(selectedOrder);
+                setEditingOrderItems(selectedOrder.items || []);
+                setShowEditOrderModal(true);
+                setShowOrderModal(false);
+              }} className="btn-secondary">
+                Edit Items
+              </button>
               <button onClick={closeOrderModal} className="btn-secondary">Close</button>
               <button onClick={saveOrderStatus} disabled={updatingOrderStatus} className="btn-primary">
                 {updatingOrderStatus ? 'Saving...' : 'Save'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Order Items Modal */}
+      {showEditOrderModal && editingOrder && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-4xl bg-white rounded-lg shadow-lg max-h-[85vh] flex flex-col">
+            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white rounded-t-lg">
+              <h3 className="text-lg font-semibold text-gray-900">Edit Order Items - #{editingOrder.id?.slice(-8)}</h3>
+              <button onClick={() => {
+                setShowEditOrderModal(false);
+                setEditingOrder(null);
+                setEditingOrderItems([]);
+                setShowOrderModal(true);
+              }} className="text-gray-500 hover:text-gray-700">✕</button>
+            </div>
+            <div className="p-6 overflow-y-auto">
+              <div className="space-y-4">
+                {editingOrderItems.map((item: any, index: number) => (
+                  <div key={item.id} className="border rounded-lg p-4">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Product</label>
+                        <p className="mt-1 text-sm text-gray-900 bg-gray-50 p-2 rounded">
+                          {item.product?.title_en || item.nameSnapshot || 'Item'}
+                        </p>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Quantity</label>
+                        <input
+                          type="number"
+                          min="1"
+                          value={item.quantity}
+                          onChange={(e) => {
+                            const newItems = [...editingOrderItems];
+                            newItems[index] = { ...item, quantity: parseInt(e.target.value) || 1 };
+                            setEditingOrderItems(newItems);
+                          }}
+                          className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-turquoise-500 focus:border-turquoise-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Price</label>
+                        <input
+                          type="number"
+                          min="0"
+                          step="0.01"
+                          value={item.price}
+                          onChange={(e) => {
+                            const newItems = [...editingOrderItems];
+                            newItems[index] = { ...item, price: parseFloat(e.target.value) || 0 };
+                            setEditingOrderItems(newItems);
+                          }}
+                          className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-turquoise-500 focus:border-turquoise-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700">Image</label>
+                        <div className="mt-1">
+                          {item.product?.imageUrl && (
+                            <img
+                              src={item.product.imageUrl}
+                              alt={item.product?.title_en}
+                              className="w-16 h-16 object-cover rounded"
+                            />
+                          )}
+                          <input
+                            type="url"
+                            value={item.imageUrl || ''}
+                            onChange={(e) => {
+                              const newItems = [...editingOrderItems];
+                              newItems[index] = { ...item, imageUrl: e.target.value };
+                              setEditingOrderItems(newItems);
+                            }}
+                            placeholder="Image URL"
+                            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-turquoise-500 focus:border-turquoise-500 text-sm"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-end gap-3">
+              <button onClick={() => {
+                setShowEditOrderModal(false);
+                setEditingOrder(null);
+                setEditingOrderItems([]);
+                setShowOrderModal(true);
+              }} className="btn-secondary">
+                Cancel
+              </button>
+              <button onClick={saveOrderItems} disabled={updatingOrderItems} className="btn-primary">
+                {updatingOrderItems ? 'Saving...' : 'Save Changes'}
               </button>
             </div>
           </div>
@@ -939,8 +1313,9 @@ function MerchantDashboard() {
           </div>
         </div>
       )}
-              {/* Orders Tab */}
-              {activeTab === 'orders' && (
+
+      {/* Orders Tab */}
+      {activeTab === 'orders' && (
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200">
                   <div className="px-6 py-4 border-b border-gray-200">
                     <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
@@ -1016,12 +1391,9 @@ function MerchantDashboard() {
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                                    order.status === 'COMPLETED' ? 'bg-green-100 text-green-800' :
-                                    order.status === 'SHIPPED' ? 'bg-blue-100 text-blue-800' :
-                                    order.status === 'PROCESSING' ? 'bg-yellow-100 text-yellow-800' :
-                                    'bg-gray-100 text-gray-800'
+                                    getMerchantOrderStatusColor(order.status)
                                   }`}>
-                                    {order.status}
+                                    {getMerchantOrderStatus(order.status)}
                                   </span>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -1031,8 +1403,11 @@ function MerchantDashboard() {
                                   <button onClick={() => openOrderModal(order)} className="text-turquoise-600 hover:text-turquoise-900 mr-3">
                                     {translate('merchant.view')}
                                   </button>
-                                  <button onClick={() => openOrderModal(order)} className="text-primary-600 hover:text-primary-900">
+                                  <button onClick={() => openOrderModal(order)} className="text-primary-600 hover:text-primary-900 mr-3">
                                     {translate('merchant.update')}
+                                  </button>
+                                  <button onClick={() => deleteOrder(order.id)} className="text-red-600 hover:text-red-900">
+                                    {translate('merchant.delete')}
                                   </button>
                                 </td>
                               </tr>
@@ -1520,13 +1895,49 @@ function MerchantDashboard() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">{translate('Image URL')}</label>
-                  <input
-                    value={editingProduct.imageUrl}
-                    onChange={e => setEditingProduct(p => ({ ...p, imageUrl: e.target.value }))}
-                    className="input-field h-11 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors"
-                    placeholder="https://.../image.jpg"
-                  />
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Product Image</label>
+
+                  {/* Image Preview */}
+                  {imagePreviewEdit && (
+                    <div className="mb-3">
+                      <img
+                        src={imagePreviewEdit}
+                        alt="Preview"
+                        className="w-32 h-32 object-cover rounded-lg border border-gray-300"
+                      />
+                    </div>
+                  )}
+
+                  {/* File Input */}
+                  <div className="flex items-center space-x-3">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUploadEdit}
+                      disabled={uploadingImageEdit}
+                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                    />
+                    {uploadingImageEdit && (
+                      <div className="flex items-center text-blue-600">
+                        <svg className="animate-spin h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Uploading...
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Alternative: Manual URL Input */}
+                  <div className="mt-2">
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Or enter image URL manually:</label>
+                    <input
+                      value={editingProduct.imageUrl}
+                      onChange={e => setEditingProduct(p => ({ ...p, imageUrl: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                      placeholder="https://.../image.jpg"
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -1626,8 +2037,49 @@ function MerchantDashboard() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">{translate('Image URL')}</label>
-                  <input value={newProduct.imageUrl} onChange={e=>setNewProduct(p=>({...p, imageUrl: e.target.value}))} className="input-field h-11 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors" placeholder="https://.../image.jpg" />
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Product Image</label>
+
+                  {/* Image Preview */}
+                  {imagePreview && (
+                    <div className="mb-3">
+                      <img
+                        src={imagePreview}
+                        alt="Preview"
+                        className="w-32 h-32 object-cover rounded-lg border border-gray-300"
+                      />
+                    </div>
+                  )}
+
+                  {/* File Input */}
+                  <div className="flex items-center space-x-3">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      disabled={uploadingImage}
+                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                    />
+                    {uploadingImage && (
+                      <div className="flex items-center text-blue-600">
+                        <svg className="animate-spin h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        Uploading...
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Alternative: Manual URL Input */}
+                  <div className="mt-2">
+                    <label className="block text-xs font-medium text-gray-600 mb-1">Or enter image URL manually:</label>
+                    <input
+                      value={newProduct.imageUrl}
+                      onChange={e => setNewProduct(p => ({ ...p, imageUrl: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                      placeholder="https://.../image.jpg"
+                    />
+                  </div>
                 </div>
               </div>
 

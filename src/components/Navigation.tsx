@@ -14,7 +14,8 @@ import {
   LogOut,
   ChevronDown,
   Settings,
-  ShoppingBag
+  ShoppingBag,
+  Package
 } from 'lucide-react';
 
 const NavLink = ({ href, children }: { href: string; children: React.ReactNode }) => {
@@ -148,6 +149,15 @@ export default function Navigation() {
                       {translate('profile')}
                     </Link>
 
+                    <Link
+                      href={`/${lang}/orders`}
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      onClick={() => setIsUserMenuOpen(false)}
+                    >
+                      <Package className="w-4 h-4 mr-2" />
+                      {translate('orders')}
+                    </Link>
+
                     {user.role === 'merchant' && (
                       <Link
                         href={`/${lang}/merchant`}
@@ -245,6 +255,13 @@ export default function Navigation() {
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   {translate('profile')}
+                </Link>
+                <Link
+                  href={`/${lang}/orders`}
+                  className="block px-3 py-2 text-gray-600 hover:text-turquoise-600 text-base font-medium"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  {translate('orders')}
                 </Link>
                 {user.role === 'merchant' && (
                   <Link

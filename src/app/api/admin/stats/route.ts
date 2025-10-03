@@ -18,19 +18,27 @@ export async function GET(request: NextRequest) {
     // Important: Some existing user docs may not have `isDeleted` set yet (Mongo missing field).
     // Counting with `where: { isDeleted: false }` would miss those documents.
     // So we compute active users as (all users) - (users with isDeleted = true).
-    const [allUsers, deletedUsers, totalOrders, deliveredRevenueAgg, activeProducts] = await Promise.all([
+    const [allUsers, deletedUsers, totalOrders, paymentsRevenueAgg, deliveredOrdersRevenueAgg, activeProducts] = await Promise.all([
       prisma.user.count(),
       prisma.user.count({ where: { isDeleted: true } as any }),
       prisma.order.count(),
+      // Primary source of truth: sum of successful USD payments
+      prisma.payment.aggregate({
+        _sum: { amount: true },
+        where: { status: 'SUCCEEDED', currency: 'USD' },
+      }),
+      // Fallback: sum of delivered orders' grandTotal (assumed USD by default schema)
       prisma.order.aggregate({
-        _sum: { totalAmount: true },
+        _sum: { grandTotal: true },
         where: { status: 'DELIVERED' },
       }),
       prisma.product.count({ where: { merchant: { status: 'ACTIVE' } } }),
     ]);
 
     const totalUsers = allUsers - deletedUsers;
-    const revenue = deliveredRevenueAgg._sum.totalAmount || 0;
+    const paymentsRevenue = paymentsRevenueAgg._sum.amount || 0;
+    const deliveredOrdersRevenue = deliveredOrdersRevenueAgg._sum.grandTotal || 0;
+    const revenue = paymentsRevenue > 0 ? paymentsRevenue : deliveredOrdersRevenue;
 
     return NextResponse.json({
       totalUsers,

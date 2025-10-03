@@ -33,6 +33,7 @@ export async function GET(request: NextRequest) {
                 product: {
                   select: {
                     title_en: true,
+                    title_de: true,
                     imageUrl: true,
                   },
                 },
@@ -46,7 +47,33 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    return NextResponse.json(orders);
+    // Collect all orderItemIds in this page for a single query
+    const allOrderItemIds = orders.flatMap(o =>
+      o.subOrders.flatMap(so => so.items.map(i => i.id))
+    );
+
+    const existingRatings = await prisma.rating.findMany({
+      where: {
+        customerId: userId,
+        orderItemId: { in: allOrderItemIds },
+      },
+      select: { orderItemId: true },
+    });
+
+    const ratedSet = new Set(existingRatings.map(r => r.orderItemId));
+
+    const augmented = orders.map(o => ({
+      ...o,
+      subOrders: o.subOrders.map(so => ({
+        ...so,
+        items: so.items.map(i => ({
+          ...i,
+          hasRated: ratedSet.has(i.id),
+        })),
+      })),
+    }));
+
+    return NextResponse.json(augmented);
   } catch (error) {
     console.error('Error fetching orders:', error);
     return NextResponse.json(

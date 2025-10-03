@@ -115,8 +115,12 @@ model User {
   addresses        Address[]
   customerProfile  CustomerProfile?
   merchantCustomers MerchantCustomer[]
+  ratings          Rating[]        @relation("CustomerRatings")
   // Orders placed by this user as a customer
   ordersAsCustomer Order[]        @relation("CustomerOrders")
+
+  // Password reset tokens for this user
+  passwordResetTokens PasswordResetToken[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -155,10 +159,15 @@ model Product {
   imageUrl   String?
   category   String     @default("Electronics")
 
+  // Rating fields
+  averageRating Float?   @default(0)
+  ratingCount   Int      @default(0)
+
   merchantId String     @db.ObjectId
   merchant   Merchant   @relation(fields: [merchantId], references: [id])
 
   orderItems OrderItem[]
+  ratings    Rating[]
 
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
@@ -280,6 +289,18 @@ model MerchantCustomer {
   @@index([customerId])
 }
 
+model PasswordResetToken {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  token     String   @unique
+  userId    String   @db.ObjectId
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
 model ContactMessage {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   name      String
@@ -287,4 +308,23 @@ model ContactMessage {
   subject   String
   message   String
   createdAt DateTime @default(now())
+}
+
+model Rating {
+  id        String   @id @default(auto()) @map("_id") @db.ObjectId
+  rating    Int      // 1-5 stars
+  review    String?  // Optional review text
+  productId String   @db.ObjectId
+  customerId String  @db.ObjectId
+  orderItemId String @db.ObjectId // Link to specific order item for verification
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  product   Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  customer  User      @relation("CustomerRatings", fields: [customerId], references: [id])
+
+  @@index([productId])
+  @@index([customerId])
+  @@index([orderItemId])
+  @@unique([customerId, orderItemId]) // One rating per customer per order item
 }

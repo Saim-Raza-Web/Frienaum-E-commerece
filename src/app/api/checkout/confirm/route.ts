@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { paymentService } from '@/lib/payment-service';
 import { verifyToken } from '@/lib/auth';
+import { OrderStatus } from '@prisma/client';
+import Stripe from 'stripe';
 
 export async function POST(req: NextRequest) {
   try {
@@ -24,63 +26,154 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => ({} as any));
     const { paymentIntentId, orderId } = body;
 
-    if (!paymentIntentId || !orderId) {
+    if (!paymentIntentId) {
       return NextResponse.json(
-        { error: 'Payment intent ID and order ID are required' },
+        { error: 'Payment intent ID is required' },
         { status: 400 }
       );
     }
 
-    // Verify the order belongs to the user
-    const order = await prisma.order.findFirst({
-      where: {
-        id: orderId,
-        customerId: userId,
-      },
-      include: {
-        subOrders: true,
-      },
+    // Retrieve the payment intent to verify it and get metadata
+    const stripe = paymentService['getStripe']();
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+    if (paymentIntent.status !== 'succeeded') {
+      return NextResponse.json(
+        { error: 'Payment not succeeded' },
+        { status: 400 }
+      );
+    }
+
+    // Extract metadata from payment intent
+    const metadata = paymentIntent.metadata || {};
+    const cartItems = metadata.cartItems ? JSON.parse(metadata.cartItems) : [];
+    const shippingAddress = metadata.shippingAddress ? JSON.parse(metadata.shippingAddress) : {};
+    const splitData = metadata.splitData ? JSON.parse(metadata.splitData) : {};
+    const currency = metadata.currency || 'USD';
+
+    if (!cartItems.length) {
+      return NextResponse.json(
+        { error: 'No cart items found in payment metadata' },
+        { status: 400 }
+      );
+    }
+
+    // Create the order and related data in a transaction
+    const result = await prisma.$transaction(async (tx) => {
+      // First, create the shipping address record
+      const address = await tx.address.create({
+        data: {
+          userId,
+          name: `${shippingAddress.firstName} ${shippingAddress.lastName}`,
+          phone: shippingAddress.phone,
+          line1: shippingAddress.address,
+          city: shippingAddress.city,
+          state: shippingAddress.state,
+          postalCode: shippingAddress.zipCode,
+          country: shippingAddress.country,
+        },
+      });
+
+      // Create formatted shipping address string
+      const formattedShippingAddress = `${shippingAddress.firstName} ${shippingAddress.lastName}, ${shippingAddress.address}, ${shippingAddress.city}, ${shippingAddress.state} ${shippingAddress.zipCode}, ${shippingAddress.country}`;
+
+      // Create the order with the address reference
+      const order = await tx.order.create({
+        data: {
+          customerId: userId,
+          merchantId: splitData.subOrders[0]?.merchantId || '', // Legacy field
+          status: OrderStatus.PENDING,
+          totalAmount: splitData.grandTotal,
+          shippingAddress: formattedShippingAddress,
+          shippingAddressId: address.id,
+          grandTotal: splitData.grandTotal,
+          currency,
+        },
+      });
+
+      // Create sub-orders with their items
+      for (const so of splitData.subOrders) {
+        // Create the sub-order
+        const subOrder = await tx.subOrder.create({
+          data: {
+            orderId: order.id,
+            merchantId: so.merchantId,
+            subtotal: so.subtotal,
+            commission: so.commission,
+            payoutAmount: so.payoutAmount,
+            status: 'PENDING',
+          },
+        });
+
+        // Create order items for this sub-order
+        for (const item of so.items) {
+          // Get the product to ensure it exists and get its details
+          const product = await tx.product.findUnique({
+            where: { id: item.productId },
+          });
+
+          if (!product) {
+            throw new Error(`Product not found: ${item.productId}`);
+          }
+
+          await tx.orderItem.create({
+            data: {
+              subOrderId: subOrder.id,
+              orderId: order.id,
+              productId: item.productId,
+              quantity: item.quantity,
+              price: item.price,
+            },
+          });
+        }
+      }
+
+      // Create payment record
+      const payment = await tx.payment.create({
+        data: {
+          orderId: order.id,
+          gateway: metadata.paymentMethod === 'paypal' ? 'PAYPAL' : 'STRIPE',
+          status: 'SUCCEEDED',
+          amount: splitData.grandTotal,
+          currency,
+          transactionId: paymentIntentId,
+          raw: paymentIntent as any,
+        },
+      });
+
+      // Update merchant balances
+      await paymentService.updateMerchantBalances({
+        id: order.id,
+        subOrders: await tx.subOrder.findMany({
+          where: { orderId: order.id },
+        }),
+      });
+
+      // Fetch the complete order with all related data
+      return tx.order.findUnique({
+        where: { id: order.id },
+        include: {
+          subOrders: {
+            include: {
+              items: true,
+            },
+          },
+        },
+      });
     });
-
-    if (!order) {
-      return NextResponse.json({ error: 'Order not found' }, { status: 404 });
-    }
-
-    if (order.status !== 'PENDING') {
-      return NextResponse.json(
-        { error: 'Order is not in a payable state' },
-        { status: 400 }
-      );
-    }
-
-    // Handle successful payment
-    const result = await paymentService.handleSuccessfulPayment(
-      paymentIntentId,
-      orderId,
-      order.grandTotal,
-      order.currency
-    );
 
     return NextResponse.json({
       success: true,
-      order: result.order,
-      payment: result.payment,
+      order: result,
+      payment: {
+        id: paymentIntentId,
+        status: 'succeeded',
+        amount: paymentIntent.amount,
+        currency: paymentIntent.currency,
+      },
     });
   } catch (error) {
     console.error('Payment confirmation error:', error);
-
-    // If there's an orderId in the request, try to cancel it
-    try {
-      const body = await req.json().catch(() => ({} as any));
-      if (body.orderId) {
-        await prisma.order.update({
-          where: { id: body.orderId },
-          data: { status: 'CANCELLED' },
-        });
-      }
-    } catch (cancelError) {
-      console.error('Failed to cancel order:', cancelError);
-    }
 
     return NextResponse.json(
       { error: 'Payment confirmation failed' },

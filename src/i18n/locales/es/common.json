@@ -79,6 +79,7 @@
     "comprehensiveInsights": "Información completa y métricas de rendimiento del negocio",
     "merchantAccount": "Cuenta de Comerciante"
   },
+  "orders": "Pedidos",
   "settings": "Configuración",
   "cart": {
     "loading": "Cargando carrito...",

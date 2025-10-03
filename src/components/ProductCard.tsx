@@ -30,9 +30,17 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
       <div className="card overflow-hidden">
         {/* Product Image */}
         <div className="relative aspect-square overflow-hidden bg-gray-100">
-          <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
-            <span className="text-gray-500 text-sm">{translate('productImage')}</span>
-          </div>
+          {product.images && product.images.length > 0 ? (
+            <img
+              src={product.images[0]}
+              alt={product.name}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            />
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
+              <span className="text-gray-500 text-sm">{translate('productImage')}</span>
+            </div>
+          )}
           
           {/* Wishlist Button */}
           <button className="absolute top-2 right-2 p-2 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-50">

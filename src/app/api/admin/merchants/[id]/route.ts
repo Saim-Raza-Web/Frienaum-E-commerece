@@ -27,10 +27,16 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
     }
 
-    const [productCount, orderCount, revenueAgg, latestProducts, latestOrders] = await Promise.all([
+    const [productCount, orderCount, paymentsRevenueAgg, deliveredOrdersRevenueAgg, latestProducts, latestOrders] = await Promise.all([
       prisma.product.count({ where: { merchantId: id } }),
       prisma.order.count({ where: { merchantId: id } }),
-      prisma.order.aggregate({ _sum: { totalAmount: true }, where: { merchantId: id } }),
+      // Primary revenue source: successful USD payments linked to this merchant's orders
+      prisma.payment.aggregate({
+        _sum: { amount: true },
+        where: { status: 'SUCCEEDED', currency: 'USD', order: { merchantId: id } },
+      }),
+      // Fallback: sum of delivered orders' grand totals
+      prisma.order.aggregate({ _sum: { grandTotal: true }, where: { merchantId: id, status: 'DELIVERED' } }),
       prisma.product.findMany({ where: { merchantId: id }, orderBy: { createdAt: 'desc' }, take: 5, select: { id: true, slug: true, title_en: true, price: true, stock: true, createdAt: true, imageUrl: true } }),
       prisma.order.findMany({ where: { merchantId: id }, orderBy: { createdAt: 'desc' }, take: 5, select: { id: true, status: true, totalAmount: true, createdAt: true } }),
     ]);
@@ -44,7 +50,9 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
       stats: {
         productCount,
         orderCount,
-        revenue: revenueAgg._sum.totalAmount || 0,
+        revenue: (paymentsRevenueAgg._sum.amount || 0) > 0
+          ? (paymentsRevenueAgg._sum.amount || 0)
+          : (deliveredOrdersRevenueAgg._sum.grandTotal || 0),
       },
       latestProducts,
       latestOrders,

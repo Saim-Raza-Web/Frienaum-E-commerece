@@ -7,6 +7,7 @@ import { Product } from '@/types';
 import { useCart } from '@/context/CartContext';
 import { useTranslation } from '@/i18n/TranslationProvider';
 import { Star, ShoppingCart, Heart, Truck, Shield, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
+import RatingDisplay from '@/components/RatingDisplay';
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -32,7 +33,7 @@ export default function ProductDetailPage() {
         // Get current language from URL params
         const currentLang = window.location.pathname.split('/')[1] || 'en';
 
-        // Transform API data to match Product interface with correct language
+        // Transform API data to match Product interface with correct language and real ratings
         const transformedProduct: Product = {
           id: data.id.toString(),
           name: currentLang === 'de' ? data.title_de : data.title_en,
@@ -41,8 +42,8 @@ export default function ProductDetailPage() {
           originalPrice: data.price,
           images: [data.imageUrl || '/images/placeholder.jpg'],
           category: data.category || 'Uncategorized',
-          rating: 4.5,
-          reviewCount: 0,
+          rating: data.averageRating || 0,
+          reviewCount: data.ratingCount || 0,
           inStock: data.stock > 0,
           tags: []
         };
@@ -299,38 +300,7 @@ export default function ProductDetailPage() {
         {/* Reviews Section */}
         <div className="mt-16">
           <h2 className="text-2xl font-bold text-gray-900 mb-8">{t('productDetail.customerReviews')}</h2>
-
-          {/* Review Summary */}
-          <div className="bg-white rounded-lg p-6 mb-8">
-            <div className="flex items-center justify-between mb-6">
-              <div className="flex items-center space-x-4">
-                <div className="text-4xl font-bold text-gray-900">{product.rating}</div>
-                <div>
-                  <div className="flex items-center mb-2">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className={`w-5 h-5 ${
-                          i < Math.floor(product.rating)
-                            ? 'text-yellow-400 fill-current'
-                            : 'text-gray-300'
-                        }`}
-                      />
-                    ))}
-                  </div>
-                  <p className="text-gray-600">{t('productDetail.basedOnReviews', { count: product.reviewCount })}</p>
-                </div>
-              </div>
-              <button className="btn-primary">{t('productDetail.writeReview')}</button>
-            </div>
-          </div>
-
-          {/* Review Placeholder */}
-          <div className="bg-white rounded-lg p-6 text-center">
-            <div className="text-gray-400 text-4xl mb-4">💬</div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">{t('productDetail.noReviewsYet')}</h3>
-            <p className="text-gray-600">{t('productDetail.firstReviewMessage')}</p>
-          </div>
+          <RatingDisplay productId={product.id} />
         </div>
       </div>
     </div>

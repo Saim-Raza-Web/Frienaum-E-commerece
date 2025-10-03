@@ -49,8 +49,8 @@ export default function ProductsPage() {
           originalPrice: product.price,
           images: [product.imageUrl || '/images/placeholder.jpg'],
           category: product.category || 'Uncategorized',
-          rating: 4.5,
-          reviewCount: 0,
+          rating: Number(product.averageRating || 0),
+          reviewCount: Number(product.ratingCount || 0),
           inStock: product.stock > 0,
           tags: []
         }));

@@ -1,8 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useTranslation } from '@/i18n/TranslationProvider';
 import { useAuth } from '@/context/AuthContext';
-import { Package, Clock, CheckCircle, XCircle, Eye } from 'lucide-react';
+import { Package, Clock, CheckCircle, XCircle, Eye, Star } from 'lucide-react';
+import RatingForm from '@/components/RatingForm';
 
 interface Order {
   id: string;
@@ -20,8 +22,10 @@ interface Order {
       productId: string;
       quantity: number;
       price: number;
+        hasRated?: boolean;
       product: {
         title_en: string;
+        title_de?: string;
         imageUrl?: string;
       };
     }>;
@@ -30,9 +34,11 @@ interface Order {
 
 export default function OrdersPage() {
   const { user, isAuthenticated } = useAuth();
+  const { translate } = useTranslation();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const [ratingTarget, setRatingTarget] = useState<{ productId: string; orderItemId: string } | null>(null);
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -59,6 +65,11 @@ export default function OrdersPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleRatingSubmitted = async () => {
+    setRatingTarget(null);
+    await fetchOrders();
   };
 
   const getStatusIcon = (status: string) => {
@@ -95,9 +106,9 @@ export default function OrdersPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Please log in to view your orders</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">{translate('ordersPage.pleaseLogin')}</h1>
           <a href="/login" className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
-            Log In
+            {translate('ordersPage.logIn')}
           </a>
         </div>
       </div>
@@ -116,7 +127,7 @@ export default function OrdersPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-red-600 mb-4">Error loading orders</h1>
+          <h1 className="text-2xl font-bold text-red-600 mb-4">{translate('ordersPage.errorLoading')}</h1>
           <p className="text-gray-600">{error}</p>
         </div>
       </div>
@@ -124,20 +135,21 @@ export default function OrdersPage() {
   }
 
   return (
+    <>
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">My Orders</h1>
-          <p className="text-gray-600 mt-2">Track your order history and status</p>
+          <h1 className="text-3xl font-bold text-gray-900">{translate('ordersPage.myOrders')}</h1>
+          <p className="text-gray-600 mt-2">{translate('ordersPage.trackHistory')}</p>
         </div>
 
         {orders.length === 0 ? (
           <div className="text-center py-12">
             <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No orders yet</h3>
-            <p className="text-gray-600">You haven't placed any orders yet.</p>
+            <h3 className="text-lg font-medium text-gray-900 mb-2">{translate('ordersPage.noOrdersYet')}</h3>
+            <p className="text-gray-600">{translate('ordersPage.noOrdersYetDesc')}</p>
             <a href="/products" className="mt-4 inline-block bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
-              Start Shopping
+              {translate('ordersPage.startShopping')}
             </a>
           </div>
         ) : (
@@ -147,15 +159,15 @@ export default function OrdersPage() {
                 <div className="px-6 py-4 border-b border-gray-200">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900">Order #{order.id}</h3>
+                      <h3 className="text-lg font-semibold text-gray-900">{translate('ordersPage.order')} #{order.id}</h3>
                       <p className="text-sm text-gray-600">
-                        Placed on {new Date(order.createdAt).toLocaleDateString()}
+                        {translate('ordersPage.placedOn', { date: new Date(order.createdAt).toLocaleDateString() })}
                       </p>
                     </div>
                     <div className="flex items-center space-x-3">
                       <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(order.status)}`}>
                         {getStatusIcon(order.status)}
-                        <span className="ml-2">{order.status}</span>
+                        <span className="ml-2">{translate(`status.${order.status.toLowerCase()}`)}</span>
                       </span>
                       <span className="text-lg font-semibold text-gray-900">
                         ${order.totalAmount.toFixed(2)}
@@ -169,33 +181,47 @@ export default function OrdersPage() {
                     {order.subOrders.map((subOrder) => (
                       <div key={subOrder.id} className="border border-gray-200 rounded-lg p-4">
                         <div className="flex items-center justify-between mb-3">
-                          <h4 className="font-medium text-gray-900">From Merchant</h4>
+                          <h4 className="font-medium text-gray-900">{translate('ordersPage.fromMerchant')}</h4>
                           <span className="text-sm text-gray-600">
-                            Subtotal: ${subOrder.subtotal.toFixed(2)}
+                            {translate('ordersPage.subtotal')}: ${subOrder.subtotal.toFixed(2)}
                           </span>
                         </div>
 
                         <div className="space-y-2">
                           {subOrder.items.map((item) => (
                             <div key={item.id} className="flex items-center space-x-3">
-                              {item.product.imageUrl && (
+                      {item.product.imageUrl && (
                                 <img
                                   src={item.product.imageUrl}
-                                  alt={item.product.title_en}
+                          alt={(typeof window !== 'undefined' && window.location.pathname.split('/')[1] === 'de' && item.product.title_de) ? item.product.title_de : item.product.title_en}
                                   className="w-12 h-12 object-cover rounded"
                                 />
                               )}
                               <div className="flex-1">
                                 <h5 className="text-sm font-medium text-gray-900">
-                                  {item.product.title_en}
+                          {(typeof window !== 'undefined' && window.location.pathname.split('/')[1] === 'de' && item.product.title_de) ? item.product.title_de : item.product.title_en}
                                 </h5>
                                 <p className="text-sm text-gray-600">
-                                  Quantity: {item.quantity} × ${item.price.toFixed(2)}
+                                  {translate('ordersPage.quantity')}: {item.quantity} × ${item.price.toFixed(2)}
                                 </p>
                               </div>
                               <div className="text-sm font-medium text-gray-900">
                                 ${(item.quantity * item.price).toFixed(2)}
                               </div>
+                              {order.status === 'DELIVERED' && (
+                                item.hasRated ? (
+                                  <span className="ml-4 inline-flex items-center text-green-600 text-sm">
+                                    <Star className="w-4 h-4 mr-1 fill-current" /> {translate('ordersPage.rated')}
+                                  </span>
+                                ) : (
+                                  <button
+                                    className="ml-4 px-3 py-1 text-sm bg-turquoise-500 hover:bg-turquoise-600 text-white rounded"
+                                    onClick={() => setRatingTarget({ productId: item.productId, orderItemId: item.id })}
+                                  >
+                                    {translate('ordersPage.rateProduct')}
+                                  </button>
+                                )
+                              )}
                             </div>
                           ))}
                         </div>
@@ -207,6 +233,37 @@ export default function OrdersPage() {
             ))}
           </div>
         )}
+      </div>
+    </div>
+    <RatingModal
+      target={ratingTarget}
+      onClose={() => setRatingTarget(null)}
+      onSubmitted={handleRatingSubmitted}
+    />
+    </>
+  );
+}
+
+// Modal container for rating form
+function RatingModal({ target, onClose, onSubmitted }: { target: { productId: string; orderItemId: string } | null; onClose: () => void; onSubmitted: () => void; }) {
+  if (!target) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+      <div className="w-full max-w-lg mx-4">
+        <div className="bg-white rounded-lg shadow-lg overflow-hidden">
+          <div className="p-4 border-b border-gray-200 flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-gray-900">{translate('ordersPage.rateProduct')}</h3>
+            <button className="text-gray-400 hover:text-gray-600" onClick={onClose}>✕</button>
+          </div>
+          <div className="p-4">
+            <RatingForm
+              productId={target.productId}
+              orderItemId={target.orderItemId}
+              onRatingSubmitted={onSubmitted}
+              onClose={onClose}
+            />
+          </div>
+        </div>
       </div>
     </div>
   );

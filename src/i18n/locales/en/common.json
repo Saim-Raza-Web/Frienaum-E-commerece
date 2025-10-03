@@ -48,6 +48,8 @@
   "newsletterDesc": "Subscribe to our newsletter for the latest products and exclusive offers",
   "enterEmail": "Enter your email",
   "subscribe": "Subscribe",
+  "tryAgain": "Try Again",
+  "noProductsAvailable": "No products available",
   "categoryProductCount": "{count} products",
   "Latest gadgets and electronic devices": "Latest gadgets and electronic devices",
   "Trendy clothing and accessories": "Trendy clothing and accessories",
@@ -239,6 +241,7 @@
   "merchantToolsDesc": "Access your merchant dashboard to manage your products and orders.",
   "merchantDashboard": "Merchant Dashboard",
   "adminTools": "Admin Tools",
+  "orders": "Orders",
   "logout": "Logout",
   "signIn": "Sign In",
   "adminToolsDesc": "Access admin dashboard to manage the platform.",
@@ -260,11 +263,14 @@
     "managePlatform": "Manage your platform",
     "systemOnline": "System is online",
     "systemHealth": "System Health",
+    "overview": "Overview",
     "recentActivity": "Recent Activity",
     "userManagement": "User Management",
     "orderManagement": "Order Management",
     "productManagement": "Product Management",
     "analyticsDashboard": "Analytics Dashboard",
+    "systemSettings": "System Settings",
+    "configurePlatformSettings": "Configure platform settings and preferences",
     "comprehensiveAnalytics": "Comprehensive analytics and reporting tools",
     "configurePlatformSettings": "Configure platform settings and preferences",
     "viewManageOrders": "View and manage all orders",
@@ -275,16 +281,47 @@
     "totalOrders": "Total Orders",
     "revenue": "Revenue",
     "activeProducts": "Active Products",
+    "cpuUsage": "CPU Usage",
+    "memory": "Memory",
+    "storage": "Storage",
+    "normal": "Normal",
+    "good": "Good",
+    "available": "Available",
     "analytics": "Analytics",
     "products": "Products",
+    "orders": "Orders",
     "settings": "Settings",
-    "manageAllProducts": "Manage all products across your platform"
+    "manageAllProducts": "Manage all products across your platform",
+    "alerts": {
+      "highServerLoad": "High server load detected",
+      "databaseBackup": "Database backup completed",
+      "paymentGateway": "Payment gateway timeout",
+      "securityUpdate": "New security update installed"
+    },
+    "settings": {
+      "title": "System Settings",
+      "general": "General",
+      "storeName": "Store Name",
+      "currency": "Currency",
+      "defaultLanguage": "Default Language",
+      "save": "Save Settings",
+      "saved": "Settings saved",
+      "loading": "Loading settings..."
+    },
+    "analyticsSection": {
+      "title": "Analytics",
+      "ordersToday": "Orders",
+      "revenue": "Revenue",
+      "activeMerchants": "Active Merchants",
+      "topProducts": "Top Products"
+    }
   },
   "merchant": {
     "dashboard": "Merchant Dashboard",
     "manageProducts": "Manage your products and track your business",
     "exportData": "Export Data",
     "addProduct": "Add Product",
+    "loading": "Loading...",
     "totalSales": "Total Sales",
     "orders": "Orders",
     "customers": "Customers",
@@ -383,5 +420,41 @@
     "writeReview": "Write a Review",
     "noReviewsYet": "No reviews yet",
     "firstReviewMessage": "Be the first to review this product!"
+  }
+  ,
+  "rating": {
+    "customerReviews": "Customer Reviews",
+    "basedOnReviews": "Based on {count} reviews",
+    "noReviewsYet": "No reviews yet",
+    "pleaseSelectRating": "Please select a rating",
+    "ratingSubmitted": "Thank you! Your rating has been submitted.",
+    "submitError": "Something went wrong submitting your rating"
+  },
+  "ordersPage": {
+    "pleaseLogin": "Please log in to view your orders",
+    "logIn": "Log In",
+    "errorLoading": "Error loading orders",
+    "myOrders": "My Orders",
+    "trackHistory": "Track your order history and status",
+    "noOrdersYet": "No orders yet",
+    "noOrdersYetDesc": "You haven't placed any orders yet.",
+    "startShopping": "Start Shopping",
+    "order": "Order",
+    "placedOn": "Placed on {date}",
+    "fromMerchant": "From Merchant",
+    "subtotal": "Subtotal",
+    "quantity": "Quantity",
+    "rated": "Rated",
+    "rateProduct": "Rate Product"
+  }
+  ,
+  "status": {
+    "active": "Active",
+    "pending": "Pending",
+    "delivered": "Delivered",
+    "shipped": "Shipped",
+    "processing": "Processing",
+    "cancelled": "Cancelled",
+    "outOfStock": "Out of Stock"
   }
 }
