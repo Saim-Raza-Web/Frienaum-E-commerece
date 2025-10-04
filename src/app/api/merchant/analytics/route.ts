@@ -163,7 +163,7 @@ export async function GET(request: NextRequest) {
       prisma.merchantCustomer.findMany({
         where: { merchantId },
         include: {
-          customer: { select: { name: true, email: true } }
+          customer: { select: { id: true, name: true, email: true } }
         },
         orderBy: { totalSpent: 'desc' },
         take: 5
