@@ -27,9 +27,55 @@ function HomePage({ params }: HomePageProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [categories, setCategories] = useState<{ id: string; name: string; productCount: number }[]>([]);
+  
+  // Typing animation state
+  const [displayText, setDisplayText] = useState('EStore');
+  const [isTyping, setIsTyping] = useState(false);
 
   useEffect(() => {
     fetchFeaturedProducts();
+  }, []);
+
+  // Typing animation effect
+  useEffect(() => {
+    const startTypingAnimation = () => {
+      const targetText = 'Feinraum';
+      let currentIndex = 0;
+      let isDeleting = false;
+      
+      const typeText = () => {
+        if (!isDeleting && currentIndex < targetText.length) {
+          // Typing forward
+          setDisplayText(targetText.substring(0, currentIndex + 1));
+          currentIndex++;
+          setTimeout(typeText, 150);
+        } else if (isDeleting && currentIndex > 0) {
+          // Deleting backward
+          setDisplayText(targetText.substring(0, currentIndex - 1));
+          currentIndex--;
+          setTimeout(typeText, 100);
+        } else if (!isDeleting && currentIndex === targetText.length) {
+          // Pause before deleting
+          setTimeout(() => {
+            isDeleting = true;
+            typeText();
+          }, 2000);
+        } else if (isDeleting && currentIndex === 0) {
+          // Reset to EStore and pause before typing again
+          setDisplayText('EStore');
+          setTimeout(() => {
+            isDeleting = false;
+            typeText();
+          }, 1000);
+        }
+      };
+      
+      typeText();
+    };
+
+    // Start animation after a short delay
+    const timer = setTimeout(startTypingAnimation, 1000);
+    return () => clearTimeout(timer);
   }, []);
 
   const fetchFeaturedProducts = async () => {
@@ -89,7 +135,7 @@ function HomePage({ params }: HomePageProps) {
       <section className="bg-gradient-to-r from-turquoise-500 to-primary-600 text-white py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-4xl md:text-6xl font-bold mb-6">
-            {translate('welcome')} to EStore
+            {translate('welcome')} to <span className="text-white">{displayText}<span className="animate-pulse">|</span></span>
           </h1>
           <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto">
             {translate('heroDescription')}
@@ -240,27 +286,6 @@ function HomePage({ params }: HomePageProps) {
         </div>
       </section>
 
-      {/* Newsletter Section */}
-      <section className="py-16 bg-turquoise-600 text-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl font-bold mb-4">
-            {translate('stayUpdated')}
-          </h2>
-          <p className="text-xl mb-8">
-            {translate('newsletterDesc')}
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 max-w-md mx-auto">
-            <input
-              type="email"
-              placeholder={translate('enterEmail')}
-              className="flex-1 px-4 py-3 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-white"
-            />
-            <button className="btn-primary bg-white text-turquoise-600 hover:bg-gray-100">
-              {translate('subscribe')}
-            </button>
-          </div>
-        </div>
-      </section>
     </div>
   );
 }

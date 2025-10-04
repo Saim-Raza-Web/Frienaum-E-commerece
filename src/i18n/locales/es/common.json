@@ -142,5 +142,26 @@
     "writeReview": "Escribir una reseña",
     "noReviewsYet": "Aún no hay reseñas",
     "firstReviewMessage": "¡Sé el primero en reseñar este producto!"
-  }
+  },
+  "profile": "Perfil",
+  "settings": "Configuración",
+  "security": "Seguridad",
+  "paymentMethods": "Métodos de Pago",
+  "twoFactorAuth": "Autenticación de Dos Factores",
+  "twoFactorAuthDesc": "Añade una capa extra de seguridad a tu cuenta",
+  "addPaymentMethod": "Añadir Método de Pago",
+  "addPaymentMethodDesc": "Añadir una nueva tarjeta de crédito o método de pago",
+  "savedPaymentMethods": "Métodos de Pago Guardados",
+  "billingAddress": "Dirección de Facturación",
+  "addCard": "Añadir Tarjeta",
+  "default": "Por Defecto",
+  "remove": "Eliminar",
+  "editAddress": "Editar Dirección",
+  "activeSessions": "Sesiones Activas",
+  "current": "Actual",
+  "revoke": "Revocar",
+  "enable": "Habilitar",
+  "enabled": "Habilitado",
+  "disable": "Deshabilitar",
+  "disabled": "Deshabilitado"
 }

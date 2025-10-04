@@ -13,14 +13,10 @@ import {
   Edit,
   Save,
   X,
-  ShoppingBag,
-  Heart,
-  Settings,
   Shield,
   CreditCard,
   Store,
-  Package,
-  ShoppingCart
+  Package
 } from 'lucide-react';
 
 function ProfileContent() {
@@ -31,6 +27,72 @@ function ProfileContent() {
   const currentLang = pathSegments[0] || 'en';
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
+  
+  // Security state
+  const [showPasswordForm, setShowPasswordForm] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirmPassword: ''
+  });
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('twoFactorEnabled');
+      return saved ? JSON.parse(saved) : false;
+    }
+    return false;
+  });
+  const [sessions, setSessions] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('sessions');
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    }
+    return [
+      { id: 1, device: 'Chrome on Windows', location: 'San Francisco, CA', current: true, lastActive: 'Now' },
+      { id: 2, device: 'iOS App', location: 'San Francisco, CA', current: false, lastActive: '2 hours ago' }
+    ];
+  });
+  
+  // Payment state
+  const [showAddPayment, setShowAddPayment] = useState(false);
+  const [paymentMethods, setPaymentMethods] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('paymentMethods');
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    }
+    return [
+      { id: 1, type: 'visa', last4: '4242', expiry: '12/25', default: true, cardholderName: 'John Doe' },
+      { id: 2, type: 'mastercard', last4: '5555', expiry: '08/26', default: false, cardholderName: 'John Doe' },
+      { id: 3, type: 'paypal', email: 'john.doe@example.com', default: false }
+    ];
+  });
+  const [billingAddress, setBillingAddress] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('billingAddress');
+      if (saved) {
+        return JSON.parse(saved);
+      }
+    }
+    return {
+      name: 'John Doe',
+      street: '123 Main Street',
+      city: 'San Francisco',
+      state: 'CA',
+      zipCode: '94105',
+      country: 'United States'
+    };
+  });
+  const [newPaymentForm, setNewPaymentForm] = useState({
+    cardNumber: '',
+    expiryDate: '',
+    cvv: '',
+    cardholderName: '',
+    type: 'visa'
+  });
 
   const [profileData, setProfileData] = useState({
     firstName: user?.firstName || '',
@@ -69,50 +131,33 @@ function ProfileContent() {
     }
   }, [user]);
 
-  const orderHistory = [
-    {
-      id: '#ORD-001',
-      date: '2024-01-15',
-      total: '$89.99',
-      status: 'Delivered',
-      items: [translate('wirelessHeadphones')]
-    },
-    {
-      id: '#ORD-002',
-      date: '2024-01-10',
-      total: '$199.99',
-      status: 'Delivered',
-      items: [translate('smartWatch'), translate('phoneCase')]
-    },
-    {
-      id: '#ORD-003',
-      date: '2024-01-05',
-      total: '$45.99',
-      status: 'Shipped',
-      items: [translate('laptopStand')]
+  // Save payment methods to localStorage whenever they change
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('paymentMethods', JSON.stringify(paymentMethods));
     }
-  ];
+  }, [paymentMethods]);
 
-  const wishlist = [
-    {
-      id: 1,
-      name: translate('gamingLaptop'),
-      price: '$1,299.99',
-      image: '/api/placeholder/100/100'
-    },
-    {
-      id: 2,
-      name: translate('wirelessEarbuds'),
-      price: '$79.99',
-      image: '/api/placeholder/100/100'
-    },
-    {
-      id: 3,
-      name: translate('mechanicalKeyboard'),
-      price: '$149.99',
-      image: '/api/placeholder/100/100'
+  // Save billing address to localStorage whenever it changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('billingAddress', JSON.stringify(billingAddress));
     }
-  ];
+  }, [billingAddress]);
+
+  // Save 2FA status to localStorage whenever it changes
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('twoFactorEnabled', JSON.stringify(twoFactorEnabled));
+    }
+  }, [twoFactorEnabled]);
+
+  // Save sessions to localStorage whenever they change
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('sessions', JSON.stringify(sessions));
+    }
+  }, [sessions]);
 
   const handleSave = () => {
     setProfileData(tempData);
@@ -139,6 +184,148 @@ function ProfileContent() {
         ...prev,
         [field]: value
       }));
+    }
+  };
+
+  // Security handlers
+  const handlePasswordChange = (field: string, value: string) => {
+    setPasswordForm(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handlePasswordSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+      alert('Passwords do not match');
+      return;
+    }
+    if (passwordForm.newPassword.length < 8) {
+      alert('Password must be at least 8 characters long');
+      return;
+    }
+    
+    try {
+      // Here you would make an API call to change the password
+      console.log('Changing password...', { currentPassword: passwordForm.currentPassword, newPassword: passwordForm.newPassword });
+      alert('Password changed successfully');
+      setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setShowPasswordForm(false);
+    } catch (error) {
+      alert('Failed to change password');
+    }
+  };
+
+  const handleTwoFactorToggle = () => {
+    setTwoFactorEnabled(!twoFactorEnabled);
+    alert(twoFactorEnabled ? 'Two-factor authentication disabled' : 'Two-factor authentication enabled');
+  };
+
+  const handleRevokeSession = (sessionId: number) => {
+    setSessions((prev: any[]) => prev.filter((session: any) => session.id !== sessionId));
+    alert('Session revoked successfully');
+  };
+
+  // Payment handlers
+  const handleAddPaymentMethod = () => {
+    setShowAddPayment(true);
+  };
+
+  const handlePaymentFormChange = (field: string, value: string) => {
+    setNewPaymentForm(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const handlePaymentFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // Basic validation
+    if (!newPaymentForm.cardNumber || !newPaymentForm.expiryDate || !newPaymentForm.cvv || !newPaymentForm.cardholderName) {
+      alert('Please fill in all required fields');
+      return;
+    }
+
+    // Extract last 4 digits
+    const last4 = newPaymentForm.cardNumber.slice(-4);
+    
+    // Determine card type based on first digit
+    const firstDigit = newPaymentForm.cardNumber[0];
+    let cardType = 'visa';
+    if (firstDigit === '5') cardType = 'mastercard';
+    else if (firstDigit === '3') cardType = 'amex';
+
+    // Create new payment method
+    const newPayment = {
+      id: Date.now(), // Simple ID generation
+      type: cardType,
+      last4: last4,
+      expiry: newPaymentForm.expiryDate,
+      default: paymentMethods.length === 0, // First card is default
+      cardholderName: newPaymentForm.cardholderName
+    };
+
+    // Add to payment methods
+    setPaymentMethods((prev: any[]) => [...prev, newPayment]);
+    
+    // Reset form and close
+    setNewPaymentForm({
+      cardNumber: '',
+      expiryDate: '',
+      cvv: '',
+      cardholderName: '',
+      type: 'visa'
+    });
+    setShowAddPayment(false);
+    
+    alert('Payment method added successfully!');
+  };
+
+  const handleCancelAddPayment = () => {
+    setNewPaymentForm({
+      cardNumber: '',
+      expiryDate: '',
+      cvv: '',
+      cardholderName: '',
+      type: 'visa'
+    });
+    setShowAddPayment(false);
+  };
+
+  const handleRemovePaymentMethod = (paymentId: number) => {
+    setPaymentMethods((prev: any[]) => prev.filter((payment: any) => payment.id !== paymentId));
+    alert('Payment method removed successfully');
+  };
+
+  const handleSetDefaultPayment = (paymentId: number) => {
+    setPaymentMethods((prev: any[]) => prev.map((payment: any) => ({
+      ...payment,
+      default: payment.id === paymentId
+    })));
+    alert('Default payment method updated');
+  };
+
+  const handleEditBillingAddress = () => {
+    const newAddress = prompt('Enter new billing address (format: Name, Street, City, State, ZIP, Country)', 
+      `${billingAddress.name}, ${billingAddress.street}, ${billingAddress.city}, ${billingAddress.state}, ${billingAddress.zipCode}, ${billingAddress.country}`);
+    
+    if (newAddress) {
+      const parts = newAddress.split(', ');
+      if (parts.length >= 6) {
+        setBillingAddress({
+          name: parts[0],
+          street: parts[1],
+          city: parts[2],
+          state: parts[3],
+          zipCode: parts[4],
+          country: parts[5]
+        });
+        alert('Billing address updated successfully');
+      } else {
+        alert('Please enter the address in the correct format');
+      }
     }
   };
 
@@ -186,9 +373,6 @@ function ProfileContent() {
             <nav className="space-y-2">
               {[
                 { id: 'profile', label: translate('profile'), icon: User },
-                { id: 'orders', label: translate('orderHistory'), icon: ShoppingBag },
-                { id: 'wishlist', label: translate('wishlist'), icon: Heart },
-                { id: 'settings', label: translate('settings'), icon: Settings },
                 { id: 'security', label: translate('security'), icon: Shield },
                 { id: 'payment', label: translate('paymentMethods'), icon: CreditCard }
               ].map((tab) => (
@@ -340,137 +524,325 @@ function ProfileContent() {
               </div>
             )}
 
-            {/* Other tabs content would go here */}
-            {activeTab === 'orders' && (
-              <div className="bg-white rounded-lg shadow-sm p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-6">{translate('orderHistory')}</h2>
-                {orderHistory.length > 0 ? (
-                  <div className="space-y-4">
-                    {orderHistory.map((order) => (
-                      <div key={order.id} className="border border-gray-200 rounded-lg p-4">
-                        <div className="flex justify-between items-start sm:items-center">
-                          <div>
-                            <h3 className="text-sm font-medium text-gray-900">{order.id}</h3>
-                            <p className="text-sm text-gray-500">{order.date}</p>
-                          </div>
-                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                            {order.status}
-                          </span>
-                        </div>
-                        <div className="mt-2">
-                          <p className="text-sm text-gray-600">
-                            {order.items.join(', ')}
-                          </p>
-                          <p className="mt-2 text-sm font-medium text-gray-900">{order.total}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <ShoppingCart className="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 className="mt-2 text-sm font-medium text-gray-900">{translate('noOrdersYet')}</h3>
-                    <p className="mt-1 text-sm text-gray-500">
-                      {translate('orderHistoryEmpty')}
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
 
-            {activeTab === 'wishlist' && (
+            {/* Security Tab */}
+            {activeTab === 'security' && (
               <div className="bg-white rounded-lg shadow-sm p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-6">{translate('wishlist')}</h2>
-                {wishlist.length > 0 ? (
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    {wishlist.map((item) => (
-                      <div key={item.id} className="border border-gray-200 rounded-lg p-4">
-                        <div className="aspect-w-1 aspect-h-1 w-full overflow-hidden rounded-md bg-gray-200">
-                          <img
-                            src={item.image}
-                            alt={item.name}
-                            className="h-full w-full object-cover object-center"
-                          />
-                        </div>
-                        <h3 className="mt-4 text-sm text-gray-700">{item.name}</h3>
-                        <p className="mt-1 text-lg font-medium text-gray-900">{item.price}</p>
-                        <div className="mt-4">
-                          <button
-                            type="button"
-                            className="w-full flex items-center justify-center rounded-md border border-transparent bg-turquoise-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-turquoise-700 focus:outline-none focus:ring-2 focus:ring-turquoise-500 focus:ring-offset-2"
-                          >
-                            {translate('addToCart')}
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-12">
-                    <Heart className="mx-auto h-12 w-12 text-gray-400" />
-                    <h3 className="mt-2 text-sm font-medium text-gray-900">{translate('noSavedItems')}</h3>
-                    <p className="mt-1 text-sm text-gray-500">
-                      {translate('wishlistEmpty')}
-                    </p>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {activeTab === 'settings' && (
-              <div className="bg-white rounded-lg shadow-sm p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-6">{translate('accountSettings')}</h2>
+                <h2 className="text-xl font-semibold text-gray-900 mb-6">{translate('security')}</h2>
                 <div className="space-y-6">
+                  {/* Password Section */}
                   <div className="bg-gray-50 p-4 rounded-lg">
-                    <h3 className="text-sm font-medium text-gray-900">{translate('password')}</h3>
-                    <p className="mt-1 text-sm text-gray-500">
+                    <h3 className="text-sm font-medium text-gray-900 mb-2">{translate('password')}</h3>
+                    <p className="text-sm text-gray-500 mb-4">
                       {translate('changePasswordDesc')}
                     </p>
-                    <div className="mt-4">
+                    {!showPasswordForm ? (
                       <button
                         type="button"
+                        onClick={() => setShowPasswordForm(true)}
                         className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turquoise-500"
                       >
                         {translate('changePassword')}
                       </button>
+                    ) : (
+                      <form onSubmit={handlePasswordSubmit} className="space-y-4">
+                          <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+                          <input
+                            type="password"
+                            value={passwordForm.currentPassword}
+                            onChange={(e) => handlePasswordChange('currentPassword', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-turquoise-500 focus:border-turquoise-500"
+                            required
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                          <input
+                            type="password"
+                            value={passwordForm.newPassword}
+                            onChange={(e) => handlePasswordChange('newPassword', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-turquoise-500 focus:border-turquoise-500"
+                            required
+                            minLength={8}
+                          />
+                        </div>
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+                          <input
+                            type="password"
+                            value={passwordForm.confirmPassword}
+                            onChange={(e) => handlePasswordChange('confirmPassword', e.target.value)}
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-turquoise-500 focus:border-turquoise-500"
+                            required
+                            minLength={8}
+                          />
+                        </div>
+                        <div className="flex space-x-2">
+                          <button
+                            type="submit"
+                            className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-turquoise-600 hover:bg-turquoise-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turquoise-500"
+                          >
+                            Update Password
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setShowPasswordForm(false);
+                              setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
+                            }}
+                            className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turquoise-500"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </form>
+                    )}
+                  </div>
+
+                  {/* Two-Factor Authentication */}
+                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
+                    <h3 className="text-sm font-medium text-blue-800 mb-2">{translate('twoFactorAuth')}</h3>
+                    <p className="text-sm text-blue-700 mb-4">
+                      {translate('twoFactorAuthDesc')}
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-blue-600 font-medium">
+                        {translate('status')}: {twoFactorEnabled ? translate('enabled') : translate('disabled')}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={handleTwoFactorToggle}
+                        className={`inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 ${
+                          twoFactorEnabled 
+                            ? 'bg-red-600 hover:bg-red-700' 
+                            : 'bg-blue-600 hover:bg-blue-700'
+                        }`}
+                      >
+                        {twoFactorEnabled ? translate('disable') : translate('enable')}
+                      </button>
                     </div>
                   </div>
 
-                  {user.role === 'merchant' && (
-                    <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
-                      <h3 className="text-sm font-medium text-blue-800">{translate('merchantTools')}</h3>
-                      <p className="mt-1 text-sm text-blue-700">
-                        {translate('merchantToolsDesc')}
-                      </p>
-                      <div className="mt-4">
-                        <a
-                          href={`/${currentLang}/merchant`}
-                          className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                        >
-                          <Store className="-ml-0.5 mr-2 h-4 w-4" />
-                          {translate('merchantDashboard')}
-                        </a>
+                  {/* Login Sessions */}
+                  <div className="bg-white border border-gray-200 rounded-lg p-4">
+                    <h3 className="text-sm font-medium text-gray-900 mb-4">{translate('activeSessions')}</h3>
+                    <div className="space-y-3">
+                      {sessions.map((session: any) => (
+                        <div key={session.id} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                          <div>
+                            <p className="text-sm font-medium text-gray-900">{session.device}</p>
+                            <p className="text-xs text-gray-500">{session.location} • Last active {session.lastActive}</p>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            {session.current && (
+                              <span className="text-xs text-green-600 font-medium">{translate('current')}</span>
+                            )}
+                            {!session.current && (
+                              <button 
+                                onClick={() => handleRevokeSession(session.id)}
+                                className="text-xs text-red-600 hover:text-red-800"
+                              >
+                                {translate('revoke')}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  </div>
+              </div>
+            )}
+
+            {/* Payment Methods Tab */}
+            {activeTab === 'payment' && (
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                <h2 className="text-xl font-semibold text-gray-900 mb-6">{translate('paymentMethods')}</h2>
+                <div className="space-y-6">
+                  {/* Add Payment Method */}
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <h3 className="text-sm font-medium text-gray-900 mb-2">{translate('addPaymentMethod')}</h3>
+                    <p className="text-sm text-gray-500 mb-4">
+                      {translate('addPaymentMethodDesc')}
+                    </p>
+                    
+                    {!showAddPayment ? (
+                      <button
+                        type="button"
+                        onClick={handleAddPaymentMethod}
+                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-turquoise-600 hover:bg-turquoise-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turquoise-500"
+                      >
+                        <CreditCard className="w-4 h-4 mr-2" />
+                        {translate('addCard')}
+                      </button>
+                    ) : (
+                      <form onSubmit={handlePaymentFormSubmit} className="space-y-4">
+                        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                          <div className="sm:col-span-2">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Cardholder Name
+                            </label>
+                            <input
+                              type="text"
+                              value={newPaymentForm.cardholderName}
+                              onChange={(e) => handlePaymentFormChange('cardholderName', e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-turquoise-500 focus:border-turquoise-500"
+                              placeholder="John Doe"
+                              required
+                            />
+                          </div>
+                          
+                          <div className="sm:col-span-2">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Card Number
+                            </label>
+                            <input
+                              type="text"
+                              value={newPaymentForm.cardNumber}
+                              onChange={(e) => handlePaymentFormChange('cardNumber', e.target.value.replace(/\D/g, '').slice(0, 16))}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-turquoise-500 focus:border-turquoise-500"
+                              placeholder="1234 5678 9012 3456"
+                              maxLength={16}
+                              required
+                            />
+                          </div>
+                          
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              Expiry Date
+                            </label>
+                            <input
+                              type="text"
+                              value={newPaymentForm.expiryDate}
+                              onChange={(e) => {
+                                let value = e.target.value.replace(/\D/g, '');
+                                if (value.length >= 2) {
+                                  value = value.slice(0, 2) + '/' + value.slice(2, 4);
+                                }
+                                handlePaymentFormChange('expiryDate', value);
+                              }}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-turquoise-500 focus:border-turquoise-500"
+                              placeholder="MM/YY"
+                              maxLength={5}
+                              required
+                            />
+                          </div>
+                          
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              CVV
+                            </label>
+                            <input
+                              type="text"
+                              value={newPaymentForm.cvv}
+                              onChange={(e) => handlePaymentFormChange('cvv', e.target.value.replace(/\D/g, '').slice(0, 4))}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-turquoise-500 focus:border-turquoise-500"
+                              placeholder="123"
+                              maxLength={4}
+                              required
+                            />
+                          </div>
+                        </div>
+                        
+                        <div className="flex space-x-2">
+                          <button
+                            type="submit"
+                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-turquoise-600 hover:bg-turquoise-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turquoise-500"
+                          >
+                            <CreditCard className="w-4 h-4 mr-2" />
+                            Add Card
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleCancelAddPayment}
+                            className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turquoise-500"
+                          >
+                            Cancel
+                          </button>
+                        </div>
+                      </form>
+                    )}
+                  </div>
+
+                  {/* Saved Payment Methods */}
+                  <div className="space-y-4">
+                    <h3 className="text-sm font-medium text-gray-900">{translate('savedPaymentMethods')}</h3>
+                    
+                    {paymentMethods.map((payment: any) => (
+                      <div key={payment.id} className="border border-gray-200 rounded-lg p-4">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-3">
+                            <div className={`w-8 h-8 rounded flex items-center justify-center ${
+                              payment.type === 'visa' ? 'bg-blue-100' : 
+                              payment.type === 'mastercard' ? 'bg-red-100' : 
+                              payment.type === 'amex' ? 'bg-green-100' :
+                              'bg-yellow-100'
+                            }`}>
+                              {payment.type === 'paypal' ? (
+                                <span className="text-yellow-600 font-bold text-xs">P</span>
+                              ) : (
+                                <CreditCard className={`w-4 h-4 ${
+                                  payment.type === 'visa' ? 'text-blue-600' : 
+                                  payment.type === 'mastercard' ? 'text-red-600' :
+                                  payment.type === 'amex' ? 'text-green-600' :
+                                  'text-gray-600'
+                                }`} />
+                              )}
+                            </div>
+                            <div>
+                              <p className="text-sm font-medium text-gray-900">
+                                {payment.type === 'paypal' ? 'PayPal Account' : `•••• •••• •••• ${payment.last4}`}
+                              </p>
+                              <p className="text-xs text-gray-500">
+                                {payment.type === 'paypal' 
+                                  ? payment.email 
+                                  : `${(payment as any).cardholderName || 'Card'} • Expires ${payment.expiry} • ${payment.type === 'visa' ? 'Visa' : payment.type === 'mastercard' ? 'Mastercard' : 'American Express'}`
+                                }
+                              </p>
+                            </div>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            {payment.default && (
+                              <span className="text-xs text-green-600 font-medium">{translate('default')}</span>
+                            )}
+                            {!payment.default && (
+                              <button 
+                                onClick={() => handleSetDefaultPayment(payment.id)}
+                                className="text-xs text-gray-500 hover:text-gray-700"
+                              >
+                                Set as Default
+                              </button>
+                            )}
+                            <button 
+                              onClick={() => handleRemovePaymentMethod(payment.id)}
+                              className="text-xs text-red-600 hover:text-red-800"
+                            >
+                              {translate('remove')}
+                            </button>
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  )}
-
-                  {user.role === 'admin' && (
-                    <div className="bg-red-50 p-4 rounded-lg border border-red-100">
-                      <h3 className="text-sm font-medium text-red-800">{translate('adminTools')}</h3>
-                      <p className="mt-1 text-sm text-red-700">
-                        {translate('adminToolsDesc')}
-                      </p>
-                  <div className="mt-4">
-                    <a
-                      href={`/${currentLang}/admin`}
-                      className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-                    >
-                      <Shield className="-ml-0.5 mr-2 h-4 w-4" />
-                      {translate('adminDashboard')}
-                    </a>
+                    ))}
                   </div>
+
+                  {/* Billing Address */}
+                  <div className="bg-gray-50 p-4 rounded-lg">
+                    <h3 className="text-sm font-medium text-gray-900 mb-2">{translate('billingAddress')}</h3>
+                    <div className="text-sm text-gray-600 mb-4">
+                      <p>{billingAddress.name}</p>
+                      <p>{billingAddress.street}</p>
+                      <p>{billingAddress.city}, {billingAddress.state} {billingAddress.zipCode}</p>
+                      <p>{billingAddress.country}</p>
                     </div>
-                  )}
+                    <button
+                      type="button"
+                      onClick={handleEditBillingAddress}
+                      className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turquoise-500"
+                    >
+                      {translate('editAddress')}
+                    </button>
+                  </div>
                 </div>
               </div>
             )}

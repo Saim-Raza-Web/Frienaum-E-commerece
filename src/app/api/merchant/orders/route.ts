@@ -7,6 +7,7 @@ export async function GET(request: NextRequest) {
     // Get token from cookie
     const token = request.cookies.get('token')?.value;
     if (!token) {
+      console.log('No token found in cookies');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -14,7 +15,9 @@ export async function GET(request: NextRequest) {
     let payload;
     try {
       payload = verifyToken(token);
+      console.log('Token verified for user:', payload.id, 'role:', payload.role);
     } catch (error) {
+      console.log('Token verification failed:', error);
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
@@ -22,18 +25,22 @@ export async function GET(request: NextRequest) {
 
     // Check if user is a merchant
     if (payload.role !== 'MERCHANT') {
+      console.log('User is not a merchant, role:', payload.role);
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     // Resolve merchant record from the logged-in user's id
     const merchant = await prisma.merchant.findUnique({
       where: { userId: userId },
-      select: { id: true }
+      select: { id: true, status: true }
     });
 
     if (!merchant) {
+      console.log('Merchant profile not found for user:', userId);
       return NextResponse.json({ error: 'Merchant profile not found' }, { status: 404 });
     }
+
+    console.log('Found merchant:', merchant.id, 'status:', merchant.status);
 
     // Fetch orders for this merchant
     const orders = await prisma.order.findMany({
@@ -44,15 +51,28 @@ export async function GET(request: NextRequest) {
             product: true,
           },
         },
+        customer: {
+          select: {
+            name: true,
+            email: true
+          }
+        }
       },
       orderBy: { createdAt: 'desc' },
     });
 
-    return NextResponse.json(orders);
+    // Filter out items with null products
+    const filteredOrders = orders.map(order => ({
+      ...order,
+      items: order.items.filter(item => item.product !== null)
+    })).filter(order => order.items.length > 0);
+
+    console.log('Found orders count:', filteredOrders.length);
+    return NextResponse.json(filteredOrders);
   } catch (error) {
     console.error('Error fetching merchant orders:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch orders' },
+      { error: 'Failed to fetch orders', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }

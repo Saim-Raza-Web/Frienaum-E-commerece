@@ -1231,7 +1231,7 @@ function SettingsForm() {
   const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
   const [error, setError] = React.useState('');
-  const [form, setForm] = React.useState({ storeName: '', currency: 'EUR', defaultLanguage: 'en' });
+  const [form, setForm] = React.useState({ storeName: 'Fienraum', currency: 'USD', defaultLanguage: 'en' });
 
   React.useEffect(() => {
     const load = async () => {
@@ -1240,8 +1240,8 @@ function SettingsForm() {
         const res = await fetch('/api/admin/settings', { credentials: 'include' });
         const data = await res.json();
         setForm({
-          storeName: data.storeName || '',
-          currency: data.currency || 'EUR',
+          storeName: data.storeName || 'Fienraum',
+          currency: data.currency || 'USD',
           defaultLanguage: data.defaultLanguage || 'en'
         });
       } catch (e: any) {
@@ -1290,7 +1290,7 @@ function SettingsForm() {
               className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent"
               value={form.storeName}
               onChange={(e)=>setForm({ ...form, storeName: e.target.value })}
-              placeholder="EStore"
+              placeholder="Fienraum"
             />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

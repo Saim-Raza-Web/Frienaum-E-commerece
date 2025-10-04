@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getUserFromReq } from '@/lib/apiAuth';
 
 let inMemorySettings = {
-  storeName: 'EStore',
-  currency: 'EUR',
+  storeName: 'Fienraum',
+  currency: 'USD',
   defaultLanguage: 'en'
 };
 

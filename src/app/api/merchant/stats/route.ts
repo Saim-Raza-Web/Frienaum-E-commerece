@@ -51,9 +51,8 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    // Get number of unique customers (from all orders, not just delivered)
-    const uniqueCustomers = await prisma.order.groupBy({
-      by: ['customerId'],
+    // Get number of unique customers from MerchantCustomer table (same as customer management)
+    const uniqueCustomers = await prisma.merchantCustomer.count({
       where: {
         merchantId: merchant.id
       }
@@ -69,7 +68,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       totalSales: salesResult._sum.amount || 0,
       totalOrders: orderCount,
-      totalCustomers: uniqueCustomers.length,
+      totalCustomers: uniqueCustomers,
       totalProducts: productCount
     });
 

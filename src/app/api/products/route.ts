@@ -73,24 +73,99 @@ function getUserFromNextRequest(req: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    // Get all products for now (remove merchant status filter for debugging)
-    const products = await getProductsWithMerchants();
+    // Get all products with proper error handling for deleted merchants
+    // We'll use a raw query approach to handle the case where merchants might be deleted
+    const products = await prisma.product.findMany({
+      include: {
+        merchant: {
+          include: {
+            user: {
+              select: { id: true, name: true, email: true }
+            }
+          }
+        }
+      },
+      orderBy: { createdAt: 'desc' }
+    });
 
-    // Map merchant.user info into top-level shape if needed by client
-    const shaped = products.map((p: any) => ({
-      ...p,
-      merchant: p.merchant?.user
-        ? { id: p.merchant.user.id, name: p.merchant.user.name, email: p.merchant.user.email }
-        : null
-    }));
+    // Filter out products with deleted merchants and map merchant.user info
+    const validProducts = products
+      .filter((p: any) => p.merchant && p.merchant.user) // Only include products with valid merchants
+      .map((p: any) => ({
+        ...p,
+        merchant: {
+          id: p.merchant.user.id,
+          name: p.merchant.user.name,
+          email: p.merchant.user.email
+        }
+      }));
 
-    return NextResponse.json(shaped);
+    // Clean up orphaned products in the background (don't wait for it)
+    if (validProducts.length < products.length) {
+      const orphanedCount = products.length - validProducts.length;
+      console.log(`Found ${orphanedCount} orphaned products, cleaning up in background...`);
+      
+      // Run cleanup in background
+      setImmediate(async () => {
+        try {
+          const orphanedProductIds = products
+            .filter((p: any) => !p.merchant || !p.merchant.user)
+            .map((p: any) => p.id);
+          
+          if (orphanedProductIds.length > 0) {
+            await prisma.product.deleteMany({
+              where: {
+                id: {
+                  in: orphanedProductIds
+                }
+              }
+            });
+            console.log(`Cleaned up ${orphanedProductIds.length} orphaned products`);
+          }
+        } catch (cleanupError) {
+          console.error('Error during cleanup:', cleanupError);
+        }
+      });
+    }
+
+    return NextResponse.json(validProducts);
   } catch (error) {
     console.error('Error fetching products:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch products' },
-      { status: 500 }
-    );
+    
+    // If the main query fails due to orphaned data, try a simpler approach
+    try {
+      console.log('Trying fallback query...');
+      const fallbackProducts = await prisma.product.findMany({
+        select: {
+          id: true,
+          slug: true,
+          title_en: true,
+          title_de: true,
+          desc_en: true,
+          desc_de: true,
+          price: true,
+          stock: true,
+          imageUrl: true,
+          category: true,
+          merchantId: true,
+          createdAt: true,
+          updatedAt: true
+        },
+        orderBy: { createdAt: 'desc' }
+      });
+
+      // Return products without merchant info for now
+      return NextResponse.json(fallbackProducts.map(p => ({
+        ...p,
+        merchant: null
+      })));
+    } catch (fallbackError) {
+      console.error('Fallback query also failed:', fallbackError);
+      return NextResponse.json(
+        { error: 'Failed to fetch products' },
+        { status: 500 }
+      );
+    }
   }
 }
 

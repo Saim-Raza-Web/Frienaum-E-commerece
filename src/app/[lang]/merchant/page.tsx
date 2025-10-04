@@ -13,7 +13,6 @@ import {
   Plus,
   Search,
   Filter,
-  Download,
   Loader2
 } from 'lucide-react';
 
@@ -86,6 +85,11 @@ function MerchantDashboard() {
   const [customers, setCustomers] = useState<any[]>([]);
   const [customersLoading, setCustomersLoading] = useState(false);
   const [customersError, setCustomersError] = useState<string | null>(null);
+
+  // State for analytics
+  const [analytics, setAnalytics] = useState<any>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+  const [analyticsError, setAnalyticsError] = useState<string | null>(null);
 
   // State for customer detail modal
   const [showCustomerModal, setShowCustomerModal] = useState(false);
@@ -538,6 +542,38 @@ function MerchantDashboard() {
     fetchCustomers();
   }, [user, activeTab]);
 
+  // Fetch analytics on tab switch to analytics
+  useEffect(() => {
+    if (activeTab !== 'analytics') return;
+    const fetchAnalytics = async () => {
+      try {
+        setAnalyticsLoading(true);
+        setAnalyticsError(null);
+        if (!user) {
+          setAnalyticsError('Please log in to access merchant dashboard');
+          return;
+        }
+        const response = await fetch('/api/merchant/analytics', {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include'
+        });
+        if (!response.ok) {
+          if (response.status === 401) throw new Error('Please log in to view analytics');
+          throw new Error(`Failed to fetch analytics: ${response.statusText}`);
+        }
+        const data = await response.json();
+        setAnalytics(data);
+      } catch (err) {
+        console.error('Error fetching analytics:', err);
+        setAnalyticsError(err instanceof Error ? err.message : 'Failed to load analytics');
+      } finally {
+        setAnalyticsLoading(false);
+      }
+    };
+    fetchAnalytics();
+  }, [user, activeTab]);
+
   // Shared fetch orders function so we can reuse in buttons and effects
   const fetchOrdersData = async () => {
     try {
@@ -945,10 +981,6 @@ function MerchantDashboard() {
                 )}
               </div>
               <div className="flex items-center space-x-3">
-                <button className="btn-secondary flex items-center space-x-2">
-                  <Download className="w-4 h-4" />
-                  <span>{translate('merchant.exportData')}</span>
-                </button>
                 <button onClick={openAddModal} className="btn-primary flex items-center space-x-2">
                   <Plus className="w-4 h-4" />
                   <span>{translate('merchant.addProduct')}</span>
@@ -1678,17 +1710,242 @@ function MerchantDashboard() {
 
               {/* Analytics Tab */}
               {activeTab === 'analytics' && (
-                <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-                  <div className="px-6 py-4 border-b border-gray-200">
-                    <h2 className="text-xl font-semibold text-gray-900">{translate('merchant.businessAnalytics')}</h2>
-                  </div>
-                  <div className="p-6">
-                    <div className="text-center py-12">
-                      <TrendingUp className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                      <h3 className="text-lg font-medium text-gray-900 mb-2">{translate('merchant.businessAnalytics')}</h3>
-                      <p className="text-gray-600">{translate('merchant.comprehensiveInsights')}</p>
+                <div className="space-y-6">
+                  {/* Analytics Header */}
+                  <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+                    <div className="px-6 py-4 border-b border-gray-200">
+                      <h2 className="text-xl font-semibold text-gray-900">{translate('merchant.businessAnalytics')}</h2>
+                      <p className="text-sm text-gray-600 mt-1">{translate('merchant.comprehensiveInsights')}</p>
                     </div>
                   </div>
+
+                  {/* Loading State */}
+                  {analyticsLoading && (
+                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                      <div className="flex items-center justify-center py-12">
+                        <Loader2 className="w-6 h-6 animate-spin text-turquoise-600 mr-2" />
+                        <span className="text-gray-600">Loading analytics...</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Error State */}
+                  {analyticsError && (
+                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                        <div className="flex items-center">
+                          <div className="flex-shrink-0">
+                            <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                          <div className="ml-3">
+                            <h3 className="text-sm font-medium text-red-800">Error Loading Analytics</h3>
+                            <div className="mt-2 text-sm text-red-700">
+                              <p>{analyticsError}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Analytics Content */}
+                  {!analyticsLoading && !analyticsError && analytics && (
+                    <div className="space-y-6">
+                      {/* Key Metrics Grid */}
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                        {/* Revenue Metrics */}
+                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-medium text-gray-500">Total Revenue</p>
+                              <p className="text-2xl font-semibold text-gray-900">
+                                ${analytics.revenue?.total?.toFixed(2) || '0.00'}
+                              </p>
+                              <p className="text-sm text-gray-600">
+                                This month: ${analytics.revenue?.monthly?.toFixed(2) || '0.00'}
+                              </p>
+                            </div>
+                            <div className="p-3 rounded-full bg-green-100">
+                              <DollarSign className="w-6 h-6 text-green-600" />
+                            </div>
+                          </div>
+                          {analytics.revenue?.monthlyGrowth !== undefined && (
+                            <div className="mt-2">
+                              <span className={`text-sm font-medium ${
+                                analytics.revenue.monthlyGrowth >= 0 ? 'text-green-600' : 'text-red-600'
+                              }`}>
+                                {analytics.revenue.monthlyGrowth >= 0 ? '+' : ''}{analytics.revenue.monthlyGrowth.toFixed(1)}% vs last month
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Orders Metrics */}
+                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-medium text-gray-500">Total Orders</p>
+                              <p className="text-2xl font-semibold text-gray-900">
+                                {analytics.orders?.total || 0}
+                              </p>
+                              <p className="text-sm text-gray-600">
+                                This month: {analytics.orders?.monthly || 0}
+                              </p>
+                            </div>
+                            <div className="p-3 rounded-full bg-blue-100">
+                              <ShoppingBag className="w-6 h-6 text-blue-600" />
+                            </div>
+                          </div>
+                          {analytics.orders?.growth !== undefined && (
+                            <div className="mt-2">
+                              <span className={`text-sm font-medium ${
+                                analytics.orders.growth >= 0 ? 'text-green-600' : 'text-red-600'
+                              }`}>
+                                {analytics.orders.growth >= 0 ? '+' : ''}{analytics.orders.growth.toFixed(1)}% vs last month
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Customers Metrics */}
+                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-medium text-gray-500">Total Customers</p>
+                              <p className="text-2xl font-semibold text-gray-900">
+                                {analytics.customers?.total || 0}
+                              </p>
+                              <p className="text-sm text-gray-600">
+                                Active: {analytics.customers?.active || 0}
+                              </p>
+                            </div>
+                            <div className="p-3 rounded-full bg-purple-100">
+                              <Users className="w-6 h-6 text-purple-600" />
+                            </div>
+                          </div>
+                          {analytics.customers?.growth !== undefined && (
+                            <div className="mt-2">
+                              <span className={`text-sm font-medium ${
+                                analytics.customers.growth >= 0 ? 'text-green-600' : 'text-red-600'
+                              }`}>
+                                {analytics.customers.growth >= 0 ? '+' : ''}{analytics.customers.growth.toFixed(1)}% vs last month
+                              </span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Products Metrics */}
+                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-medium text-gray-500">Products</p>
+                              <p className="text-2xl font-semibold text-gray-900">
+                                {analytics.products?.total || 0}
+                              </p>
+                              <p className="text-sm text-gray-600">
+                                Low stock: {analytics.products?.lowStock || 0}
+                              </p>
+                            </div>
+                            <div className="p-3 rounded-full bg-orange-100">
+                              <Package className="w-6 h-6 text-orange-600" />
+                            </div>
+                          </div>
+                          {analytics.products?.outOfStock > 0 && (
+                            <div className="mt-2">
+                              <span className="text-sm font-medium text-red-600">
+                                {analytics.products.outOfStock} out of stock
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+
+                      {/* Detailed Analytics Sections */}
+                      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {/* Top Customers */}
+                        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+                          <div className="px-6 py-4 border-b border-gray-200">
+                            <h3 className="text-lg font-semibold text-gray-900">Top Customers</h3>
+                          </div>
+                          <div className="p-6">
+                            {analytics.customers?.topCustomers?.length > 0 ? (
+                              <div className="space-y-4">
+                                {analytics.customers.topCustomers.map((customer: any, index: number) => (
+                                  <div key={customer.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                    <div className="flex items-center space-x-3">
+                                      <div className="w-8 h-8 bg-turquoise-100 rounded-full flex items-center justify-center">
+                                        <span className="text-sm font-medium text-turquoise-700">
+                                          {index + 1}
+                                        </span>
+                                      </div>
+                                      <div>
+                                        <p className="font-medium text-gray-900">{customer.name || 'Unknown'}</p>
+                                        <p className="text-sm text-gray-500">{customer.email}</p>
+                                      </div>
+                                    </div>
+                                    <div className="text-right">
+                                      <p className="font-semibold text-gray-900">${customer.totalSpent?.toFixed(2) || '0.00'}</p>
+                                      <p className="text-sm text-gray-500">{customer.totalOrders} orders</p>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-gray-500 text-center py-4">No customer data available</p>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Top Products */}
+                        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+                          <div className="px-6 py-4 border-b border-gray-200">
+                            <h3 className="text-lg font-semibold text-gray-900">Top Products</h3>
+                          </div>
+                          <div className="p-6">
+                            {analytics.products?.topProducts?.length > 0 ? (
+                              <div className="space-y-4">
+                                {analytics.products.topProducts.map((product: any, index: number) => (
+                                  <div key={product.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                                    <div className="flex items-center space-x-3">
+                                      <div className="w-8 h-8 bg-turquoise-100 rounded-full flex items-center justify-center">
+                                        <span className="text-sm font-medium text-turquoise-700">
+                                          {index + 1}
+                                        </span>
+                                      </div>
+                                      <div>
+                                        <p className="font-medium text-gray-900">{product.title}</p>
+                                        <p className="text-sm text-gray-500">${product.price?.toFixed(2) || '0.00'}</p>
+                                      </div>
+                                    </div>
+                                    <div className="text-right">
+                                      <p className="font-semibold text-gray-900">{product.totalSold || 0} sold</p>
+                                      <p className="text-sm text-gray-500">${product.revenue?.toFixed(2) || '0.00'}</p>
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="text-gray-500 text-center py-4">No product data available</p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                    </div>
+                  )}
+
+                  {/* Empty State */}
+                  {!analyticsLoading && !analyticsError && !analytics && (
+                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                      <div className="text-center py-12">
+                        <TrendingUp className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">No Analytics Data</h3>
+                        <p className="text-gray-600">Start making sales to see your business analytics</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
