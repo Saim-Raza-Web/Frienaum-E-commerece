@@ -13,11 +13,25 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   if (!productId) {
     return NextResponse.json({ message: 'Invalid id' }, { status: 400 });
   }
-  const product = await prisma.product.findUnique({ where: { id: productId } });
+  const product = await prisma.product.findUnique({ 
+    where: { id: productId },
+    include: {
+      category: {
+        select: { id: true, name: true, description: true }
+      }
+    }
+  });
   if (!product) {
     return NextResponse.json({ message: 'Not found' }, { status: 404 });
   }
-  return NextResponse.json(product);
+  
+  // Transform to include category name
+  const transformedProduct = {
+    ...product,
+    category: product.category?.name || 'General'
+  };
+  
+  return NextResponse.json(transformedProduct);
 }
 
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -32,12 +46,56 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   }
 
-  const { slug, title_en, title_de, desc_en, desc_de, price, stock, imageUrl } = await request.json();
+  const { slug, title_en, title_de, desc_en, desc_de, price, stock, imageUrl, category } = await request.json();
+  
+  // Find or create category
+  let categoryId = null;
+  if (category && category !== 'General') {
+    const existingCategory = await prisma.category.findUnique({
+      where: { name: category }
+    });
+    
+    if (existingCategory) {
+      categoryId = existingCategory.id;
+    } else {
+      // Create new category if it doesn't exist
+      const newCategory = await prisma.category.create({
+        data: {
+          name: category,
+          description: `Products in ${category} category`
+        }
+      });
+      categoryId = newCategory.id;
+    }
+  }
+
   const updated = await prisma.product.update({
     where: { id: productId },
-    data: { slug, title_en, title_de, desc_en, desc_de, price: Number(price), stock: Number(stock), imageUrl: imageUrl || undefined }
+    data: { 
+      slug, 
+      title_en, 
+      title_de, 
+      desc_en, 
+      desc_de, 
+      price: Number(price), 
+      stock: Number(stock), 
+      imageUrl: imageUrl || undefined,
+      categoryId: categoryId
+    },
+    include: {
+      category: {
+        select: { id: true, name: true, description: true }
+      }
+    }
   });
-  return NextResponse.json(updated);
+  
+  // Transform to include category name
+  const transformedProduct = {
+    ...updated,
+    category: updated.category?.name || 'General'
+  };
+  
+  return NextResponse.json(transformedProduct);
 }
 
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {

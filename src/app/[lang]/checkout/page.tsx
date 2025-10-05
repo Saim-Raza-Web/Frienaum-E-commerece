@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import Navigation from '@/components/Navigation';
+import Navigation from '@/components/UnifiedNavbar';
 import Footer from '@/components/Footer';
 import { Address } from '@/types';
 import { ArrowLeft, CreditCard, Lock, Truck, CheckCircle } from 'lucide-react';

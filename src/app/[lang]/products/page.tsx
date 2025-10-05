@@ -33,12 +33,23 @@ export default function ProductsPage() {
       setLoading(true);
       setError('');
       try {
-        // Fetch products
-        const productsResponse = await fetch('/api/products');
+        // Fetch products and categories in parallel
+        const [productsResponse, categoriesResponse] = await Promise.all([
+          fetch('/api/products'),
+          fetch('/api/categories')
+        ]);
+
         if (!productsResponse.ok) {
           throw new Error('Failed to fetch products');
         }
-        const productsData = await productsResponse.json();
+        if (!categoriesResponse.ok) {
+          throw new Error('Failed to fetch categories');
+        }
+
+        const [productsData, categoriesData] = await Promise.all([
+          productsResponse.json(),
+          categoriesResponse.json()
+        ]);
 
         // Transform API data to match Product interface
         const transformedProducts: Product[] = productsData.map((product: any) => ({
@@ -56,23 +67,9 @@ export default function ProductsPage() {
         }));
 
         setProducts(transformedProducts);
-
-        // Generate categories from products
-        const categoryMap = new Map<string, number>();
-        transformedProducts.forEach(product => {
-          const category = product.category;
-          categoryMap.set(category, (categoryMap.get(category) || 0) + 1);
-        });
-
-        const categoriesData: Category[] = Array.from(categoryMap.entries()).map(([name, productCount], index) => ({
-          id: (index + 1).toString(),
-          name,
-          productCount
-        }));
-
         setCategories(categoriesData);
       } catch (err) {
-        setError('Failed to load products');
+        setError('Failed to load data');
         console.error('Error fetching data:', err);
       } finally {
         setLoading(false);

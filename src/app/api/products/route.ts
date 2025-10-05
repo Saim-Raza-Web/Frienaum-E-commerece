@@ -83,6 +83,9 @@ export async function GET(request: NextRequest) {
               select: { id: true, name: true, email: true }
             }
           }
+        },
+        category: {
+          select: { id: true, name: true, description: true }
         }
       },
       orderBy: { createdAt: 'desc' }
@@ -93,6 +96,7 @@ export async function GET(request: NextRequest) {
       .filter((p: any) => p.merchant && p.merchant.user) // Only include products with valid merchants
       .map((p: any) => ({
         ...p,
+        category: p.category?.name || 'General',
         merchant: {
           id: p.merchant.user.id,
           name: p.merchant.user.name,
@@ -146,10 +150,13 @@ export async function GET(request: NextRequest) {
           price: true,
           stock: true,
           imageUrl: true,
-          category: true,
+          categoryId: true,
           merchantId: true,
           createdAt: true,
-          updatedAt: true
+          updatedAt: true,
+          category: {
+            select: { id: true, name: true, description: true }
+          }
         },
         orderBy: { createdAt: 'desc' }
       });
@@ -157,6 +164,7 @@ export async function GET(request: NextRequest) {
       // Return products without merchant info for now
       return NextResponse.json(fallbackProducts.map(p => ({
         ...p,
+        category: p.category?.name || 'General',
         merchant: null
       })));
     } catch (fallbackError) {
@@ -218,6 +226,27 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Find or create category
+    let categoryId = null;
+    if (category && category !== 'General') {
+      const existingCategory = await prisma.category.findUnique({
+        where: { name: category }
+      });
+      
+      if (existingCategory) {
+        categoryId = existingCategory.id;
+      } else {
+        // Create new category if it doesn't exist
+        const newCategory = await prisma.category.create({
+          data: {
+            name: category,
+            description: `Products in ${category} category`
+          }
+        });
+        categoryId = newCategory.id;
+      }
+    }
+
     // Create the product
     const created = await prisma.product.create({
       data: {
@@ -229,7 +258,7 @@ export async function POST(request: NextRequest) {
         price: Number(price),
         stock: Number(stock),
         imageUrl: imageUrl || undefined,
-        category: category || 'General',
+        categoryId: categoryId,
         merchantId: targetMerchantId
       },
       include: {

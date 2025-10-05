@@ -3,6 +3,10 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+generator client {
+  provider = "prisma-client-js"
+}
+
 // Sub-order for each merchant in a split order
 model SubOrder {
   id           String       @id @default(auto()) @map("_id") @db.ObjectId
@@ -66,8 +70,17 @@ model PayoutTransaction {
   @@index([status])
 }
 
-generator client {
-  provider = "prisma-client-js"
+// Categories for organizing products
+model Category {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  name        String   @unique
+  description String
+  image       String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  products Product[]
 }
 
 enum Role {
@@ -157,7 +170,7 @@ model Product {
   price      Float
   stock      Int
   imageUrl   String?
-  category   String     @default("Electronics")
+  categoryId String?    @db.ObjectId
 
   // Rating fields
   averageRating Float?   @default(0)
@@ -168,9 +181,12 @@ model Product {
 
   orderItems OrderItem[]
   ratings    Rating[]
+  category   Category?  @relation(fields: [categoryId], references: [id])
 
   createdAt  DateTime   @default(now())
   updatedAt  DateTime   @updatedAt
+
+  @@index([categoryId])
 }
 
 model OrderItem {

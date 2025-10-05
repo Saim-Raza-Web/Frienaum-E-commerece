@@ -52,4 +52,9 @@ export interface Category {
   description: string;
   image: string;
   productCount: number;
+  firstProduct?: {
+    imageUrl: string;
+    title: string;
+    price: number;
+  } | null;
 } 

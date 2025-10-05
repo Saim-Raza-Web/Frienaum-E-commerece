@@ -26,7 +26,7 @@ function HomePage({ params }: HomePageProps) {
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [categories, setCategories] = useState<{ id: string; name: string; productCount: number }[]>([]);
+  const [categories, setCategories] = useState<{ id: string; name: string; productCount: number; firstProduct?: { imageUrl?: string; title?: string } }[]>([]);
   
   // Typing animation state
   const [displayText, setDisplayText] = useState('EStore');
@@ -81,11 +81,24 @@ function HomePage({ params }: HomePageProps) {
   const fetchFeaturedProducts = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/products');
-      if (!response.ok) {
+      
+      // Fetch products and categories in parallel
+      const [productsResponse, categoriesResponse] = await Promise.all([
+        fetch('/api/products'),
+        fetch('/api/categories')
+      ]);
+
+      if (!productsResponse.ok) {
         throw new Error('Failed to fetch products');
       }
-      const productsData = await response.json();
+      if (!categoriesResponse.ok) {
+        throw new Error('Failed to fetch categories');
+      }
+
+      const [productsData, categoriesData] = await Promise.all([
+        productsResponse.json(),
+        categoriesResponse.json()
+      ]);
 
       // Transform API data to match Product interface
       const transformedProducts: Product[] = productsData.map((product: any) => ({
@@ -105,19 +118,11 @@ function HomePage({ params }: HomePageProps) {
       // Take first 6 products as featured
       setFeaturedProducts(transformedProducts.slice(0, 6));
 
-      // Build categories from all products
-      const categoryMap = new Map<string, number>();
-      transformedProducts.forEach(p => {
-        const cat = p.category || 'Uncategorized';
-        categoryMap.set(cat, (categoryMap.get(cat) || 0) + 1);
-      });
-      const builtCategories = Array.from(categoryMap.entries())
-        .map(([name, productCount], idx) => ({ id: String(idx + 1), name, productCount }))
-        .sort((a, b) => b.productCount - a.productCount);
-      setCategories(builtCategories);
+      // Use categories from database
+      setCategories(categoriesData);
     } catch (err) {
-      console.error('Error fetching products:', err);
-      setError('Failed to load products');
+      console.error('Error fetching data:', err);
+      setError('Failed to load data');
     } finally {
       setLoading(false);
     }
@@ -208,19 +213,51 @@ function HomePage({ params }: HomePageProps) {
                 tabIndex={0}
                 onKeyDown={(e) => { if (e.key === 'Enter') router.push(`/${lang}/products?category=${encodeURIComponent(category.name)}`); }}
               >
-                <div className="bg-white rounded-lg p-6 text-center shadow-md hover:shadow-lg transition-shadow duration-200">
-                  <div className="w-16 h-16 bg-gradient-to-br from-turquoise-100 to-primary-100 rounded-full mx-auto mb-4 flex items-center justify-center">
-                    <span className="text-2xl">📱</span>
+                <div className="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100 hover:border-turquoise-200 relative">
+                  {/* Product Image */}
+                  <div className="relative h-32 overflow-hidden">
+                    {category.firstProduct?.imageUrl ? (
+                      <img
+                        src={category.firstProduct.imageUrl}
+                        alt={category.firstProduct.title}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.style.display = 'none';
+                          const fallback = target.nextElementSibling as HTMLElement;
+                          if (fallback) fallback.style.display = 'flex';
+                        }}
+                      />
+                    ) : null}
+                    {/* Fallback gradient background */}
+                    <div 
+                      className={`absolute inset-0 bg-gradient-to-br from-turquoise-500 to-primary-500 flex items-center justify-center ${category.firstProduct?.imageUrl ? 'hidden' : 'flex'}`}
+                    >
+                      <span className="text-4xl text-white font-bold">
+                        {category.name.charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                    {/* Overlay with category info */}
+                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-300 flex items-center justify-center">
+                      <div className="text-center text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <p className="text-sm font-semibold mb-1">{category.name}</p>
+                        <p className="text-xs">{category.productCount} {translate('products')}</p>
+                      </div>
+                    </div>
                   </div>
-                  <h3 className="font-semibold text-gray-900 mb-2">
-                    {category.name}
-                  </h3>
-                  <p className="text-sm text-gray-600 mb-3">
-                    {category.productCount} {translate('products')}
-                  </p>
-                  <div className="flex items-center justify-center text-turquoise-600 group-hover:text-turquoise-700 transition-colors">
-                    <span className="text-sm font-medium">{translate('explore')}</span>
-                    <ArrowRight className="w-4 h-4 ml-1" />
+                  
+                  {/* Card Content */}
+                  <div className="p-4">
+                    <h3 className="font-bold text-gray-900 mb-2 text-lg group-hover:text-turquoise-600 transition-colors duration-200">
+                      {category.name}
+                    </h3>
+                    <p className="text-sm text-gray-500 mb-4 font-medium">
+                      {category.productCount} {translate('products')}
+                    </p>
+                    <div className="flex items-center justify-center text-turquoise-600 group-hover:text-turquoise-700 transition-all duration-200 group-hover:scale-105">
+                      <span className="text-sm font-semibold">{translate('explore')}</span>
+                      <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-200" />
+                    </div>
                   </div>
                 </div>
               </div>

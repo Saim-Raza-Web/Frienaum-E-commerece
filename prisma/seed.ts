@@ -8,6 +8,27 @@ async function main() {
   const merchantPass = await bcrypt.hash("Merchant@12345", 10);
   const customerPass = await bcrypt.hash("Customer@12345", 10);
 
+  // Seed categories first
+  const categories = [
+    { name: 'Electronics', description: 'Electronic devices and gadgets' },
+    { name: 'Fashion', description: 'Clothing, accessories, and fashion items' },
+    { name: 'Home & Garden', description: 'Home improvement and garden supplies' },
+    { name: 'Sports', description: 'Sports equipment and fitness gear' },
+    { name: 'Books', description: 'Books and educational materials' },
+    { name: 'Beauty & Personal Care', description: 'Beauty products and personal care items' },
+    { name: 'Toys & Games', description: 'Toys, games, and entertainment' }
+  ];
+
+  const createdCategories = [];
+  for (const category of categories) {
+    const created = await prisma.category.upsert({
+      where: { name: category.name },
+      update: {},
+      create: category
+    });
+    createdCategories.push(created);
+  }
+
   await prisma.user.upsert({
     where: { email: "admin@store.com" },
     update: {},
@@ -52,7 +73,7 @@ async function main() {
       price: 89.99,
       stock: 15,
       imageUrl: '/images/headphones-1.jpg',
-      category: 'Electronics'
+      categoryName: 'Electronics'
     },
     {
       slug: 'smart-fitness-watch',
@@ -63,7 +84,7 @@ async function main() {
       price: 199.99,
       stock: 8,
       imageUrl: '/images/watch-1.jpg',
-      category: 'Electronics'
+      categoryName: 'Electronics'
     },
     {
       slug: 'portable-bluetooth-speaker',
@@ -74,7 +95,7 @@ async function main() {
       price: 79.99,
       stock: 0,
       imageUrl: '/images/speaker-1.jpg',
-      category: 'Electronics'
+      categoryName: 'Electronics'
     },
     {
       slug: 'organic-cotton-t-shirt',
@@ -85,7 +106,7 @@ async function main() {
       price: 24.99,
       stock: 25,
       imageUrl: '/images/tshirt-1.jpg',
-      category: 'Fashion'
+      categoryName: 'Fashion'
     },
     {
       slug: 'designer-sunglasses',
@@ -96,7 +117,7 @@ async function main() {
       price: 149.99,
       stock: 5,
       imageUrl: '/images/sunglasses-1.jpg',
-      category: 'Fashion'
+      categoryName: 'Fashion'
     },
     {
       slug: 'ceramic-coffee-mug-set',
@@ -107,7 +128,7 @@ async function main() {
       price: 34.99,
       stock: 12,
       imageUrl: '/images/mugs-1.jpg',
-      category: 'Home & Garden'
+      categoryName: 'Home & Garden'
     },
     {
       slug: 'yoga-mat-premium',
@@ -118,7 +139,7 @@ async function main() {
       price: 49.99,
       stock: 20,
       imageUrl: '/images/yoga-mat-1.jpg',
-      category: 'Sports'
+      categoryName: 'Sports'
     },
     {
       slug: 'bestseller-novel-collection',
@@ -129,7 +150,7 @@ async function main() {
       price: 39.99,
       stock: 10,
       imageUrl: '/images/books-1.jpg',
-      category: 'Books'
+      categoryName: 'Books'
     },
     {
       slug: 'leather-wallet',
@@ -140,7 +161,7 @@ async function main() {
       price: 45.99,
       stock: 18,
       imageUrl: '/images/wallet-1.jpg',
-      category: 'Fashion'
+      categoryName: 'Fashion'
     },
     {
       slug: 'kitchen-blender',
@@ -151,7 +172,7 @@ async function main() {
       price: 129.99,
       stock: 12,
       imageUrl: '/images/blender-1.jpg',
-      category: 'Home & Garden'
+      categoryName: 'Home & Garden'
     },
     {
       slug: 'resistance-bands-set',
@@ -162,7 +183,7 @@ async function main() {
       price: 29.99,
       stock: 25,
       imageUrl: '/images/bands-1.jpg',
-      category: 'Sports'
+      categoryName: 'Sports'
     },
     {
       slug: 'wireless-earbuds',
@@ -173,7 +194,7 @@ async function main() {
       price: 159.99,
       stock: 15,
       imageUrl: '/images/earbuds-1.jpg',
-      category: 'Electronics'
+      categoryName: 'Electronics'
     },
     {
       slug: 'coffee-maker',
@@ -184,7 +205,7 @@ async function main() {
       price: 89.99,
       stock: 8,
       imageUrl: '/images/coffee-maker-1.jpg',
-      category: 'Home & Garden'
+      categoryName: 'Home & Garden'
     },
     {
       slug: 'running-shoes',
@@ -195,7 +216,7 @@ async function main() {
       price: 119.99,
       stock: 20,
       imageUrl: '/images/running-shoes-1.jpg',
-      category: 'Sports'
+      categoryName: 'Sports'
     },
     {
       slug: 'smartphone-case',
@@ -206,7 +227,7 @@ async function main() {
       price: 24.99,
       stock: 30,
       imageUrl: '/images/phone-case-1.jpg',
-      category: 'Electronics'
+      categoryName: 'Electronics'
     }
   ];
 
@@ -232,14 +253,19 @@ async function main() {
 
   // Seed products owned by the Merchant profile (use Merchant.id)
   for (const product of products) {
+    const { categoryName, ...productData } = product;
+    const category = createdCategories.find(c => c.name === categoryName);
+    
     await prisma.product.upsert({
       where: { slug: product.slug },
       update: {
-        merchantId: merchantProfile.id
+        merchantId: merchantProfile.id,
+        categoryId: category?.id
       },
       create: {
-        ...product,
-        merchantId: merchantProfile.id
+        ...productData,
+        merchantId: merchantProfile.id,
+        categoryId: category?.id
       },
     });
   }

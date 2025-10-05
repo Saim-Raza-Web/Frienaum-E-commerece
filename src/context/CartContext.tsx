@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { Product } from '@/types';
+import { useAuth } from './AuthContext';
 
 type CartItem = {
   product: Product;
@@ -23,34 +24,49 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 export function CartProvider({ children }: { children: ReactNode }) {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isClient, setIsClient] = useState(false);
+  const { user, isAuthenticated } = useAuth();
 
   // Ensure we only access localStorage on the client
   useEffect(() => {
     setIsClient(true);
 
-    // Load cart from localStorage only on client
-    try {
-      const savedCart = localStorage.getItem('cart');
-      if (savedCart) {
-        const parsedCart = JSON.parse(savedCart);
-        setCartItems(parsedCart);
+    // Load cart from localStorage only on client and when authenticated
+    if (isAuthenticated) {
+      try {
+        const savedCart = localStorage.getItem('cart');
+        if (savedCart) {
+          const parsedCart = JSON.parse(savedCart);
+          setCartItems(parsedCart);
+        }
+      } catch (error) {
+        console.error('Failed to load cart from localStorage', error);
+        localStorage.removeItem('cart');
       }
-    } catch (error) {
-      console.error('Failed to load cart from localStorage', error);
-      localStorage.removeItem('cart');
     }
-  }, []);
+  }, [isAuthenticated]);
 
-  // Save cart to localStorage whenever it changes (only on client)
+  // Clear cart when user logs out
   useEffect(() => {
-    if (!isClient) return;
+    if (isClient && !isAuthenticated) {
+      setCartItems([]);
+      try {
+        localStorage.removeItem('cart');
+      } catch (error) {
+        console.error('Failed to clear cart from localStorage', error);
+      }
+    }
+  }, [isAuthenticated, isClient]);
+
+  // Save cart to localStorage whenever it changes (only on client and when authenticated)
+  useEffect(() => {
+    if (!isClient || !isAuthenticated) return;
 
     try {
       localStorage.setItem('cart', JSON.stringify(cartItems));
     } catch (error) {
       console.error('Failed to save cart to localStorage', error);
     }
-  }, [cartItems, isClient]);
+  }, [cartItems, isClient, isAuthenticated]);
 
   const addToCart = (product: Product, quantity: number = 1) => {
     setCartItems(prevItems => {
@@ -91,7 +107,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const clearCart = useCallback(() => {
     setCartItems([]);
-  }, []);
+    if (isClient) {
+      try {
+        localStorage.removeItem('cart');
+      } catch (error) {
+        console.error('Failed to clear cart from localStorage', error);
+      }
+    }
+  }, [isClient]);
 
   // Calculate total items in cart
   const itemCount = cartItems.reduce((total, item) => total + item.quantity, 0);

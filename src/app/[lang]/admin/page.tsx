@@ -44,6 +44,7 @@ type Product = {
 function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const { translate } = useTranslation();
+  const { user } = useAuth();
 
   // Product management state
   const [products, setProducts] = useState<Product[]>([]);
@@ -56,6 +57,15 @@ function AdminDashboard() {
     price:"0", stock:"0", imageUrl:"", category: "General"
   });
   const [isUploading, setIsUploading] = useState(false);
+  // Admin-only: selected merchant for new product
+  const [selectedMerchantId, setSelectedMerchantId] = useState<string>('');
+
+  // Categories state
+  const [categories, setCategories] = useState<any[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
+  const [showNewCategoryModal, setShowNewCategoryModal] = useState(false);
+  const [newCategory, setNewCategory] = useState({ name: '', description: '' });
+  const [creatingCategory, setCreatingCategory] = useState(false);
 
   // Live system stats
   const [stats, setStats] = useState({ totalUsers: 0, totalOrders: 0, revenue: 0, activeProducts: 0 });
@@ -112,6 +122,58 @@ function AdminDashboard() {
       setStatsError(e?.message || 'Failed to load stats');
     } finally {
       setStatsLoading(false);
+    }
+  };
+
+  // Fetch categories from database
+  const fetchCategories = async () => {
+    try {
+      setCategoriesLoading(true);
+      const response = await fetch('/api/categories');
+      if (!response.ok) {
+        throw new Error('Failed to fetch categories');
+      }
+      const data = await response.json();
+      setCategories(data);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    } finally {
+      setCategoriesLoading(false);
+    }
+  };
+
+  // Create new category
+  const createCategory = async () => {
+    if (!newCategory.name.trim()) {
+      alert('Category name is required');
+      return;
+    }
+
+    try {
+      setCreatingCategory(true);
+      const response = await fetch('/api/categories', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newCategory),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create category');
+      }
+
+      const createdCategory = await response.json();
+      setCategories(prev => [...prev, createdCategory]);
+      setNewCategory({ name: '', description: '' });
+      setShowNewCategoryModal(false);
+      alert('Category created successfully!');
+    } catch (error) {
+      console.error('Error creating category:', error);
+      alert(error instanceof Error ? error.message : 'Failed to create category');
+    } finally {
+      setCreatingCategory(false);
     }
   };
 
@@ -310,6 +372,9 @@ function AdminDashboard() {
   useEffect(() => {
     if (activeTab === 'products') {
       loadProducts();
+      fetchCategories();
+      // Ensure merchants list is available for admin merchant selection
+      loadUsers();
     }
   }, [activeTab]);
 
@@ -332,18 +397,31 @@ function AdminDashboard() {
     try {
       const url = editingProduct ? `/api/products/${editingProduct.id}` : "/api/products";
       const method = editingProduct ? "PUT" : "POST";
+      const payload = {
+        ...form,
+        // For admins creating a product, API requires merchantId
+        ...(editingProduct ? {} : (user?.role === 'admin' ? { merchantId: selectedMerchantId || undefined } : {}))
+      };
+
+      // Admin must select a merchant when creating a new product
+      if (!editingProduct && user?.role === 'admin' && !selectedMerchantId) {
+        setLoading(false);
+        alert('Please select a merchant for this product.');
+        return;
+      }
 
       const res = await fetch(url, {
         method,
         headers: {"Content-Type":"application/json"},
         credentials: 'include',
-        body: JSON.stringify(form)
+        body: JSON.stringify(payload)
       });
 
       if (res.ok) {
         setForm({ slug:"", title_en:"", title_de:"", desc_en:"", desc_de:"", price:"0", stock:"0", imageUrl:"", category: "General" });
         setShowForm(false);
         setEditingProduct(null);
+        setSelectedMerchantId('');
         loadProducts();
       } else {
         const error = await res.json();
@@ -848,13 +926,12 @@ function AdminDashboard() {
                   <div className="flex flex-col sm:flex-row gap-4">
                     <div className="flex-1">
                       <div className="relative">
-                        <Search className="w-5 h-5 absolute left-3 top-3 text-gray-400" />
                         <input
                           type="text"
                           placeholder="Search products..."
                           value={searchTerm}
                           onChange={(e) => setSearchTerm(e.target.value)}
-                          className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent"
+                          className="w-full pl-3 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent"
                         />
                       </div>
                     </div>
@@ -893,24 +970,25 @@ function AdminDashboard() {
                     ) : (
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {filteredProducts.map(p=>(
-                          <div key={p.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
+                          <div key={p.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow relative flex flex-col h-full">
                             {p.imageUrl && (
                               <div className="w-full h-48 bg-gray-100">
                                 <img src={p.imageUrl} alt={p.slug} className="w-full h-full object-contain" />
                               </div>
                             )}
-                            <div className="p-6">
-                              <div className="flex items-start justify-between mb-4">
-                                <div className="flex-1">
+                            <div className="p-6 flex-1 flex flex-col">
+                              <div className="flex items-start justify-between mb-4 gap-3">
+                                <div className="min-w-0 flex-1">
                                   <h3 className="font-semibold text-lg text-gray-900 mb-1 truncate" title={p.title_en}>{p.title_en}</h3>
                                   <p className="text-sm text-gray-600 mb-2 truncate" title={p.title_de}>{p.title_de}</p>
-                                  <p className="text-xs text-gray-500">Slug: {p.slug}</p>
+                                  <p className="text-xs text-gray-500 truncate">Slug: {p.slug}</p>
                                 </div>
-                                <div className="flex space-x-2">
+                                <div className="flex space-x-2 flex-shrink-0 relative z-10">
                                   <button
                                     onClick={() => editProduct(p)}
                                     className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
                                     title="Edit product"
+                                    aria-label="Edit product"
                                   >
                                     <Edit className="w-4 h-4" />
                                   </button>
@@ -918,6 +996,7 @@ function AdminDashboard() {
                                     onClick={() => deleteProduct(p.id)}
                                     className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
                                     title="Delete product"
+                                    aria-label="Delete product"
                                   >
                                     <Trash2 className="w-4 h-4" />
                                   </button>
@@ -931,7 +1010,7 @@ function AdminDashboard() {
                                 </div>
                                 <div className="flex items-center justify-between">
                                   <span className="text-sm text-gray-600">Stock:</span>
-                                  <span className={`font-semibold ${p.stock > 0 ? 'text-green-600' : 'text-red-600'}`}>
+                                  <span className={`${p.stock > 0 ? 'text-green-600' : 'text-red-600'} font-semibold`}>
                                     {p.stock}
                                   </span>
                                 </div>
@@ -980,6 +1059,25 @@ function AdminDashboard() {
                               placeholder="unique-product-slug"
                             />
                           </div>
+                          {/* Admin-only merchant selector when creating new product */}
+                          {(!editingProduct && user?.role === 'admin') && (
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">Merchant</label>
+                              <select
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent"
+                                value={selectedMerchantId}
+                                onChange={e=>setSelectedMerchantId(e.target.value)}
+                                required
+                              >
+                                <option value="">Select a merchant...</option>
+                                {users.filter(u => !!u.merchantId && !u.isDeleted).map(u => (
+                                  <option key={u.merchantId!} value={u.merchantId!}>
+                                    {u.storeName || u.name || u.email}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          )}
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">English Title</label>
                             <input
@@ -1026,20 +1124,28 @@ function AdminDashboard() {
                           </div>
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
-                            <select
-                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent cursor-pointer"
-                              value={form.category}
-                              onChange={e=>setForm({...form, category:e.target.value})}
-                            >
-                              <option value="General">General</option>
-                              <option value="Electronics">Electronics</option>
-                              <option value="Fashion">Fashion</option>
-                              <option value="Home & Kitchen">Home & Kitchen</option>
-                              <option value="Beauty & Personal Care">Beauty & Personal Care</option>
-                              <option value="Sports & Outdoors">Sports & Outdoors</option>
-                              <option value="Books">Books</option>
-                              <option value="Toys & Games">Toys & Games</option>
-                            </select>
+                            <div className="flex gap-2">
+                              <select
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent cursor-pointer flex-1"
+                                value={form.category}
+                                onChange={e=>setForm({...form, category:e.target.value})}
+                              >
+                                <option value="General">General</option>
+                                {categories.map(category => (
+                                  <option key={category.id} value={category.name}>
+                                    {category.name}
+                                  </option>
+                                ))}
+                              </select>
+                              <button
+                                type="button"
+                                onClick={() => setShowNewCategoryModal(true)}
+                                className="px-3 py-2 bg-turquoise-600 text-white rounded-md hover:bg-turquoise-700 text-sm"
+                                title="Add new category"
+                              >
+                                +
+                              </button>
+                            </div>
                           </div>
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">Product Image</label>
@@ -1085,7 +1191,9 @@ function AdminDashboard() {
                                 }}
                               >
                                 <input
-                                  type="url"
+                                  type="text"
+                                  inputMode="url"
+                                  autoComplete="off"
                                   className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent"
                                   value={form.imageUrl}
                                   onChange={e=>setForm({...form, imageUrl:e.target.value})}
@@ -1222,6 +1330,59 @@ function AdminDashboard() {
           </div>
         </div>
       </div>
+
+      {/* New Category Modal */}
+      {showNewCategoryModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">Add New Category</h3>
+            </div>
+            <form onSubmit={(e) => { e.preventDefault(); createCategory(); }} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Category Name</label>
+                <input
+                  type="text"
+                  value={newCategory.name}
+                  onChange={(e) => setNewCategory(prev => ({ ...prev, name: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent"
+                  placeholder="Enter category name"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                <textarea
+                  value={newCategory.description}
+                  onChange={(e) => setNewCategory(prev => ({ ...prev, description: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent"
+                  placeholder="Enter category description"
+                  rows={3}
+                />
+              </div>
+              <div className="flex items-center justify-end gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowNewCategoryModal(false);
+                    setNewCategory({ name: '', description: '' });
+                  }}
+                  className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={creatingCategory}
+                  className="px-4 py-2 bg-turquoise-600 text-white rounded-lg hover:bg-turquoise-700 disabled:opacity-50"
+                >
+                  {creatingCategory ? 'Creating...' : 'Create Category'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

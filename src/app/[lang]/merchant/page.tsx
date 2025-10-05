@@ -30,6 +30,11 @@ function MerchantDashboard() {
     });
   }, [user]);
 
+  // Fetch categories on component mount
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
   // State declarations
   const [activeTab, setActiveTab] = useState('overview');
   const [searchTerm, setSearchTerm] = useState('');
@@ -98,6 +103,13 @@ function MerchantDashboard() {
   const [customerOrders, setCustomerOrders] = useState<any[]>([]);
   const [customerNotes, setCustomerNotes] = useState('');
   const [customerTags, setCustomerTags] = useState('');
+
+  // State for categories
+  const [categories, setCategories] = useState<any[]>([]);
+  const [categoriesLoading, setCategoriesLoading] = useState(false);
+  const [showNewCategoryModal, setShowNewCategoryModal] = useState(false);
+  const [newCategory, setNewCategory] = useState({ name: '', description: '' });
+  const [creatingCategory, setCreatingCategory] = useState(false);
   const [customerSaving, setCustomerSaving] = useState(false);
 
   // Helper function to transform order status for merchant view
@@ -116,6 +128,58 @@ function MerchantDashboard() {
       case 'DELIVERED': return 'bg-green-100 text-green-800';
       case 'CANCELLED': return 'bg-red-100 text-red-800';
       default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  // Fetch categories from database
+  const fetchCategories = async () => {
+    try {
+      setCategoriesLoading(true);
+      const response = await fetch('/api/categories');
+      if (!response.ok) {
+        throw new Error('Failed to fetch categories');
+      }
+      const data = await response.json();
+      setCategories(data);
+    } catch (error) {
+      console.error('Error fetching categories:', error);
+    } finally {
+      setCategoriesLoading(false);
+    }
+  };
+
+  // Create new category
+  const createCategory = async () => {
+    if (!newCategory.name.trim()) {
+      alert('Category name is required');
+      return;
+    }
+
+    try {
+      setCreatingCategory(true);
+      const response = await fetch('/api/categories', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(newCategory),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Failed to create category');
+      }
+
+      const createdCategory = await response.json();
+      setCategories(prev => [...prev, createdCategory]);
+      setNewCategory({ name: '', description: '' });
+      setShowNewCategoryModal(false);
+      alert('Category created successfully!');
+    } catch (error) {
+      console.error('Error creating category:', error);
+      alert(error instanceof Error ? error.message : 'Failed to create category');
+    } finally {
+      setCreatingCategory(false);
     }
   };
 
@@ -2136,20 +2200,28 @@ function MerchantDashboard() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">{translate('Category')}</label>
-                  <select
-                    value={editingProduct.category}
-                    onChange={e => setEditingProduct(p => ({ ...p, category: e.target.value }))}
-                    className="input-field h-11 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors cursor-pointer"
-                  >
-                    <option value="General">General</option>
-                    <option value="Electronics">Electronics</option>
-                    <option value="Fashion">Fashion</option>
-                    <option value="Home & Kitchen">Home & Kitchen</option>
-                    <option value="Beauty & Personal Care">Beauty & Personal Care</option>
-                    <option value="Sports & Outdoors">Sports & Outdoors</option>
-                    <option value="Books">Books</option>
-                    <option value="Toys & Games">Toys & Games</option>
-                  </select>
+                  <div className="flex gap-2">
+                    <select
+                      value={editingProduct.category}
+                      onChange={e => setEditingProduct(p => ({ ...p, category: e.target.value }))}
+                      className="input-field h-11 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors cursor-pointer flex-1"
+                    >
+                      <option value="General">General</option>
+                      {categories.map(category => (
+                        <option key={category.id} value={category.name}>
+                          {category.name}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => setShowNewCategoryModal(true)}
+                      className="px-3 py-2 bg-turquoise-600 text-white rounded-md hover:bg-turquoise-700 text-sm"
+                      title="Add new category"
+                    >
+                      +
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Product Image</label>
@@ -2278,20 +2350,28 @@ function MerchantDashboard() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700">{translate('Category')}</label>
-                  <select
-                    value={newProduct.category}
-                    onChange={e=>setNewProduct(p=>({...p, category: e.target.value}))}
-                    className="input-field h-11 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors cursor-pointer"
-                  >
-                    <option value="General">General</option>
-                    <option value="Electronics">Electronics</option>
-                    <option value="Fashion">Fashion</option>
-                    <option value="Home & Kitchen">Home & Kitchen</option>
-                    <option value="Beauty & Personal Care">Beauty & Personal Care</option>
-                    <option value="Sports & Outdoors">Sports & Outdoors</option>
-                    <option value="Books">Books</option>
-                    <option value="Toys & Games">Toys & Games</option>
-                  </select>
+                  <div className="flex gap-2">
+                    <select
+                      value={newProduct.category}
+                      onChange={e=>setNewProduct(p=>({...p, category: e.target.value}))}
+                      className="input-field h-11 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors cursor-pointer flex-1"
+                    >
+                      <option value="General">General</option>
+                      {categories.map(category => (
+                        <option key={category.id} value={category.name}>
+                          {category.name}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      onClick={() => setShowNewCategoryModal(true)}
+                      className="px-3 py-2 bg-turquoise-600 text-white rounded-md hover:bg-turquoise-700 text-sm"
+                      title="Add new category"
+                    >
+                      +
+                    </button>
+                  </div>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Product Image</label>
@@ -2353,6 +2433,59 @@ function MerchantDashboard() {
                 <button type="button" onClick={closeAddModal} className="btn-secondary">{translate('Cancel')}</button>
                 <button type="submit" disabled={creating} className="btn-primary">
                   {creating ? translate('merchant.loading') : translate('merchant.addProduct')}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* New Category Modal */}
+      {showNewCategoryModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+            <div className="px-6 py-4 border-b border-gray-200">
+              <h3 className="text-lg font-semibold text-gray-900">Add New Category</h3>
+            </div>
+            <form onSubmit={(e) => { e.preventDefault(); createCategory(); }} className="p-6 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Category Name</label>
+                <input
+                  type="text"
+                  value={newCategory.name}
+                  onChange={(e) => setNewCategory(prev => ({ ...prev, name: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent"
+                  placeholder="Enter category name"
+                  required
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                <textarea
+                  value={newCategory.description}
+                  onChange={(e) => setNewCategory(prev => ({ ...prev, description: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent"
+                  placeholder="Enter category description"
+                  rows={3}
+                />
+              </div>
+              <div className="flex items-center justify-end gap-3 pt-4">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowNewCategoryModal(false);
+                    setNewCategory({ name: '', description: '' });
+                  }}
+                  className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={creatingCategory}
+                  className="px-4 py-2 bg-turquoise-600 text-white rounded-lg hover:bg-turquoise-700 disabled:opacity-50"
+                >
+                  {creatingCategory ? 'Creating...' : 'Create Category'}
                 </button>
               </div>
             </form>

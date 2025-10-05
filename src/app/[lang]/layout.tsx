@@ -1,7 +1,6 @@
 import { Locale, isValidLocale } from '@/i18n/config';
 import { Providers } from '@/components/Providers';
-import Navbar from '@/components/Navbar';
-import Navigation from '@/components/Navigation';
+import UnifiedNavbar from '@/components/UnifiedNavbar';
 import Footer from '@/components/Footer';
 
 interface LocaleLayoutProps {
@@ -19,8 +18,7 @@ export default async function LocaleLayout({
   return (
     <Providers locale={locale}>
       <div className="flex flex-col min-h-screen" suppressHydrationWarning={true}>
-        <Navbar />
-        <Navigation />
+        <UnifiedNavbar />
         <main className="flex-grow">
           {children}
         </main>
