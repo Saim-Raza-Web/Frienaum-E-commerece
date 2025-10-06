@@ -2,11 +2,15 @@
 
 import React from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Facebook, Twitter, Instagram, Mail, Phone, MapPin } from 'lucide-react';
 import { useTranslation } from '@/i18n/TranslationProvider';
 
 export default function Footer() {
   const { translate } = useTranslation();
+  const pathname = usePathname() || '';
+  const segments = pathname.split('/');
+  const lang = segments[1] || 'en';
   return (
     <footer className="bg-gray-900 text-white">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
@@ -38,27 +42,27 @@ export default function Footer() {
             <h3 className="text-lg font-semibold mb-4">{translate('quickLinks')}</h3>
             <ul className="space-y-2">
               <li>
-                <Link href="/en/" className="text-gray-300 hover:text-turquoise-400 transition-colors">
+                <Link href={`/${lang}/`} className="text-gray-300 hover:text-turquoise-400 transition-colors">
                   {translate('home')}
                 </Link>
               </li>
               <li>
-                <Link href="/en/products" className="text-gray-300 hover:text-turquoise-400 transition-colors">
+                <Link href={`/${lang}/products`} className="text-gray-300 hover:text-turquoise-400 transition-colors">
                   {translate('navigation.products')}
                 </Link>
               </li>
               <li>
-                <Link href="/en/categories" className="text-gray-300 hover:text-turquoise-400 transition-colors">
+                <Link href={`/${lang}/categories`} className="text-gray-300 hover:text-turquoise-400 transition-colors">
                   {translate('navigation.categories')}
                 </Link>
               </li>
               <li>
-                <Link href="/en/about" className="text-gray-300 hover:text-turquoise-400 transition-colors">
+                <Link href={`/${lang}/about`} className="text-gray-300 hover:text-turquoise-400 transition-colors">
                   {translate('about')}
                 </Link>
               </li>
               <li>
-                <Link href="/en/contact" className="text-gray-300 hover:text-turquoise-400 transition-colors">
+                <Link href={`/${lang}/contact`} className="text-gray-300 hover:text-turquoise-400 transition-colors">
                   {translate('contact')}
                 </Link>
               </li>
@@ -70,23 +74,13 @@ export default function Footer() {
             <h3 className="text-lg font-semibold mb-4">{translate('customerService')}</h3>
             <ul className="space-y-2">
               <li>
-                <Link href="/help" className="text-gray-300 hover:text-turquoise-400 transition-colors">
+                <Link href={`/${lang}/help`} className="text-gray-300 hover:text-turquoise-400 transition-colors">
                   {translate('helpCenter')}
                 </Link>
               </li>
               <li>
-                <Link href="/shipping" className="text-gray-300 hover:text-turquoise-400 transition-colors">
-                  {translate('shippingInfo')}
-                </Link>
-              </li>
-              <li>
-                <Link href="/returns" className="text-gray-300 hover:text-turquoise-400 transition-colors">
-                  {translate('returns')}
-                </Link>
-              </li>
-              <li>
-                <Link href="/size-guide" className="text-gray-300 hover:text-turquoise-400 transition-colors">
-                  {translate('sizeGuide')}
+                <Link href={`/${lang}/faqs`} className="text-gray-300 hover:text-turquoise-400 transition-colors">
+                  {translate('faqTitle')}
                 </Link>
               </li>
             </ul>
@@ -115,11 +109,11 @@ export default function Footer() {
         <div className="mt-8 pt-8 border-t border-gray-700 text-center">
           <p className="text-gray-400">
             {translate('copyright')} | 
-            <Link href="/privacy" className="ml-2 text-gray-300 hover:text-turquoise-400 transition-colors">
+            <Link href={`/${lang}/privacy`} className="ml-2 text-gray-300 hover:text-turquoise-400 transition-colors">
               {translate('privacyPolicy')}
             </Link>
             {' | '}
-            <Link href="/terms" className="text-gray-300 hover:text-turquoise-400 transition-colors">
+            <Link href={`/${lang}/terms`} className="text-gray-300 hover:text-turquoise-400 transition-colors">
               {translate('termsOfService')}
             </Link>
           </p>

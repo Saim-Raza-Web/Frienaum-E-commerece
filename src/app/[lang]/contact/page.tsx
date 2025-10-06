@@ -3,6 +3,8 @@
 import React, { useState } from 'react';
 import { Mail, Phone, MapPin, Clock, Send, MessageCircle } from 'lucide-react';
 import { useTranslation } from '@/i18n/TranslationProvider';
+import PageHero from '@/components/PageHero';
+import SectionCard from '@/components/SectionCard';
 
 export default function ContactPage() {
   const { translate } = useTranslation();
@@ -65,12 +67,6 @@ export default function ContactPage() {
       color: 'text-primary-600'
     },
     {
-      icon: MapPin,
-      title: translate('visitUs'),
-      details: ['123 Commerce St', 'San Francisco, CA 94105'],
-      color: 'text-turquoise-600'
-    },
-    {
       icon: Clock,
       title: translate('businessHours'),
       details: [translate('businessHoursWeekdays'), translate('businessHoursWeekend')],
@@ -89,25 +85,12 @@ export default function ContactPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <h1 className="text-3xl font-bold text-gray-900">{translate('contactUs')}</h1>
-          <p className="mt-2 text-gray-600">{translate('contactSubtitle')}</p>
-        </div>
-      </div>
+      <PageHero title={translate('contactUs')} subtitle={translate('contactSubtitle')} />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
           {/* Contact Form */}
-          <div className="bg-white rounded-lg shadow-md p-8">
-            <div className="flex items-center space-x-3 mb-6">
-              <div className="w-10 h-10 bg-gradient-to-r from-turquoise-500 to-primary-500 rounded-lg flex items-center justify-center">
-                <MessageCircle className="w-5 h-5 text-white" />
-              </div>
-              <h2 className="text-2xl font-bold text-gray-900">{translate('sendMessage')}</h2>
-            </div>
-            
+          <SectionCard title={translate('sendMessage')}>
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
@@ -198,7 +181,7 @@ export default function ContactPage() {
                 )}
               </button>
             </form>
-          </div>
+          </SectionCard>
 
           {/* Contact Information */}
           <div className="space-y-8">
@@ -226,41 +209,16 @@ export default function ContactPage() {
                 </div>
               ))}
             </div>
-
-            {/* FAQ Section */}
-            <div className="bg-gradient-to-br from-turquoise-50 to-primary-50 rounded-lg p-6">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">{translate('faqTitle')}</h3>
-              <div className="space-y-3">
-                <div>
-                  <h4 className="font-medium text-gray-900 text-sm">{translate('shippingQuestion')}</h4>
-                  <p className="text-gray-600 text-sm">{translate('shippingAnswer')}</p>
-                </div>
-                <div>
-                  <h4 className="font-medium text-gray-900 text-sm">{translate('returnPolicyQuestion')}</h4>
-                  <p className="text-gray-600 text-sm">{translate('returnPolicyAnswer')}</p>
-                </div>
-                <div>
-                  <h4 className="font-medium text-gray-900 text-sm">{translate('internationalShippingQuestion')}</h4>
-                  <p className="text-gray-600 text-sm">{translate('internationalShippingAnswer')}</p>
-                </div>
+            <SectionCard title={translate('faqTitle')}>
+              <div className="space-y-2 text-sm text-gray-600">
+                <p>{translate('shippingQuestion')} — {translate('shippingAnswer')}</p>
+                <p>{translate('returnPolicyQuestion')} — {translate('returnPolicyAnswer')}</p>
+                <p>{translate('internationalShippingQuestion')} — {translate('internationalShippingAnswer')}</p>
               </div>
-            </div>
+            </SectionCard>
           </div>
         </div>
 
-        {/* Map Section */}
-        <div className="mt-16">
-          <div className="bg-white rounded-lg shadow-md p-8">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">{translate('ourLocation')}</h2>
-            <div className="bg-gray-200 rounded-lg h-64 flex items-center justify-center">
-              <div className="text-center">
-                <MapPin className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600">{translate('mapPlaceholder')}</p>
-                <p className="text-sm text-gray-500">123 Commerce St, San Francisco, CA 94105</p>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );
