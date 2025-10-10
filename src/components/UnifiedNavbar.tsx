@@ -111,7 +111,7 @@ export default function UnifiedNavbar() {
           <div className="flex-shrink-0">
             <Link href={`/${lang}/`} className="flex items-center gap-2">
               <img 
-                src="/images/logo.png" 
+                src="/images/Logo.png" 
                 alt="Frienaum Logo" 
                 className="h-8 w-auto" 
                 style={{ filter: 'invert(37%) sepia(53%) saturate(946%) hue-rotate(336deg) brightness(90%) contrast(100%) drop-shadow(0 0 0.5px #00000066)' }}
