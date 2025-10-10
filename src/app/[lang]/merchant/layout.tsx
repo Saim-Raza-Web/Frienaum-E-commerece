@@ -63,7 +63,7 @@ export default function MerchantLayout({
       >
         <div className="flex h-full flex-col">
           <div className="flex h-16 flex-shrink-0 items-center justify-between px-4">
-            <h1 className="text-xl font-bold text-blue-600">{translate('merchant.dashboard')}</h1>
+            <h1 className="text-xl font-bold text-primary-800">{translate('merchant.dashboard')}</h1>
             <button
               className="rounded-md p-1 text-gray-400 hover:bg-gray-100 lg:hidden"
               onClick={() => setSidebarOpen(false)}
@@ -78,19 +78,19 @@ export default function MerchantLayout({
                 href={item.href}
                 className={`group flex items-center px-3 py-3 text-sm font-medium rounded-md ${
                   isActive(item)
-                    ? 'bg-blue-50 text-blue-600 font-medium'
+                    ? 'bg-primary-50 text-primary-600 font-medium'
                     : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
                 } transition-colors duration-200`}
               >
                 <item.icon
                   className={`mr-3 h-5 w-5 flex-shrink-0 ${
-                    isActive(item) ? 'text-blue-600' : 'text-gray-400 group-hover:text-gray-500'
+                    isActive(item) ? 'text-primary-700' : 'text-gray-400 group-hover:text-gray-500'
                   }`}
                   aria-hidden="true"
                 />
                 {translate(item.name)}
                 {isActive(item) && (
-                  <span className="ml-auto w-1 h-6 bg-blue-600 rounded-l-md"></span>
+                  <span className="ml-auto w-1 h-6 bg-primary-700 rounded-l-md"></span>
                 )}
               </Link>
             ))}

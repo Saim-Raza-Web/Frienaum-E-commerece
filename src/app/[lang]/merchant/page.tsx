@@ -108,7 +108,12 @@ function MerchantDashboard() {
   const [categories, setCategories] = useState<any[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(false);
   const [showNewCategoryModal, setShowNewCategoryModal] = useState(false);
-  const [newCategory, setNewCategory] = useState({ name: '', description: '' });
+  const [newCategory, setNewCategory] = useState({ 
+    name: '', 
+    description: '',
+    image: null as File | null,
+    imagePreview: null as string | null
+  });
   const [creatingCategory, setCreatingCategory] = useState(false);
   const [customerSaving, setCustomerSaving] = useState(false);
 
@@ -157,12 +162,18 @@ function MerchantDashboard() {
 
     try {
       setCreatingCategory(true);
+      
+      const formData = new FormData();
+      formData.append('name', newCategory.name.trim());
+      formData.append('description', newCategory.description.trim());
+      if (newCategory.image) {
+        formData.append('image', newCategory.image);
+      }
+
       const response = await fetch('/api/categories', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(newCategory),
+        // Don't set Content-Type header, let the browser set it with the correct boundary
+        body: formData,
       });
 
       if (!response.ok) {
@@ -172,7 +183,18 @@ function MerchantDashboard() {
 
       const createdCategory = await response.json();
       setCategories(prev => [...prev, createdCategory]);
-      setNewCategory({ name: '', description: '' });
+      
+      // Reset form and cleanup
+      if (newCategory.imagePreview) {
+        URL.revokeObjectURL(newCategory.imagePreview);
+      }
+      setNewCategory({ 
+        name: '', 
+        description: '',
+        image: null,
+        imagePreview: null
+      });
+      setShowNewCategoryModal(false);
       setShowNewCategoryModal(false);
       alert('Category created successfully!');
     } catch (error) {
@@ -1078,7 +1100,7 @@ function MerchantDashboard() {
                         {loading ? (
                           <span className="inline-flex items-center">
                             <Loader2 className="animate-spin h-5 w-5 mr-2" />
-                            Loading...
+                            ...
                           </span>
                         ) : error ? (
                           <span className="text-red-600">Error</span>
@@ -2469,12 +2491,62 @@ function MerchantDashboard() {
                   rows={3}
                 />
               </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Category Image</label>
+                <div className="mt-1 flex items-center">
+                  <label className="cursor-pointer">
+                    <span className="inline-block px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50">
+                      {newCategory.image ? 'Change Image' : 'Upload Image'}
+                    </span>
+                    <input
+                      type="file"
+                      className="sr-only"
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          // Revoke previous object URL to prevent memory leaks
+                          if (newCategory.imagePreview) {
+                            URL.revokeObjectURL(newCategory.imagePreview);
+                          }
+                          setNewCategory(prev => ({
+                            ...prev,
+                            image: file,
+                            imagePreview: URL.createObjectURL(file)
+                          }));
+                        }
+                      }}
+                    />
+                  </label>
+                  {newCategory.imagePreview && (
+                    <div className="ml-4">
+                      <img
+                        src={newCategory.imagePreview}
+                        alt="Category preview"
+                        className="h-16 w-16 object-cover rounded-md"
+                      />
+                    </div>
+                  )}
+                </div>
+                <p className="mt-1 text-xs text-gray-500">
+                  {newCategory.image ? newCategory.image.name : 'No file chosen'}
+                </p>
+              </div>
               <div className="flex items-center justify-end gap-3 pt-4">
                 <button
                   type="button"
                   onClick={() => {
                     setShowNewCategoryModal(false);
-                    setNewCategory({ name: '', description: '' });
+                    // Clean up the object URL to prevent memory leaks
+                    if (newCategory.imagePreview) {
+                      URL.revokeObjectURL(newCategory.imagePreview);
+                    }
+                    setNewCategory({ 
+                      name: '', 
+                      description: '',
+                      image: null,
+                      imagePreview: null
+                    });
                   }}
                   className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
                 >

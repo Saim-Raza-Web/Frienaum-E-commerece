@@ -24,21 +24,15 @@ interface HomePageProps {
 
 // Category Card Component
 const CategoryCard = ({ category, index, lang, router }: { 
-  category: { id: string; name: string }; 
+  category: { id: string; name: string; image?: string; firstProduct?: { imageUrl?: string } }; 
   index: number; 
   lang: string; 
   router: any 
 }) => {
-  const categoryImages = [
-    '/images/0bc3a4a9-e8ff-4ccb-84fb-31c2681954e8.avif',
-    '/images/56bd60e4-9ceb-4d19-96e2-fbff134f96e6.webp',
-    '/images/87bad4ed-4a67-46d2-bbf6-dc07464a66b8.jfif',
-    '/images/aa3828cd-3b1b-4988-a260-1a3835961377.webp',
-    '/images/ab3774f4-bef8-47fb-8110-231aa1bbdecb.webp',
-    '/images/dbf72cec-2063-4f83-9dce-3d9859f3fb40.webp',
-    '/images/0bc3a4a9-e8ff-4ccb-84fb-31c2681954e8.avif',
-    '/images/56bd60e4-9ceb-4d19-96e2-fbff134f96e6.webp',
-  ];
+  // Fallback to first product image if category image is not available
+  const imageSrc = category.image || 
+                  (category.firstProduct?.imageUrl || 
+                  '/images/placeholder-category.jpg');
 
   return (
     <div
@@ -50,9 +44,14 @@ const CategoryCard = ({ category, index, lang, router }: {
     >
       <div className="relative h-48 w-full overflow-hidden rounded-lg shadow-md hover:shadow-lg transition-shadow">
         <img
-          src={categoryImages[index % categoryImages.length]}
+          src={imageSrc}
           alt={category.name}
           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+          onError={(e) => {
+            // Fallback to placeholder if image fails to load
+            const target = e.target as HTMLImageElement;
+            target.src = '/images/placeholder-category.jpg';
+          }}
         />
         <div className="absolute inset-0 bg-black bg-opacity-20 group-hover:bg-opacity-30 transition-all duration-300"></div>
         <h3 className="absolute bottom-4 left-0 right-0 mx-auto text-white text-lg font-semibold drop-shadow-lg px-4">

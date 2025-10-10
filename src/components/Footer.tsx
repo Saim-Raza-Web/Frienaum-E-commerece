@@ -19,7 +19,7 @@ export default function Footer() {
           <div className="col-span-1 md:col-span-2">
             <div className="flex items-center space-x-2 mb-4">
               <img 
-              src="/images/logo.png" 
+              src="/images/Logo.png" 
               alt="Frienaum Logo" 
               className="h-8 w-auto"
               style={{ filter: 'invert(37%) sepia(53%) saturate(946%) hue-rotate(336deg) brightness(90%) contrast(100%) drop-shadow(0 0 0.5px #00000066)' }}

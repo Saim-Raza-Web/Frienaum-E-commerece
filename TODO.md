@@ -1,3 +1,11 @@
+# Build Fix: TypeScript Error in Categories API
+
+## Pending Tasks
+- [x] Update RouteContext type to use Promise for params
+- [x] Update PUT function to await params
+- [x] Update DELETE function to await params
+- [ ] Run build to verify fix
+
 # Stripe Payment Integration Implementation
 
 ## Completed Tasks ✅

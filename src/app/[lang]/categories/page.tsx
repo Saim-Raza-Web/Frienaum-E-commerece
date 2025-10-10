@@ -18,17 +18,17 @@ export default function CategoriesPage() {
   const router = useRouter();
   const currentLang = pathname?.split('/')[1] || 'en';
   
-  // Category images array matching the home page
-  const categoryImages = [
-    '/images/0bc3a4a9-e8ff-4ccb-84fb-31c2681954e8.avif',
-    '/images/56bd60e4-9ceb-4d19-96e2-fbff134f96e6.webp',
-    '/images/87bad4ed-4a67-46d2-bbf6-dc07464a66b8.jfif',
-    '/images/aa3828cd-3b1b-4988-a260-1a3835961377.webp',
-    '/images/ab3774f4-bef8-47fb-8110-231aa1bbdecb.webp',
-    '/images/dbf72cec-2063-4f83-9dce-3d9859f3fb40.webp',
-    '/images/0bc3a4a9-e8ff-4ccb-84fb-31c2681954e8.avif',
-    '/images/56bd60e4-9ceb-4d19-96e2-fbff134f96e6.webp',
-  ];
+  // Get the appropriate image source for a category
+  const getCategoryImage = (category: Category) => {
+    // Use the category image if available
+    if (category.image) return category.image;
+    
+    // Otherwise use the first product's image if available
+    if (category.firstProduct?.imageUrl) return category.firstProduct.imageUrl;
+    
+    // Fallback to a placeholder image
+    return '/images/placeholder-category.jpg';
+  };
 
   // Fetch categories from API
   useEffect(() => {
@@ -166,9 +166,14 @@ export default function CategoriesPage() {
                   {/* Category Image */}
                   <div className="relative h-56 w-full overflow-hidden">
                     <img
-                      src={categoryImages[index % categoryImages.length]}
+                      src={getCategoryImage(category)}
                       alt={category.name}
                       className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                      onError={(e) => {
+                        // Fallback to placeholder if image fails to load
+                        const target = e.target as HTMLImageElement;
+                        target.src = '/images/placeholder-category.jpg';
+                      }}
                     />
                     <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-300"></div>
                   </div>

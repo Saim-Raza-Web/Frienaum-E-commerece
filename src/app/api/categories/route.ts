@@ -71,8 +71,11 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { name, description, image } = body;
+    // Handle multipart form data
+    const formData = await request.formData();
+    const name = formData.get('name') as string;
+    const description = formData.get('description') as string;
+    const imageFile = formData.get('image') as File | null;
 
     // Validate required fields
     if (!name || !description) {
@@ -82,12 +85,42 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create new category
+    let imageUrl = null;
+
+    // Handle image upload if provided
+    if (imageFile) {
+      // Validate file type
+      if (!imageFile.type.startsWith('image/')) {
+        return NextResponse.json(
+          { error: 'Uploaded file must be an image' },
+          { status: 400 }
+        );
+      }
+
+      // Upload the image to the server
+      const uploadFormData = new FormData();
+      uploadFormData.append('file', imageFile);
+
+      const uploadResponse = await fetch(`${request.nextUrl.origin}/api/upload`, {
+        method: 'POST',
+        body: uploadFormData,
+      });
+
+      if (!uploadResponse.ok) {
+        const error = await uploadResponse.json();
+        throw new Error(error.error || 'Failed to upload image');
+      }
+
+      const { url } = await uploadResponse.json();
+      imageUrl = url;
+    }
+
+    // Create new category with the image URL
     const category = await prisma.category.create({
       data: {
         name,
         description,
-        image: image || null
+        image: imageUrl
       }
     });
 
@@ -110,8 +143,9 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { error: 'Failed to create category' },
+      { error: error instanceof Error ? error.message : 'Failed to create category' },
       { status: 500 }
     );
   }
 }
+
