@@ -10,7 +10,7 @@ interface PageHeroProps {
 export default function PageHero({ title, subtitle }: PageHeroProps) {
   return (
     <div className="relative overflow-hidden">
-      <div className="absolute inset-0 bg-gradient-to-r from-turquoise-600 via-turquoise-500 to-primary-600" />
+      <div className="absolute inset-0 bg-gradient-to-r from-primary-700 via-primary-600 to-primary-500" />
       {/* Decorative gradients */}
       <div className="absolute -top-24 -right-24 w-72 h-72 bg-white/10 rounded-full blur-3xl" />
       <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-black/10 rounded-full blur-3xl" />
@@ -22,7 +22,7 @@ export default function PageHero({ title, subtitle }: PageHeroProps) {
           </div>
           <h1 className="mt-3 text-4xl md:text-5xl font-extrabold drop-shadow-sm">{title}</h1>
           {subtitle && (
-            <p className="mt-3 text-turquoise-100 max-w-2xl leading-relaxed">{subtitle}</p>
+            <p className="mt-3 text-primary-100 max-w-2xl leading-relaxed">{subtitle}</p>
           )}
         </div>
       </div>

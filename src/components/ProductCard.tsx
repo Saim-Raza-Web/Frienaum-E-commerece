@@ -26,21 +26,28 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
   };
 
   return (
-    <Link href={`/${lang}/product/${product.id}`} className="group">
-      <div className="card overflow-hidden">
+    <Link href={`/${lang}/product/${product.id}`} className="group h-full">
+      <div className="card overflow-hidden h-full flex flex-col bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300">
         {/* Product Image */}
-        <div className="relative aspect-square overflow-hidden bg-gray-100">
-          {product.images && product.images.length > 0 ? (
-            <img
-              src={product.images[0]}
-              alt={product.name}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-            />
-          ) : (
-            <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
-              <span className="text-gray-500 text-sm">{translate('productImage')}</span>
-            </div>
-          )}
+        <div className="relative aspect-square overflow-hidden bg-white">
+          <div className="w-full h-full">
+            {product.images && product.images[0] ? (
+              <img
+                src={product.images[0]}
+                alt={product.name}
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                onError={(e) => {
+                  const target = e.target as HTMLImageElement;
+                  target.onerror = null;
+                  target.src = '/images/placeholder-product.png';
+                }}
+              />
+            ) : (
+              <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
+                <span className="text-gray-500 text-sm">{translate('productImage')}</span>
+              </div>
+            )}
+          </div>
           
           {/* Wishlist Button */}
           <button className="absolute top-2 right-2 p-2 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-50">
@@ -56,14 +63,14 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
         </div>
 
         {/* Product Info */}
-        <div className="p-4">
+        <div className="p-4 flex-1 flex flex-col">
           {/* Category */}
-          <p className="text-sm text-turquoise-600 font-medium mb-1">
+          <p className="text-sm text-primary-600 font-medium mb-1">
             {product.category}
           </p>
           
-          {/* Product Name */}
-          <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-turquoise-600 transition-colors">
+          {/* Product Name - Single line with ellipsis */}
+          <h3 className="font-semibold text-gray-900 mb-2 truncate group-hover:text-turquoise-600 transition-colors flex-1 min-h-[1.5em]" title={product.name}>
             {product.name}
           </h3>
           
@@ -101,18 +108,20 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
           </div>
           
           {/* Add to Cart Button */}
-          <button
-            onClick={handleAddToCart}
-            disabled={!product.inStock}
-            className={`w-full flex items-center justify-center space-x-2 py-2 px-4 rounded-lg font-medium transition-colors ${
-              product.inStock
-                ? 'bg-turquoise-500 hover:bg-turquoise-600 text-white'
-                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-            }`}
-          >
-            <ShoppingCart className="w-4 h-4" />
-            <span>{product.inStock ? translate('addToCart') : translate('outOfStock')}</span>
-          </button>
+          <div className="mt-auto pt-2">
+            <button
+              onClick={handleAddToCart}
+              disabled={!product.inStock}
+              className={`w-full flex items-center justify-center space-x-2 py-2 px-4 rounded-lg font-medium transition-colors ${
+                product.inStock
+                  ? 'bg-[var(--color-primary-500)] hover:bg-[var(--color-primary-600)] text-white shadow-md hover:shadow-lg'
+                  : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+              }`}
+            >
+              <ShoppingCart className="w-4 h-4" />
+              <span className="text-sm">{product.inStock ? translate('addToCart') : translate('outOfStock')}</span>
+            </button>
+          </div>
         </div>
       </div>
     </Link>

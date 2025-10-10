@@ -7,6 +7,10 @@ import { useCart } from '@/context/CartContext';
 import { useTranslation } from '@/i18n/TranslationProvider';
 import { Product } from '@/types';
 import { ArrowRight, Star, Truck, Shield, Clock } from 'lucide-react';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/navigation';
 
 // Dynamically import the ProductCard component with no SSR
 const ProductCard = dynamic(() => import('@/components/ProductCard'), {
@@ -18,87 +22,89 @@ interface HomePageProps {
   params: Promise<{ lang: string }>;
 }
 
+// Category Card Component
+const CategoryCard = ({ category, index, lang, router }: { 
+  category: { id: string; name: string }; 
+  index: number; 
+  lang: string; 
+  router: any 
+}) => {
+  const categoryImages = [
+    '/images/0bc3a4a9-e8ff-4ccb-84fb-31c2681954e8.avif',
+    '/images/56bd60e4-9ceb-4d19-96e2-fbff134f96e6.webp',
+    '/images/87bad4ed-4a67-46d2-bbf6-dc07464a66b8.jfif',
+    '/images/aa3828cd-3b1b-4988-a260-1a3835961377.webp',
+    '/images/ab3774f4-bef8-47fb-8110-231aa1bbdecb.webp',
+    '/images/dbf72cec-2063-4f83-9dce-3d9859f3fb40.webp',
+    '/images/0bc3a4a9-e8ff-4ccb-84fb-31c2681954e8.avif',
+    '/images/56bd60e4-9ceb-4d19-96e2-fbff134f96e6.webp',
+  ];
+
+  return (
+    <div
+      className="relative group cursor-pointer h-full"
+      onClick={() => router.push(`/${lang}/products?category=${encodeURIComponent(category.name)}`)}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e) => { if (e.key === 'Enter') router.push(`/${lang}/products?category=${encodeURIComponent(category.name)}`); }}
+    >
+      <div className="relative h-48 w-full overflow-hidden rounded-lg shadow-md hover:shadow-lg transition-shadow">
+        <img
+          src={categoryImages[index % categoryImages.length]}
+          alt={category.name}
+          className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+        />
+        <div className="absolute inset-0 bg-black bg-opacity-20 group-hover:bg-opacity-30 transition-all duration-300"></div>
+        <h3 className="absolute bottom-4 left-0 right-0 mx-auto text-white text-lg font-semibold drop-shadow-lg px-4">
+          {category.name}
+        </h3>
+      </div>
+    </div>
+  );
+};
+
 function HomePage({ params }: HomePageProps) {
   const { lang } = React.use(params);
   const { addToCart } = useCart();
   const { translate } = useTranslation();
   const router = useRouter();
+  
+  // Component state
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [categories, setCategories] = useState<{ id: string; name: string; productCount: number; firstProduct?: { imageUrl?: string; title?: string } }[]>([]);
   
   // Typing animation state
-  const [displayText, setDisplayText] = useState('EStore');
-  const [isTyping, setIsTyping] = useState(false);
+  const [displayText, setDisplayText] = useState('');
+  const words = ['Living', 'Comfort', 'Elegance', 'Style'];
+  let wordIndex = 0;
 
-  useEffect(() => {
-    fetchFeaturedProducts();
-  }, []);
-
-  // Typing animation effect
-  useEffect(() => {
-    const startTypingAnimation = () => {
-      const targetText = 'Feinraum';
-      let currentIndex = 0;
-      let isDeleting = false;
-      
-      const typeText = () => {
-        if (!isDeleting && currentIndex < targetText.length) {
-          // Typing forward
-          setDisplayText(targetText.substring(0, currentIndex + 1));
-          currentIndex++;
-          setTimeout(typeText, 150);
-        } else if (isDeleting && currentIndex > 0) {
-          // Deleting backward
-          setDisplayText(targetText.substring(0, currentIndex - 1));
-          currentIndex--;
-          setTimeout(typeText, 100);
-        } else if (!isDeleting && currentIndex === targetText.length) {
-          // Pause before deleting
-          setTimeout(() => {
-            isDeleting = true;
-            typeText();
-          }, 2000);
-        } else if (isDeleting && currentIndex === 0) {
-          // Reset to EStore and pause before typing again
-          setDisplayText('EStore');
-          setTimeout(() => {
-            isDeleting = false;
-            typeText();
-          }, 1000);
-        }
-      };
-      
-      typeText();
-    };
-
-    // Start animation after a short delay
-    const timer = setTimeout(startTypingAnimation, 1000);
-    return () => clearTimeout(timer);
-  }, []);
-
+  // Fetch featured products and categories
   const fetchFeaturedProducts = async () => {
     try {
       setLoading(true);
+      setError('');
       
-      // Fetch products and categories in parallel
+      // Fetch products and categories in parallel with error handling for each
       const [productsResponse, categoriesResponse] = await Promise.all([
-        fetch('/api/products'),
-        fetch('/api/categories')
+        fetch('/api/products').then(res => {
+          if (!res.ok) throw new Error('Failed to fetch products');
+          return res.json();
+        }).catch(err => {
+          console.error('Products fetch error:', err);
+          throw new Error('Failed to load products. Please try again later.');
+        }),
+        fetch('/api/categories').then(res => {
+          if (!res.ok) throw new Error('Failed to fetch categories');
+          return res.json();
+        }).catch(err => {
+          console.error('Categories fetch error:', err);
+          return []; // Return empty array for categories if fetch fails
+        })
       ]);
 
-      if (!productsResponse.ok) {
-        throw new Error('Failed to fetch products');
-      }
-      if (!categoriesResponse.ok) {
-        throw new Error('Failed to fetch categories');
-      }
-
-      const [productsData, categoriesData] = await Promise.all([
-        productsResponse.json(),
-        categoriesResponse.json()
-      ]);
+      const [productsData, categoriesData] = [productsResponse, categoriesResponse];
 
       // Transform API data to match Product interface
       const transformedProducts: Product[] = productsData.map((product: any) => ({
@@ -115,8 +121,8 @@ function HomePage({ params }: HomePageProps) {
         tags: []
       }));
 
-      // Take first 6 products as featured
-      setFeaturedProducts(transformedProducts.slice(0, 6));
+      // Take first 5 products as featured
+      setFeaturedProducts(transformedProducts.slice(0, 5));
 
       // Use categories from database
       setCategories(categoriesData);
@@ -128,6 +134,60 @@ function HomePage({ params }: HomePageProps) {
     }
   };
 
+  // Fetch data on component mount
+  useEffect(() => {
+    fetchFeaturedProducts();
+  }, [lang]);
+
+  // Typing animation effect
+  useEffect(() => {
+    let currentIndex = 0;
+    let isDeleting = false;
+    let timeout: NodeJS.Timeout;
+    let typingSpeed = 150; // ms per character
+    let deleteSpeed = 100; // ms per character when deleting
+    let pauseBetweenWords = 2000; // ms to pause between words
+
+    const typeText = () => {
+      const currentWord = words[wordIndex % words.length];
+      
+      if (isDeleting) {
+        // Delete text
+        setDisplayText(currentWord.substring(0, currentIndex - 1));
+        currentIndex--;
+        typingSpeed = deleteSpeed;
+      } else {
+        // Type text
+        setDisplayText(currentWord.substring(0, currentIndex + 1));
+        currentIndex++;
+        typingSpeed = 150;
+      }
+
+      // Check if we've finished typing a word
+      if (!isDeleting && currentIndex === currentWord.length) {
+        // Pause at the end of the word
+        typingSpeed = pauseBetweenWords;
+        isDeleting = true;
+      } else if (isDeleting && currentIndex === 0) {
+        // Move to the next word after deleting
+        isDeleting = false;
+        wordIndex++;
+        // Short pause before starting next word
+        typingSpeed = 500;
+      }
+
+      timeout = setTimeout(typeText, typingSpeed);
+    };
+
+    // Start the animation after a short delay
+    timeout = setTimeout(typeText, 1000);
+
+    // Cleanup function
+    return () => {
+      clearTimeout(timeout);
+    };
+  }, []);
+
   const handleAddToCart = (product: Product) => {
     addToCart(product);
   };
@@ -135,29 +195,56 @@ function HomePage({ params }: HomePageProps) {
   // categories are built from products fetch above
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-white">
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-turquoise-500 to-primary-600 text-white py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl md:text-6xl font-bold mb-6">
-            {translate('welcome')} to <span className="text-white">{displayText}<span className="animate-pulse">|</span></span>
-          </h1>
-          <p className="text-xl md:text-2xl mb-8 max-w-3xl mx-auto">
-            {translate('heroDescription')}
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <button 
-              className="btn-primary text-lg px-8 py-3"
-              onClick={() => router.push(`/${lang}/products`)}
-            >
-              {translate('shopNow')}
-            </button>
-            <button 
-              className="btn-secondary text-lg px-8 py-3"
-              onClick={() => router.push(`/${lang}/about`)}
-            >
-              {translate('learnMore')}
-            </button>
+      <section className="bg-[var(--color-accent-beige)]">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
+          <div className="flex flex-col lg:flex-row items-center justify-between">
+            {/* Text Content */}
+            <div className="w-full lg:w-1/2 xl:pr-16">
+              <div className="min-h-[240px] md:min-h-[260px] lg:min-h-[320px] flex flex-col justify-center pt-8 lg:pt-0">
+                <h1 className="text-5xl md:text-6xl lg:text-6xl xl:text-7xl font-serif text-[var(--color-primary-800)] leading-tight" style={{ fontFamily: 'var(--font-playfair), ui-serif, Georgia' }}>
+                  <div className="whitespace-nowrap">Timeless Style...</div>
+                  <div className="flex items-baseline">
+                    <span className="whitespace-nowrap">Modern&nbsp;</span>
+                    <span className="inline-block min-w-[180px] lg:min-w-[220px] text-left">
+                      {displayText}
+                      {!displayText && <span className="invisible">Comfort</span>}
+                    </span>
+                  </div>
+                </h1>
+                <p className="mt-6 text-lg text-[var(--color-primary-700)] max-w-lg">
+                  Discover products that define elegance and comfort for your modern lifestyle.
+                </p>
+                <div className="mt-10 flex flex-col sm:flex-row gap-4">
+                  <button 
+                    className="px-8 py-4 bg-[var(--color-primary-500)] text-white font-medium rounded-lg hover:bg-[var(--color-primary-700)] transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+                    onClick={() => router.push(`/${lang}/products`)}
+                  >
+                    Shop Now
+                  </button>
+                  <button 
+                    className="px-8 py-4 border-2 border-[#8C6A4A] text-[var(--color-primary-700)] font-medium rounded-lg hover:bg-[var(--color-hover-accent)] hover:text-[var(--color-primary-800)] transition-all duration-300"
+                    style={{ borderStyle: 'solid' }}
+                    onClick={() => router.push(`/${lang}/about`)}
+                  >
+                    Learn More
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Image - Fixed dimensions to prevent movement */}
+            <div className="w-full lg:w-1/2 flex justify-center lg:justify-end mt-8 lg:mt-0">
+              <div className="relative w-full max-w-2xl h-[400px] md:h-[500px] lg:h-[600px] transform -translate-y-10">
+                <img 
+                  src="/images/hero.png" 
+                  alt="Elegant Home Decor" 
+                  className="w-full h-full object-contain lg:object-cover rounded-xl shadow-2xl" 
+                  style={{ objectPosition: 'center 10%' }}
+                />
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -167,22 +254,22 @@ function HomePage({ params }: HomePageProps) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             <div className="text-center">
-              <div className="w-16 h-16 bg-turquoise-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Truck className="w-8 h-8 text-turquoise-600" />
+              <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Truck className="w-8 h-8 text-primary-600" />
               </div>
               <h3 className="text-xl font-semibold mb-2">{translate('freeShipping')}</h3>
               <p className="text-gray-600">{translate('freeShippingDesc')}</p>
             </div>
             <div className="text-center">
-              <div className="w-16 h-16 bg-turquoise-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Shield className="w-8 h-8 text-turquoise-600" />
+              <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Shield className="w-8 h-8 text-primary-600" />
               </div>
               <h3 className="text-xl font-semibold mb-2">{translate('securePayment')}</h3>
               <p className="text-gray-600">{translate('securePaymentDesc')}</p>
             </div>
             <div className="text-center">
-              <div className="w-16 h-16 bg-turquoise-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Clock className="w-8 h-8 text-turquoise-600" />
+              <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Clock className="w-8 h-8 text-primary-600" />
               </div>
               <h3 className="text-xl font-semibold mb-2">{translate('support247')}</h3>
               <p className="text-gray-600">{translate('support247Desc')}</p>
@@ -192,79 +279,122 @@ function HomePage({ params }: HomePageProps) {
       </section>
 
       {/* Categories Section */}
-      <section className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              {translate('shopByCategory')}
-            </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
-              {translate('shopByCategoryDesc')}
-            </p>
-          </div>
+      <section className="py-16 px-4 sm:px-6 lg:px-8 text-center bg-white">
+        <div className="max-w-7xl mx-auto relative">
+          <h2 className="text-3xl font-semibold text-gray-900 mb-4">Shop by Category</h2>
+          <p className="text-gray-500 mb-10">Explore our range of products organized by category.</p>
           
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6">
-            {categories.map((category) => (
-              <div
-                key={category.id}
-                className="group cursor-pointer"
-                onClick={() => router.push(`/${lang}/products?category=${encodeURIComponent(category.name)}`)}
-                role="button"
-                tabIndex={0}
-                onKeyDown={(e) => { if (e.key === 'Enter') router.push(`/${lang}/products?category=${encodeURIComponent(category.name)}`); }}
-              >
-                <div className="bg-white rounded-xl overflow-hidden shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 border border-gray-100 hover:border-turquoise-200 relative">
-                  {/* Product Image */}
-                  <div className="relative h-32 overflow-hidden">
-                    {category.firstProduct?.imageUrl ? (
-                      <img
-                        src={category.firstProduct.imageUrl}
-                        alt={category.firstProduct.title}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = 'none';
-                          const fallback = target.nextElementSibling as HTMLElement;
-                          if (fallback) fallback.style.display = 'flex';
-                        }}
-                      />
-                    ) : null}
-                    {/* Fallback gradient background */}
-                    <div 
-                      className={`absolute inset-0 bg-gradient-to-br from-turquoise-500 to-primary-500 flex items-center justify-center ${category.firstProduct?.imageUrl ? 'hidden' : 'flex'}`}
-                    >
-                      <span className="text-4xl text-white font-bold">
-                        {category.name.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                    {/* Overlay with category info */}
-                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-300 flex items-center justify-center">
-                      <div className="text-center text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <p className="text-sm font-semibold mb-1">{category.name}</p>
-                        <p className="text-xs">{category.productCount} {translate('products')}</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Card Content */}
-                  <div className="p-4">
-                    <h3 className="font-bold text-gray-900 mb-2 text-lg group-hover:text-turquoise-600 transition-colors duration-200">
-                      {category.name}
-                    </h3>
-                    <p className="text-sm text-gray-500 mb-4 font-medium">
-                      {category.productCount} {translate('products')}
-                    </p>
-                    <div className="flex items-center justify-center text-turquoise-600 group-hover:text-turquoise-700 transition-all duration-200 group-hover:scale-105">
-                      <span className="text-sm font-semibold">{translate('explore')}</span>
-                      <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform duration-200" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
+          {/* Navigation Buttons - Outside Swiper */}
+          <button className="category-swiper-button-prev absolute left-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 flex items-center justify-center bg-white rounded-full shadow-lg hover:bg-gray-50 transition-colors">
+            <svg className="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          
+          <button className="category-swiper-button-next absolute right-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 flex items-center justify-center bg-white rounded-full shadow-lg hover:bg-gray-50 transition-colors">
+            <svg className="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+          
+          {/* Categories Slider */}
+          <div className="px-12 overflow-hidden">
+            <Swiper
+              spaceBetween={16}
+              slidesPerView={'auto'}
+              navigation={{
+                nextEl: '.category-swiper-button-next',
+                prevEl: '.category-swiper-button-prev',
+              }}
+              modules={[Navigation]}
+              breakpoints={{
+                640: {
+                  slidesPerView: 2.5,
+                },
+                768: {
+                  slidesPerView: 3.5,
+                },
+                1024: {
+                  slidesPerView: 5,
+                },
+              }}
+              className="!py-4 !overflow-visible"
+              noSwiping={true}
+              noSwipingClass="swiper-wrapper"
+              preventInteractionOnTransition={true}
+            >
+              {categories.map((category, index) => (
+                <SwiperSlide key={category.id} className="!w-auto">
+                  <CategoryCard 
+                    category={category} 
+                    index={index} 
+                    lang={lang} 
+                    router={router} 
+                  />
+                </SwiperSlide>
+              ))}
+            </Swiper>
           </div>
         </div>
       </section>
+      
+      {/* Swiper Navigation Styles */}
+      <style jsx global>{`
+        .swiper {
+          padding: 10px 0;
+          overflow: hidden !important;
+          -ms-overflow-style: none;  /* IE and Edge */
+          scrollbar-width: none;  /* Firefox */
+        }
+        .swiper::-webkit-scrollbar {
+          display: none;  /* Chrome, Safari and Opera */
+        }
+        .swiper-wrapper {
+          -webkit-user-select: none;
+          -khtml-user-select: none;
+          -moz-user-select: none;
+          -ms-user-select: none;
+          user-select: none;
+        }
+        .swiper-slide {
+          width: auto !important;
+          height: auto !important;
+          transition: transform 0.3s ease;
+        }
+        .swiper-slide:hover {
+          transform: translateY(-4px);
+        }
+      `}</style>
+      
+      <style jsx global>{`
+        .swiper {
+          padding: 10px 0 40px;
+        }
+        .swiper-slide {
+          width: auto;
+          height: auto;
+        }
+        .category-swiper-button-prev,
+        .category-swiper-button-next {
+          background: white;
+          border-radius: 50%;
+          width: 40px;
+          height: 40px;
+          box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+          color: #4f46e5;
+        }
+        .category-swiper-button-prev:after,
+        .category-swiper-button-next:after {
+          font-size: 16px;
+          font-weight: bold;
+        }
+        .category-swiper-button-prev {
+          left: 0;
+        }
+        .category-swiper-button-next {
+          right: 0;
+        }
+      `}</style>
 
       {/* Featured Products Section */}
       <section className="py-16 bg-white">
@@ -278,12 +408,12 @@ function HomePage({ params }: HomePageProps) {
             </p>
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {loading ? (
               // Loading skeletons
-              Array.from({ length: 6 }).map((_, index) => (
+              Array.from({ length: 5 }).map((_, index) => (
                 <div key={index} className="bg-white rounded-lg shadow-md overflow-hidden">
-                  <div className="w-full h-48 bg-gray-200 animate-pulse"></div>
+                  <div className="w-full h-36 bg-gray-200 animate-pulse"></div>
                   <div className="p-4">
                     <div className="h-4 bg-gray-200 animate-pulse mb-2"></div>
                     <div className="h-4 bg-gray-200 animate-pulse w-2/3"></div>

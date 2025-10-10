@@ -37,7 +37,9 @@
     "prisma": "^6.16.1",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
-    "stripe": "^18.5.0"
+    "react-responsive-carousel": "^3.2.23",
+    "stripe": "^18.5.0",
+    "swiper": "^12.0.2"
   },
   "devDependencies": {
     "@types/jsonwebtoken": "^9.0.10",

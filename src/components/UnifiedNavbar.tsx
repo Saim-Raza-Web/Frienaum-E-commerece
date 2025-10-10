@@ -31,8 +31,8 @@ const NavLink = ({ href, children, className = "" }: { href: string; children: R
       href={`/${lang}${href}`} 
       className={`px-3 py-2 text-sm font-medium transition-colors ${className} ${
         isActive 
-          ? 'text-turquoise-600 border-b-2 border-turquoise-500' 
-          : 'text-gray-600 hover:text-turquoise-600'
+          ? 'text-[var(--color-primary-700)] border-b-2 border-[var(--color-primary-700)]' 
+          : 'text-gray-600 hover:text-[var(--color-primary-700)]'
       }`}
     >
       {children}
@@ -104,40 +104,29 @@ export default function UnifiedNavbar() {
   ];
 
   return (
-    <nav className="bg-white shadow-sm border-b sticky top-0 z-40" suppressHydrationWarning={true}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+    <nav className="bg-white border-b border-gray-100 sticky top-0 z-40" suppressHydrationWarning={true}>
+      <div className="max-w-7xl mx-auto px-8 md:px-20">
+        <div className="flex justify-between items-center py-4">
           {/* Logo */}
           <div className="flex-shrink-0">
-            <Link href={`/${lang}/`} className="flex items-center space-x-2">
-              <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden">
-                <img 
-                  src="/images/Feinraum logo icon favicon png.png" 
-                  alt="Feinraum Logo" 
-                  className="w-full h-full object-contain"
-                  onError={(e) => {
-                    if (typeof window === 'undefined') return;
-                    const target = e.target as HTMLImageElement;
-                    target.onerror = null;
-                    target.style.display = 'none';
-                    const fallback = document.createElement('div');
-                    fallback.className = 'w-8 h-8 rounded-lg bg-turquoise-600 text-white flex items-center justify-center';
-                    fallback.innerHTML = '<span class="text-lg font-bold">F</span>';
-                    target.parentNode?.insertBefore(fallback, target);
-                  }}
-                />
-              </div>
-              <span className="text-xl font-bold text-gray-900 hidden sm:inline">Feinraum</span>
+            <Link href={`/${lang}/`} className="flex items-center gap-2">
+              <img 
+                src="/images/logo.png" 
+                alt="Frienaum Logo" 
+                className="h-8 w-auto" 
+                style={{ filter: 'invert(37%) sepia(53%) saturate(946%) hue-rotate(336deg) brightness(90%) contrast(100%) drop-shadow(0 0 0.5px #00000066)' }}
+              />
+              <span className="font-bold text-lg text-[#824a43]">Frienaum</span>
             </Link>
           </div>
 
           {/* Desktop Navigation - Different content based on auth status */}
           <div className="hidden md:block flex-1">
-            <div className="ml-10 flex items-baseline space-x-8">
+            <div className="ml-10 flex items-center gap-8 text-gray-700 font-medium">
               {isAuthenticated ? (
                 // Logged in navigation
                 <>
-                  <Link href={`/${lang}/`} className="text-gray-600 hover:text-turquoise-600 px-3 py-2 text-sm font-medium transition-colors">
+                  <Link href={`/${lang}/`} className="hover:text-[var(--color-primary-700)] transition-colors">
                     {translate('home')}
                   </Link>
                   <NavLink href="/products">{translate('navigation.products')}</NavLink>
@@ -156,46 +145,40 @@ export default function UnifiedNavbar() {
           </div>
 
           {/* Right side - Search, Cart, User/Language */}
-          <div className="flex items-center space-x-4">
-            {/* Search Bar - Only show when logged in */}
-            {isAuthenticated && (
-              <div className="hidden lg:block">
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onKeyDown={handleSearch}
-                    className="block w-64 pl-3 pr-4 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-turquoise-500 focus:border-turquoise-500 text-sm"
-                    placeholder={translate('search')}
-                  />
-                </div>
+          <div className="flex items-center gap-4">
+            {/* Search Bar */}
+            <div className="hidden lg:block">
+              <div className="relative">
+                <input
+                  type="search"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={handleSearch}
+                  className="search-input block w-64 pl-9 pr-3 py-2 rounded-full placeholder-gray-500 text-sm transition-all duration-200 focus:outline-none"
+                  placeholder="Search..."
+                />
               </div>
-            )}
+            </div>
 
             {/* Language Selector - Show for both logged in and out */}
             <div className="relative">
               <button 
                 onClick={() => setIsLanguageOpen(!isLanguageOpen)}
                 onBlur={() => setTimeout(() => setIsLanguageOpen(false), 200)}
-                className="flex items-center text-gray-700 hover:text-turquoise-600 focus:outline-none"
+                className="flex items-center text-gray-600 hover:text-[var(--color-primary-700)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-700)] focus:ring-opacity-50 rounded"
               >
                 <Globe className="h-5 w-5 mr-1" />
                 <span className="text-sm font-medium">{lang.toUpperCase()}</span>
                 <ChevronDown className="ml-1 h-4 w-4" />
               </button>
               <div 
-                className={`absolute right-0 mt-2 w-40 bg-white rounded-md shadow-lg py-1 ring-1 ring-black ring-opacity-5 focus:outline-none ${isLanguageOpen ? 'block' : 'hidden'} z-[100]`}
+                className={`absolute right-0 mt-2 w-40 bg-white rounded-md shadow-lg py-1 ring-1 ring-black/5 border border-gray-100 ${isLanguageOpen ? 'block' : 'hidden'} z-[100]`}
               >
                 {languages.map((language) => (
                   <button
                     key={language.code}
                     onClick={() => changeLanguage(language.code)}
-                    className={`w-full text-left px-4 py-2 text-sm ${
-                      lang === language.code
-                        ? 'bg-turquoise-50 text-turquoise-700'
-                        : 'text-gray-700 hover:bg-gray-100'
-                    }`}
+                    className={`w-full text-left px-4 py-2 text-sm ${lang === language.code ? 'bg-[var(--color-primary-50)] text-[var(--color-primary-700)]' : 'text-gray-700 hover:bg-[var(--color-primary-50)]'}`}
                   >
                     {language.name}
                   </button>
@@ -204,10 +187,10 @@ export default function UnifiedNavbar() {
             </div>
 
             {/* Cart - Show for both logged in and out */}
-            <Link href={`/${lang}/cart`} className="relative p-2 text-gray-600 hover:text-turquoise-600 transition-colors">
+            <Link href={`/${lang}/cart`} className="relative p-2 text-gray-600 hover:text-[var(--color-primary-700)] transition-colors rounded hover:bg-[var(--color-primary-50)]">
               <ShoppingCart className="w-6 h-6" />
               {cartItemCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-turquoise-600 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 bg-primary-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
                   {cartItemCount > 99 ? '99+' : cartItemCount}
                 </span>
               )}
@@ -218,9 +201,9 @@ export default function UnifiedNavbar() {
               <div className="relative">
                 <button
                   onClick={toggleUserMenu}
-                  className="flex items-center space-x-2 p-2 text-gray-600 hover:text-turquoise-600 transition-colors rounded-lg hover:bg-gray-100"
+                  className="flex items-center gap-2 p-2 text-gray-600 hover:text-[var(--color-primary-700)] transition-colors rounded-lg hover:bg-[var(--color-primary-50)]"
                 >
-                  <div className="w-8 h-8 bg-gradient-to-r from-turquoise-500 to-primary-500 rounded-full flex items-center justify-center">
+                  <div className="w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center">
                     <span className="text-white text-sm font-bold">
                       {user.firstName?.charAt(0) || 'U'}
                       {user.lastName?.charAt(0) || ''}
@@ -234,18 +217,18 @@ export default function UnifiedNavbar() {
 
                 {/* User Dropdown */}
                 {isUserMenuOpen && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-200">
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-100">
                     <div className="px-4 py-2 border-b border-gray-100">
                       <p className="text-sm font-medium text-gray-900">
                         {user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.firstName || 'User'}
                       </p>
                       <p className="text-xs text-gray-500">{user.email}</p>
-                      <p className="text-xs text-turquoise-600 font-medium capitalize">{user.role}</p>
+                      <p className="text-xs text-primary-600 font-medium capitalize">{user.role}</p>
                     </div>
                     
                     <Link
                       href={`/${lang}/profile`}
-                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-[var(--color-primary-50)] hover:text-[var(--color-primary-700)]"
                       onClick={() => setIsUserMenuOpen(false)}
                     >
                       <User className="w-4 h-4 mr-2" />
@@ -254,7 +237,7 @@ export default function UnifiedNavbar() {
 
                     <Link
                       href={`/${lang}/orders`}
-                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-[var(--color-primary-50)] hover:text-[var(--color-primary-700)]"
                       onClick={() => setIsUserMenuOpen(false)}
                     >
                       <Package className="w-4 h-4 mr-2" />
@@ -264,7 +247,7 @@ export default function UnifiedNavbar() {
                     {user.role === 'merchant' && (
                       <Link
                         href={`/${lang}/merchant`}
-                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-[var(--color-primary-50)] hover:text-[var(--color-primary-700)]"
                         onClick={() => setIsUserMenuOpen(false)}
                       >
                         <ShoppingBag className="w-4 h-4 mr-2" />
@@ -275,7 +258,7 @@ export default function UnifiedNavbar() {
                     {user.role === 'admin' && (
                       <Link
                         href={`/${lang}/admin`}
-                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-[var(--color-primary-50)] hover:text-[var(--color-primary-700)]"
                         onClick={() => setIsUserMenuOpen(false)}
                       >
                         <Settings className="w-4 h-4 mr-2" />
@@ -294,7 +277,7 @@ export default function UnifiedNavbar() {
                 )}
               </div>
             ) : (
-              <Link href={`/${lang}/login`} className="btn-login">
+              <Link href={`/${lang}/login`} className="inline-flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-[var(--color-primary-700)] rounded-lg hover:bg-[var(--color-primary-50)] transition-colors">
                 <User className="w-4 h-4" />
                 <span>{translate('signIn')}</span>
               </Link>
@@ -303,7 +286,7 @@ export default function UnifiedNavbar() {
             {/* Mobile menu button */}
             <button
               onClick={toggleMobileMenu}
-              className="md:hidden p-2 text-gray-600 hover:text-turquoise-600 transition-colors"
+              className="md:hidden p-2 text-gray-600 hover:text-[var(--color-primary-700)] transition-colors rounded hover:bg-[var(--color-primary-50)]"
             >
               {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -314,25 +297,24 @@ export default function UnifiedNavbar() {
       {/* Mobile Navigation */}
       {isMobileMenuOpen && (
         <div className="md:hidden">
-          <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-white border-t border-gray-200">
-            {/* Mobile Search - Only show when logged in */}
-            {isAuthenticated && (
-              <div className="px-3 py-2">
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    onKeyDown={handleSearch}
-                    className="block w-full pl-3 pr-4 py-2 border border-gray-300 rounded-md leading-5 bg-white placeholder-gray-500 focus:outline-none focus:placeholder-gray-400 focus:ring-1 focus:ring-turquoise-500 focus:border-turquoise-500 text-sm"
-                    placeholder={translate('search')}
-                  />
-                </div>
+          <div className="px-4 pt-2 pb-3 space-y-3 bg-white border-t border-gray-100">
+            {/* Mobile Search */}
+            <div className="py-2">
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <input
+                  type="search"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={handleSearch}
+                  className="search-input block w-full pl-9 pr-3 py-2 rounded-full placeholder-gray-500 text-sm transition-all duration-200 focus:outline-none"
+                  placeholder="Search..."
+                />
               </div>
-            )}
+            </div>
 
             {/* Mobile Language Selector - Show for both logged in and out */}
-            <div className="px-3 py-2">
+            <div className="px-1 py-2">
               <div className="flex items-center space-x-2">
                 <Globe className="h-4 w-4 text-gray-400" />
                 <span className="text-sm text-gray-600">Language:</span>
@@ -341,11 +323,7 @@ export default function UnifiedNavbar() {
                     <button
                       key={language.code}
                       onClick={() => changeLanguage(language.code)}
-                      className={`px-2 py-1 text-xs rounded ${
-                        lang === language.code
-                          ? 'bg-turquoise-100 text-turquoise-700'
-                          : 'text-gray-600 hover:bg-gray-100'
-                      }`}
+                      className={`px-2 py-1 text-xs rounded ${lang === language.code ? 'bg-[var(--color-primary-100)] text-[var(--color-primary-700)]' : 'text-gray-600 hover:bg-[var(--color-primary-50)]'}`}
                     >
                       {language.code.toUpperCase()}
                     </button>
@@ -360,35 +338,35 @@ export default function UnifiedNavbar() {
               <>
                 <Link
                   href={`/${lang}/`}
-                  className="block px-3 py-2 text-gray-600 hover:text-turquoise-600 text-base font-medium"
+                  className="block px-3 py-2 text-gray-700 hover:text-[var(--color-primary-700)] hover:bg-[var(--color-primary-50)] rounded text-base"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   {translate('home')}
                 </Link>
                 <Link
                   href={`/${lang}/products`}
-                  className="block px-3 py-2 text-gray-600 hover:text-turquoise-600 text-base font-medium"
+                  className="block px-3 py-2 text-gray-700 hover:text-[var(--color-primary-700)] hover:bg-[var(--color-primary-50)] rounded text-base"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   {translate('navigation.products')}
                 </Link>
                 <Link
                   href={`/${lang}/categories`}
-                  className="block px-3 py-2 text-gray-600 hover:text-turquoise-600 text-base font-medium"
+                  className="block px-3 py-2 text-gray-700 hover:text-[var(--color-primary-700)] hover:bg-[var(--color-primary-50)] rounded text-base"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   {translate('navigation.categories')}
                 </Link>
                 <Link
                   href={`/${lang}/about`}
-                  className="block px-3 py-2 text-gray-600 hover:text-turquoise-600 text-base font-medium"
+                  className="block px-3 py-2 text-gray-700 hover:text-[var(--color-primary-700)] hover:bg-[var(--color-primary-50)] rounded text-base"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   {translate('about')}
                 </Link>
                 <Link
                   href={`/${lang}/contact`}
-                  className="block px-3 py-2 text-gray-600 hover:text-turquoise-600 text-base font-medium"
+                  className="block px-3 py-2 text-gray-700 hover:text-[var(--color-primary-700)] hover:bg-[var(--color-primary-50)] rounded text-base"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   {translate('contact')}
@@ -399,14 +377,14 @@ export default function UnifiedNavbar() {
               <>
                 <Link
                   href={`/${lang}/products`}
-                  className="block px-3 py-2 text-gray-600 hover:text-turquoise-600 text-base font-medium"
+                  className="block px-3 py-2 text-gray-600 hover:text-[var(--color-primary-700)] hover:bg-[var(--color-primary-50)] rounded text-base font-medium"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   {translate('navigation.products')}
                 </Link>
                 <Link
                   href={`/${lang}/categories`}
-                  className="block px-3 py-2 text-gray-600 hover:text-turquoise-600 text-base font-medium"
+                  className="block px-3 py-2 text-gray-600 hover:text-[var(--color-primary-700)] hover:bg-[var(--color-primary-50)] rounded text-base font-medium"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   {translate('navigation.categories')}
@@ -420,14 +398,14 @@ export default function UnifiedNavbar() {
                 <div className="border-t border-gray-200 my-2"></div>
                 <Link
                   href={`/${lang}/profile`}
-                  className="block px-3 py-2 text-gray-600 hover:text-turquoise-600 text-base font-medium"
+                  className="block px-3 py-2 text-gray-700 hover:text-[var(--color-primary-700)] hover:bg-[var(--color-primary-50)] rounded text-base"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   {translate('profile')}
                 </Link>
                 <Link
                   href={`/${lang}/orders`}
-                  className="block px-3 py-2 text-gray-600 hover:text-turquoise-600 text-base font-medium"
+                  className="block px-3 py-2 text-gray-700 hover:text-[var(--color-primary-700)] hover:bg-[var(--color-primary-50)] rounded text-base"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   {translate('orders')}
@@ -435,7 +413,7 @@ export default function UnifiedNavbar() {
                 {user.role === 'merchant' && (
                   <Link
                     href={`/${lang}/merchant`}
-                    className="block px-3 py-2 text-gray-600 hover:text-turquoise-600 text-base font-medium"
+                    className="block px-3 py-2 text-gray-700 hover:text-[var(--color-primary-700)] hover:bg-[var(--color-primary-50)] rounded text-base"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     {translate('merchantDashboard')}
@@ -444,7 +422,7 @@ export default function UnifiedNavbar() {
                 {user.role === 'admin' && (
                   <Link
                     href={`/${lang}/admin`}
-                    className="block px-3 py-2 text-gray-600 hover:text-turquoise-600 text-base font-medium"
+                    className="block px-3 py-2 text-gray-700 hover:text-[var(--color-primary-700)] hover:bg-[var(--color-primary-50)] rounded text-base"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     {translate('admin.panel')}
@@ -452,7 +430,7 @@ export default function UnifiedNavbar() {
                 )}
                 <button
                   onClick={handleLogout}
-                  className="block w-full text-left px-3 py-2 text-gray-600 hover:text-turquoise-600 text-base font-medium"
+                  className="block w-full text-left px-3 py-2 text-gray-700 hover:text-primary-600 text-base"
                 >
                   {translate('logout')}
                 </button>

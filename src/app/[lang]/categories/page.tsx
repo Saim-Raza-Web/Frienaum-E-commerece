@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Search, Grid, List, Loader2 } from 'lucide-react';
 import { useTranslation } from '@/i18n/TranslationProvider';
 import { Category } from '@/types';
@@ -15,7 +15,20 @@ export default function CategoriesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const pathname = usePathname();
+  const router = useRouter();
   const currentLang = pathname?.split('/')[1] || 'en';
+  
+  // Category images array matching the home page
+  const categoryImages = [
+    '/images/0bc3a4a9-e8ff-4ccb-84fb-31c2681954e8.avif',
+    '/images/56bd60e4-9ceb-4d19-96e2-fbff134f96e6.webp',
+    '/images/87bad4ed-4a67-46d2-bbf6-dc07464a66b8.jfif',
+    '/images/aa3828cd-3b1b-4988-a260-1a3835961377.webp',
+    '/images/ab3774f4-bef8-47fb-8110-231aa1bbdecb.webp',
+    '/images/dbf72cec-2063-4f83-9dce-3d9859f3fb40.webp',
+    '/images/0bc3a4a9-e8ff-4ccb-84fb-31c2681954e8.avif',
+    '/images/56bd60e4-9ceb-4d19-96e2-fbff134f96e6.webp',
+  ];
 
   // Fetch categories from API
   useEffect(() => {
@@ -53,7 +66,7 @@ export default function CategoriesPage() {
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-<h1 className="text-3xl font-bold text-gray-900">{translate('categories')}</h1>
+<h1 className="text-3xl font-bold text-gray-900">{translate('Categories')}</h1>
 <p className="mt-2 text-gray-600">{translate('shopByCategoryDesc')}</p>
         </div>
       </div>
@@ -140,68 +153,56 @@ export default function CategoriesPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
-            {filteredCategories.map((category) => (
-              <Link
+            {filteredCategories.map((category, index) => (
+              <div
                 key={category.id}
-                href={`/${currentLang}/products?category=${encodeURIComponent(category.name)}`}
-                className="group"
+                className="relative group cursor-pointer h-full"
+                onClick={() => router.push(`/${currentLang}/products?category=${encodeURIComponent(category.name)}`)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => { if (e.key === 'Enter') router.push(`/${currentLang}/products?category=${encodeURIComponent(category.name)}`); }}
               >
-                <div className="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 hover:scale-105 relative">
-                  {/* Product Image */}
-                  <div className="relative h-48 overflow-hidden">
-                    {category.firstProduct?.imageUrl ? (
-                      <img
-                        src={category.firstProduct.imageUrl}
-                        alt={category.firstProduct.title}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.style.display = 'none';
-                          const fallback = target.nextElementSibling as HTMLElement;
-                          if (fallback) fallback.style.display = 'flex';
-                        }}
-                      />
-                    ) : null}
-                    {/* Fallback gradient background */}
-                    <div 
-                      className={`absolute inset-0 bg-gradient-to-br from-turquoise-500 to-primary-500 flex items-center justify-center ${category.firstProduct?.imageUrl ? 'hidden' : 'flex'}`}
-                    >
-                      <span className="text-5xl text-white font-bold">
-                        {category.name.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
-                    {/* Overlay with category info */}
-                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-40 transition-all duration-300 flex items-center justify-center">
-                      <div className="text-center text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                        <p className="text-lg font-bold mb-2">{translate(category.name)}</p>
-                        <p className="text-sm mb-2">{category.productCount} {translate('products')}</p>
-                        <p className="text-xs px-4 leading-relaxed">
-                          {translate(category.description)}
-                        </p>
-                      </div>
-                    </div>
+                <div className="h-full flex flex-col bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden border border-gray-100">
+                  {/* Category Image */}
+                  <div className="relative h-56 w-full overflow-hidden">
+                    <img
+                      src={categoryImages[index % categoryImages.length]}
+                      alt={category.name}
+                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                    />
+                    <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-300"></div>
                   </div>
                   
                   {/* Card Content */}
-                  <div className="p-6">
-                    <h3 className="text-xl font-bold text-gray-900 group-hover:text-turquoise-600 transition-colors duration-200 mb-2">
+                  <div className="p-5 flex-1 flex flex-col">
+                    <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-turquoise-600 transition-colors">
                       {translate(category.name)}
                     </h3>
-                    <div className="flex items-center justify-between mb-3">
-                      <p className="text-sm font-semibold text-gray-600 bg-gray-100 px-3 py-1 rounded-full">
-                        {category.productCount} {translate('products')}
-                      </p>
+                    
+                    {/* Description with fallback */}
+                    <div className="text-sm text-gray-600 mb-4 line-clamp-2 min-h-[2.5rem]">
+                      {category.description ? (
+                        translate(category.description)
+                      ) : (
+                        <span className="text-gray-400 italic">
+                          {translate('noDescriptionAvailable')}
+                        </span>
+                      )}
                     </div>
-                    <p className="text-sm text-gray-500 leading-relaxed mb-4">
-                      {translate(category.description)}
-                    </p>
-                    <div className="flex items-center text-turquoise-600 group-hover:text-turquoise-700 transition-colors duration-200">
-                      <span className="text-sm font-semibold">{translate('explore')}</span>
-                      <span className="ml-2 group-hover:translate-x-1 transition-transform duration-200">→</span>
+                    
+                    <div className="mt-auto pt-2 border-t border-gray-100">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-medium text-gray-600">
+                          {category.productCount} {translate('products')}
+                        </span>
+                        <span className="text-sm font-medium text-turquoise-600 group-hover:text-turquoise-700 transition-colors flex items-center">
+                          {translate('explore')} <span className="ml-1 group-hover:translate-x-1 transition-transform">→</span>
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
         )}
