@@ -1,15 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 
-export function generateStaticParams() {
-  return [];
-}
-
-type RouteContext = {
-  params: Promise<{
-    id: string;
-  }>;
+type RouteParams = {
+  params: Promise<{ id: string }>;
 };
+
+export const dynamic = 'force-dynamic';
 
 export async function PUT(
   request: NextRequest,

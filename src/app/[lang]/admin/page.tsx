@@ -63,6 +63,7 @@ function AdminDashboard() {
   // Categories state
   const [categories, setCategories] = useState<any[]>([]);
   const [categoriesLoading, setCategoriesLoading] = useState(true);
+  const [categoriesError, setCategoriesError] = useState<string | null>(null);
   const [showNewCategoryModal, setShowNewCategoryModal] = useState(false);
   const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null);
   const [newCategory, setNewCategory] = useState({ 
@@ -135,6 +136,7 @@ function AdminDashboard() {
   const fetchCategories = async () => {
     try {
       setCategoriesLoading(true);
+      setCategoriesError(null);
       const response = await fetch('/api/categories');
       if (!response.ok) {
         throw new Error('Failed to fetch categories');
@@ -144,6 +146,7 @@ function AdminDashboard() {
       return data;
     } catch (error) {
       console.error('Error fetching categories:', error);
+      setCategoriesError(error instanceof Error ? error.message : 'Failed to load categories');
       return [];
     } finally {
       setCategoriesLoading(false);
@@ -430,6 +433,12 @@ function AdminDashboard() {
     }
   }, [activeTab]);
 
+  useEffect(() => {
+    if (activeTab === 'categories') {
+      fetchCategories();
+    }
+  }, [activeTab]);
+
   const saveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -518,7 +527,7 @@ function AdminDashboard() {
   };
 
   // Delete category
-  const deleteCategory = async (id: number) => {
+  const deleteCategory = async (id: string) => {
     if (!confirm('Are you sure you want to delete this category? This will not delete associated products but will remove their category assignment.')) return;
     
     try {
@@ -528,16 +537,22 @@ function AdminDashboard() {
       });
 
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to delete category');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to delete category');
       }
 
-      setCategories(prev => prev.filter(cat => cat.id !== id));
+      // Refresh the categories list from the server
+      await fetchCategories();
       alert('Category deleted successfully');
     } catch (error) {
       console.error('Error deleting category:', error);
       alert(error instanceof Error ? error.message : 'Failed to delete category');
     }
+  };
+
+  // Handle delete category (wrapper for the UI)
+  const handleDeleteCategory = async (categoryId: string) => {
+    await deleteCategory(categoryId);
   };
 
   return (
@@ -1387,7 +1402,10 @@ function AdminDashboard() {
                 <div className="flex justify-between items-center">
                   <h2 className="text-2xl font-bold text-gray-900">Categories</h2>
                   <button
-                    onClick={() => setShowNewCategoryModal(true)}
+                    onClick={() => {
+                      resetCategoryForm();
+                      setShowNewCategoryModal(true);
+                    }}
                     className="px-4 py-2 bg-turquoise-600 text-white rounded-lg hover:bg-turquoise-700 flex items-center gap-2"
                   >
                     <Plus size={16} />
@@ -1396,8 +1414,22 @@ function AdminDashboard() {
                 </div>
 
                 {categoriesLoading ? (
-                  <div className="flex justify-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-turquoise-500"></div>
+                  <div className="flex justify-center py-12">
+                    <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-turquoise-500"></div>
+                  </div>
+                ) : categoriesError ? (
+                  <div className="text-center py-8">
+                    <div className="text-red-600 mb-4">Error loading categories: {categoriesError}</div>
+                    <button
+                      onClick={fetchCategories}
+                      className="px-4 py-2 bg-turquoise-600 text-white rounded-lg hover:bg-turquoise-700"
+                    >
+                      Retry
+                    </button>
+                  </div>
+                ) : categories.length === 0 ? (
+                  <div className="text-center py-12 text-gray-500">
+                    No categories found. Click "Add New Category" to create one.
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
@@ -1409,31 +1441,64 @@ function AdminDashboard() {
                               src={category.image} 
                               alt={category.name}
                               className="w-full h-full object-cover"
+                              onError={(e) => {
+                                const target = e.target as HTMLImageElement;
+                                target.onerror = null;
+                                target.src = '/images/placeholder-category.jpg';
+                              }}
                             />
                           ) : (
-                            <div className="text-gray-400">No Image</div>
+                            <div className="text-gray-400 p-4 text-center">
+                              <img 
+                                src="/images/placeholder-category.jpg" 
+                                alt="No image" 
+                                className="w-40 h-40 object-cover opacity-50 mx-auto"
+                              />
+                            </div>
                           )}
                         </div>
                         <div className="p-4">
-                          <h3 className="font-medium text-gray-900">{category.name}</h3>
+                          <div className="flex justify-between items-start">
+                            <h3 className="font-medium text-gray-900">{category.name}</h3>
+                            <span className={`text-xs px-2 py-1 rounded-full ${
+                              category.isActive 
+                                ? 'bg-green-100 text-green-800' 
+                                : 'bg-gray-100 text-gray-800'
+                            }`}>
+                              {category.isActive ? 'Active' : 'Inactive'}
+                            </span>
+                          </div>
                           {category.description && (
                             <p className="text-sm text-gray-500 mt-1 line-clamp-2">{category.description}</p>
                           )}
-                          <div className="mt-4 flex justify-end space-x-2">
-                            <button
-                              onClick={() => handleEditCategory(category)}
-                              className="p-2 text-gray-500 hover:text-turquoise-600"
-                              title="Edit"
-                            >
-                              <Edit size={16} />
-                            </button>
-                            <button
-                              onClick={() => deleteCategory(category.id)}
-                              className="p-2 text-gray-500 hover:text-red-600"
-                              title="Delete"
-                            >
-                              <Trash2 size={16} />
-                            </button>
+                          <div className="mt-3 flex justify-between items-center">
+                            <span className="text-xs text-gray-500">
+                              {category.productCount} {category.productCount === 1 ? 'product' : 'products'}
+                            </span>
+                            <div className="flex space-x-2">
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleEditCategory(category);
+                                }}
+                                className="p-1.5 text-gray-500 hover:text-turquoise-600 hover:bg-gray-100 rounded"
+                                title="Edit"
+                              >
+                                <Edit size={16} />
+                              </button>
+                              <button
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  if (window.confirm(`Are you sure you want to delete "${category.name}"?`)) {
+                                    await handleDeleteCategory(category.id);
+                                  }
+                                }}
+                                className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-gray-100 rounded"
+                                title="Delete"
+                              >
+                                <Trash2 size={16} />
+                              </button>
+                            </div>
                           </div>
                         </div>
                       </div>
@@ -1458,19 +1523,28 @@ function AdminDashboard() {
 
       {/* Category Modal */}
       {showNewCategoryModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
-            <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900">
-                {editingCategoryId ? 'Edit Category' : 'Add New Category'}
-              </h3>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 overflow-y-auto py-8">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 my-8">
+            <div className="px-6 py-4 border-b border-gray-200 sticky top-0 bg-white z-10">
+              <div className="flex justify-between items-center">
+                <h3 className="text-lg font-semibold text-gray-900">
+                  {editingCategoryId ? 'Edit Category' : 'Add New Category'}
+                </h3>
+                <button
+                  onClick={resetCategoryForm}
+                  className="text-gray-400 hover:text-gray-500"
+                  type="button"
+                >
+                  <X size={20} />
+                </button>
+              </div>
             </div>
             <form 
               onSubmit={(e) => { 
                 e.preventDefault(); 
                 saveCategory(); 
               }} 
-              className="p-6 space-y-4"
+              className="p-6 space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto"
             >
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Category Name</label>

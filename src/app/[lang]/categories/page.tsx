@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Search, Grid, List, Loader2 } from 'lucide-react';
+import { Search, Grid, List, Loader2, AlertCircle } from 'lucide-react';
 import { useTranslation } from '@/i18n/TranslationProvider';
 import { Category } from '@/types';
 
@@ -36,12 +36,37 @@ export default function CategoriesPage() {
       setLoading(true);
       setError(null);
       try {
-        const response = await fetch('/api/categories');
+        console.log('Fetching categories...');
+        const response = await fetch(`/api/categories`, {
+          cache: 'no-store',
+          headers: {
+            'Cache-Control': 'no-cache, no-store, must-revalidate',
+            'Pragma': 'no-cache',
+            'Expires': '0'
+          }
+        });
+        
         if (!response.ok) {
-          throw new Error('Failed to fetch categories');
+          const errorText = await response.text();
+          console.error('Failed to fetch categories:', response.status, errorText);
+          throw new Error(`Failed to fetch categories: ${response.status} ${errorText}`);
         }
+        
         const data = await response.json();
-        setCategories(data);
+        console.log('Categories data received:', data);
+        
+        // Transform the data to match the expected format
+        const formattedCategories = data.map((category: any) => ({
+          ...category,
+          name: category.name || 'Unnamed Category',
+          description: category.description || '',
+          slug: category.slug || `category-${category.id}`,
+          image: category.image || '/images/placeholder-category.jpg',
+          productCount: category.productCount || 0
+        }));
+        
+        console.log('Formatted categories:', formattedCategories);
+        setCategories(formattedCategories);
       } catch (err) {
         console.error('Error fetching categories:', err);
         // Fallback to dummy data if database is not available
@@ -61,13 +86,46 @@ export default function CategoriesPage() {
     category.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <Loader2 className="mx-auto h-12 w-12 text-gray-400 animate-spin" />
+          <p className="mt-4 text-gray-600">{translate('loading')}...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center p-6 max-w-md mx-auto bg-white rounded-lg shadow-md">
+          <AlertCircle className="mx-auto h-12 w-12 text-red-500" />
+          <h2 className="mt-4 text-xl font-semibold text-gray-900">
+            {translate('errorLoadingCategories')}
+          </h2>
+          <p className="mt-2 text-gray-600">
+            {error}
+          </p>
+          <button
+            onClick={() => window.location.reload()}
+            className="mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          >
+            {translate('retry')}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-<h1 className="text-3xl font-bold text-gray-900">{translate('Categories')}</h1>
-<p className="mt-2 text-gray-600">{translate('shopByCategoryDesc')}</p>
+          <h1 className="text-3xl font-bold text-gray-900">{translate('Categories')}</h1>
+          <p className="mt-2 text-gray-600">{translate('shopByCategoryDesc')}</p>
         </div>
       </div>
 

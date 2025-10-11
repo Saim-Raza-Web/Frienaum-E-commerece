@@ -1,33 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-
 export async function GET(request: NextRequest) {
   try {
-    // Fetch all active categories from the database
+    const { searchParams } = new URL(request.url);
+    const includeInactive = searchParams.get('all') === 'true';
+    
+    console.log('Fetching categories from database...');
+    
     const categories = await prisma.category.findMany({
-      where: {
-        isActive: true
-      },
+      where: includeInactive ? {} : { isActive: true },
       include: {
         _count: {
-          select: {
+          select: { 
             products: {
-              where: {
-                stock: {
-                  gt: 0 // Only count products that are in stock
-                }
-              }
-            }
+              where: { 
+                stock: { gt: 0 } // Only count products that are in stock
+              } 
+            } 
           }
         },
         products: {
           where: {
-            stock: {
-              gt: 0
-            },
-            imageUrl: {
-              not: null
-            }
+            stock: { gt: 0 },
+            imageUrl: { not: null }
           },
           select: {
             imageUrl: true,
@@ -35,35 +30,41 @@ export async function GET(request: NextRequest) {
             price: true
           },
           take: 1,
-          orderBy: {
-            createdAt: 'desc'
-          }
+          orderBy: { createdAt: 'desc' }
         }
       },
-      orderBy: {
-        name: 'asc'
-      }
+      orderBy: { name: 'asc' }
     });
 
-    // Transform the data to match the Category interface
+    console.log(`Found ${categories.length} categories`);
+
+    // Transform the data to match the expected format
     const transformedCategories = categories.map((category: any) => ({
       id: category.id,
       name: category.name,
-      description: category.description,
-      image: category.image || '/images/placeholder.jpg',
-      productCount: category._count.products,
-      firstProduct: category.products.length > 0 ? {
+      description: category.description || '',
+      image: category.image || '/images/placeholder-category.jpg',
+      isActive: category.isActive !== undefined ? category.isActive : true,
+      slug: category.slug || `category-${category.id}`,
+      productCount: category._count?.products || 0,
+      createdAt: category.createdAt,
+      updatedAt: category.updatedAt,
+      firstProduct: category.products?.[0] ? {
         imageUrl: category.products[0].imageUrl,
         title: category.products[0].title_en,
         price: category.products[0].price
       } : null
     }));
 
+    console.log('Categories data transformed successfully');
     return NextResponse.json(transformedCategories);
   } catch (error) {
     console.error('Error fetching categories:', error);
     return NextResponse.json(
-      { error: 'Failed to fetch categories' },
+      { 
+        error: 'Failed to fetch categories',
+        details: error instanceof Error ? error.message : 'Unknown error occurred'
+      },
       { status: 500 }
     );
   }
