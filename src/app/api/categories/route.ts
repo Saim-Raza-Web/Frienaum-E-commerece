@@ -76,7 +76,20 @@ export async function POST(request: NextRequest) {
     const formData = await request.formData();
     const name = formData.get('name') as string;
     const description = formData.get('description') as string;
-    const imageFile = formData.get('image') as File | null;
+    const imageUrl = formData.get('imageUrl') as string | null;
+
+    // Debug logging
+    console.log('=== CATEGORY CREATION DEBUG ===');
+    console.log('FormData entries:');
+    for (const [key, value] of formData.entries()) {
+      console.log(`${key}:`, value);
+    }
+    console.log('Extracted values:');
+    console.log('name:', name);
+    console.log('description:', description);
+    console.log('imageUrl:', imageUrl);
+    console.log('imageUrl type:', typeof imageUrl);
+    console.log('imageUrl length:', imageUrl?.length);
 
     // Validate required fields
     if (!name || !description) {
@@ -86,44 +99,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    let imageUrl = null;
-
-    // Handle image upload if provided
-    if (imageFile) {
-      // Validate file type
-      if (!imageFile.type.startsWith('image/')) {
-        return NextResponse.json(
-          { error: 'Uploaded file must be an image' },
-          { status: 400 }
-        );
-      }
-
-      // Upload the image to the server
-      const uploadFormData = new FormData();
-      uploadFormData.append('file', imageFile);
-
-      const uploadResponse = await fetch(`${request.nextUrl.origin}/api/upload`, {
-        method: 'POST',
-        body: uploadFormData,
-      });
-
-      if (!uploadResponse.ok) {
-        const error = await uploadResponse.json();
-        throw new Error(error.error || 'Failed to upload image');
-      }
-
-      const { url } = await uploadResponse.json();
-      imageUrl = url;
-    }
-
     // Create new category with the image URL
     const category = await prisma.category.create({
       data: {
         name,
         description,
-        image: imageUrl
+        image: imageUrl || null
       }
     });
+
+    console.log('Created category:', category);
 
     return NextResponse.json({
       id: category.id,

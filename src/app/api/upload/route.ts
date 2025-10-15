@@ -1,7 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { writeFile, mkdir } from 'fs/promises';
-import { join } from 'path';
-import { v4 as uuidv4 } from 'uuid';
+import cloudinary from '@/lib/cloudinary';
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,44 +10,72 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'No file received.' }, { status: 400 });
     }
 
-    const bytes = await file.arrayBuffer();
-    const buffer = Buffer.from(bytes);
-
     // Validate file type
     if (!file.type.startsWith('image/')) {
       return NextResponse.json({ error: 'File must be an image.' }, { status: 400 });
     }
 
-    // Validate file size (5MB limit)
+    // Validate file size (5MB limit for better reliability)
     const maxSize = 5 * 1024 * 1024; // 5MB
     if (file.size > maxSize) {
-      return NextResponse.json({ error: 'File size must be less than 5MB.' }, { status: 400 });
+      return NextResponse.json({ error: 'File size must be less than 5MB for optimal upload performance.' }, { status: 400 });
     }
 
-    // Generate unique filename
-    const fileExtension = file.name.split('.').pop();
-    const filename = `${uuidv4()}.${fileExtension}`;
-    const uploadDir = join(process.cwd(), 'public', 'images');
+    // Convert file to buffer
+    const bytes = await file.arrayBuffer();
+    const buffer = Buffer.from(bytes);
 
-    // Ensure upload directory exists
-    try {
-      await mkdir(uploadDir, { recursive: true });
-    } catch (error) {
-      // Directory might already exist
+    // Upload to Cloudinary with timeout and retry configuration
+    const result = await new Promise((resolve, reject) => {
+      const uploadStream = cloudinary.uploader.upload_stream(
+        {
+          resource_type: 'auto',
+          folder: 'ecommerce-uploads', // Organize uploads in a folder
+          transformation: [
+            { quality: 'auto' },
+            { fetch_format: 'auto' }
+          ],
+          timeout: 120000, // 2 minutes timeout
+          chunk_size: 6000000, // 6MB chunks for better reliability
+        },
+        (error, result) => {
+          if (error) {
+            console.error('Cloudinary upload error details:', error);
+            reject(error);
+          } else {
+            resolve(result);
+          }
+        }
+      );
+      
+      // Set a timeout for the entire upload process
+      const timeoutId = setTimeout(() => {
+        uploadStream.destroy();
+        reject(new Error('Upload timeout - please try with a smaller image'));
+      }, 120000); // 2 minutes
+      
+      uploadStream.on('end', () => {
+        clearTimeout(timeoutId);
+      });
+      
+      uploadStream.end(buffer);
+    });
+
+    if (!result || typeof result !== 'object' || !('secure_url' in result)) {
+      throw new Error('Failed to upload to Cloudinary');
     }
 
-    // Save file
-    const filepath = join(uploadDir, filename);
-    await writeFile(filepath, buffer);
-
-    // Return the URL path (relative to public folder)
+    // Return the Cloudinary secure URL
     return NextResponse.json({
       success: true,
-      filename,
-      url: `/images/${filename}`
+      url: (result as any).secure_url,
+      public_id: (result as any).public_id
     });
   } catch (error) {
-    console.error('Upload error:', error);
-    return NextResponse.json({ error: 'Failed to upload file.' }, { status: 500 });
+    console.error('Cloudinary upload error:', error);
+    return NextResponse.json({ 
+      error: 'Failed to upload file to Cloudinary.',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
   }
 }

@@ -33,7 +33,7 @@ export async function PUT(
     const formData = await request.formData();
     const name = formData.get('name') as string;
     const description = formData.get('description') as string;
-    const imageFile = formData.get('image') as File | null;
+    const imageUrl = formData.get('imageUrl') as string | null;
 
     // Validate required fields
     if (!name || !description) {
@@ -55,43 +55,13 @@ export async function PUT(
       );
     }
 
-    let imageUrl = existingCategory.image;
-
-    // Handle image upload if a new image is provided
-    if (imageFile) {
-      // Validate file type
-      if (!imageFile.type.startsWith('image/')) {
-        return NextResponse.json(
-          { error: 'Uploaded file must be an image' },
-          { status: 400 }
-        );
-      }
-
-      // Upload the new image to the server
-      const uploadFormData = new FormData();
-      uploadFormData.append('file', imageFile);
-
-      const uploadResponse = await fetch(`${request.nextUrl.origin}/api/upload`, {
-        method: 'POST',
-        body: uploadFormData,
-      });
-
-      if (!uploadResponse.ok) {
-        const error = await uploadResponse.json();
-        throw new Error(error.error || 'Failed to upload image');
-      }
-
-      const { url } = await uploadResponse.json();
-      imageUrl = url;
-    }
-
-    // Update the category
+    // Update the category with the new image URL (or keep existing if no new URL provided)
     const updatedCategory = await prisma.category.update({
       where: { id: categoryId },
       data: {
         name,
         description,
-        image: imageUrl,
+        image: imageUrl || existingCategory.image,
         updatedAt: new Date()
       }
     });

@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import ImageUpload from '@/components/ImageUpload';
 import {
   Users,
   ShoppingBag,
@@ -69,8 +70,7 @@ function AdminDashboard() {
   const [newCategory, setNewCategory] = useState({ 
     name: '', 
     description: '', 
-    image: null as File | null,
-    imageUrl: '' as string | null
+    imageUrl: ''
   });
   const [creatingCategory, setCreatingCategory] = useState(false);
 
@@ -160,15 +160,35 @@ function AdminDashboard() {
       return;
     }
 
+    // Prevent submission while image is uploading
+    if (isImageUploading) {
+      alert('Please wait for the image upload to complete');
+      return;
+    }
+
     try {
       setCreatingCategory(true);
-      
+
       // Create form data to handle file upload
       const formData = new FormData();
       formData.append('name', newCategory.name.trim());
       formData.append('description', newCategory.description.trim());
-      if (newCategory.image) {
-        formData.append('image', newCategory.image);
+      // Always append imageUrl, even if empty (will be converted to null in API)
+      formData.append('imageUrl', newCategory.imageUrl || '');
+
+      // Debug logging
+      console.log('=== FRONTEND FORM DATA DEBUG ===');
+      console.log('newCategory state:', newCategory);
+      console.log('FormData entries:');
+      for (const [key, value] of formData.entries()) {
+        console.log(`${key}:`, value);
+      }
+
+      // Check if imageUrl is set
+      if (newCategory.imageUrl) {
+        console.log('✅ Image URL is set in state:', newCategory.imageUrl);
+      } else {
+        console.log('❌ Image URL is empty in state');
       }
 
       const isEditing = !!editingCategoryId;
@@ -206,15 +226,14 @@ function AdminDashboard() {
     setNewCategory({
       name: category.name,
       description: category.description || '',
-      image: null,
-      imageUrl: category.image || null
+      imageUrl: category.image || ''
     });
     setShowNewCategoryModal(true);
   };
 
   // Reset the category form
   const resetCategoryForm = () => {
-    setNewCategory({ name: '', description: '', image: null, imageUrl: null });
+    setNewCategory({ name: '', description: '', imageUrl: '' });
     setEditingCategoryId(null);
     setShowNewCategoryModal(false);
   };
@@ -438,6 +457,29 @@ function AdminDashboard() {
       fetchCategories();
     }
   }, [activeTab]);
+
+  const handleProductImageUpload = (url: string) => {
+    setForm((prev: any) => ({ ...prev, imageUrl: url }));
+  };
+
+  const [isImageUploading, setIsImageUploading] = useState(false);
+
+  const handleCategoryImageUpload = (url: string) => {
+    console.log('=== IMAGE UPLOAD CALLBACK ===');
+    console.log('Received URL:', url);
+    console.log('Before state update - newCategory:', newCategory);
+    setNewCategory((prev: any) => ({ ...prev, imageUrl: url }));
+    setIsImageUploading(false); // Image upload completed
+    console.log('After state update - should update newCategory.imageUrl to:', url);
+  };
+
+  const handleImageUploadStart = () => {
+    setIsImageUploading(true);
+  };
+
+  const handleImageUploadEnd = () => {
+    setIsImageUploading(false);
+  };
 
   const saveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1227,86 +1269,22 @@ function AdminDashboard() {
                           </div>
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">Product Image</label>
-                            <div className="space-y-2">
-                              <div className="relative w-full h-48 bg-gray-100 rounded flex items-center justify-center overflow-hidden">
-                                {form.imageUrl ? (
-                                  <>
-                                    <img src={form.imageUrl} alt="preview" className="max-h-full object-contain" />
-                                    <button
-                                      type="button"
-                                      className="absolute top-2 right-2 p-1.5 rounded-full bg-white/90 border hover:bg-white shadow"
-                                      onClick={() => setForm({ ...form, imageUrl: '' })}
-                                      title="Remove image"
-                                    >
-                                      <X className="w-4 h-4 text-gray-700" />
-                                    </button>
-                                  </>
-                                ) : (
-                                  <span className="text-gray-400 text-sm">No image</span>
-                                )}
-                              </div>
-                              <div
-                                className="flex items-center gap-3"
-                                onDragOver={(e)=>e.preventDefault()}
-                                onDrop={async (e)=>{
-                                  e.preventDefault();
-                                  const file = e.dataTransfer.files?.[0];
-                                  if (!file) return;
-                                  const fd = new FormData();
-                                  fd.append('file', file);
-                                  try {
-                                    setIsUploading(true);
-                                    const res = await fetch('/api/upload', { method: 'POST', body: fd });
-                                    const data = await res.json();
-                                    if (!res.ok || !data.url) {
-                                      alert(data.error || 'Upload failed');
-                                    } else {
-                                      setForm({ ...form, imageUrl: data.url });
-                                    }
-                                  } finally {
-                                    setIsUploading(false);
-                                  }
-                                }}
-                              >
-                                <input
-                                  type="text"
-                                  inputMode="url"
-                                  autoComplete="off"
-                                  className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent"
-                                  value={form.imageUrl}
-                                  onChange={e=>setForm({...form, imageUrl:e.target.value})}
-                                  placeholder="https://example.com/image.jpg"
-                                />
-                                <label className="inline-flex items-center gap-2 px-3 py-2 border rounded-lg cursor-pointer hover:bg-gray-50">
-                                  <Upload className="w-4 h-4" />
-                                  <span>{isUploading ? 'Uploading...' : (form.imageUrl ? 'Change' : 'Upload')}</span>
-                                  <input
-                                    type="file"
-                                    accept="image/*"
-                                    className="hidden"
-                                    onChange={async (e) => {
-                                      const file = e.target.files?.[0];
-                                      if (!file) return;
-                                      const formData = new FormData();
-                                      formData.append('file', file);
-                                      try {
-                                        setIsUploading(true);
-                                        const res = await fetch('/api/upload', { method: 'POST', body: formData });
-                                        const data = await res.json();
-                                        if (!res.ok || !data.url) {
-                                          alert(data.error || 'Upload failed');
-                                          return;
-                                        }
-                                        setForm({ ...form, imageUrl: data.url });
-                                      } catch (err) {
-                                        alert('Upload failed');
-                                      } finally {
-                                        setIsUploading(false);
-                                      }
-                                    }}
-                                  />
-                                </label>
-                              </div>
+                            <ImageUpload
+                              onImageUpload={handleProductImageUpload}
+                              currentImageUrl={form.imageUrl}
+                              className="mb-2"
+                            />
+                            
+                            {/* Alternative: Manual URL Input */}
+                            <div className="mt-2">
+                              <label className="block text-xs font-medium text-gray-600 mb-1">Or enter image URL manually:</label>
+                              <input
+                                type="text"
+                                value={form.imageUrl}
+                                onChange={e => setForm({ ...form, imageUrl: e.target.value })}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                placeholder="https://.../image.jpg"
+                              />
                             </div>
                           </div>
                         </div>
@@ -1569,49 +1547,14 @@ function AdminDashboard() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Category Image</label>
-                {newCategory.imageUrl && !newCategory.image && (
-                  <div className="mb-4">
-                    <p className="text-sm text-gray-500 mb-2">Current Image:</p>
-                    <img 
-                      src={newCategory.imageUrl} 
-                      alt="Current category" 
-                      className="h-32 w-32 object-cover rounded-md"
-                    />
-                  </div>
-                )}
-                <div className="mt-1 flex items-center">
-                  <label className="w-full flex flex-col items-center px-4 py-6 bg-white text-turquoise-600 rounded-lg shadow-sm tracking-wide uppercase border border-turquoise-500 cursor-pointer hover:bg-turquoise-50">
-                    <svg className="w-8 h-8" fill="currentColor" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                      <path d="M16.88 9.1A4 4 0 0 1 16 17H5a5 5 0 0 1-1-9.9V7a3 3 0 0 1 4.52-2.59A4.98 4.98 0 0 1 17 8c0 .38-.04.74-.12 1.1zM11 11h3l-4-4-4 4h3v3h2v-3z" />
-                    </svg>
-                    <span className="mt-2 text-base leading-normal">
-                      {newCategory.image 
-                        ? newCategory.image.name 
-                        : newCategory.imageUrl 
-                          ? 'Change image' 
-                          : 'Select an image'}
-                    </span>
-                    <input 
-                      type="file" 
-                      className="hidden" 
-                      accept="image/*"
-                      onChange={(e) => {
-                        if (e.target.files && e.target.files[0]) {
-                          setNewCategory(prev => ({ 
-                            ...prev, 
-                            image: e.target.files![0],
-                            imageUrl: URL.createObjectURL(e.target.files![0])
-                          }));
-                        }
-                      }}
-                    />
-                  </label>
-                </div>
-                {newCategory.image && (
-                  <div className="mt-2 text-sm text-gray-500">
-                    {newCategory.image.name} ({(newCategory.image.size / 1024).toFixed(2)} KB)
-                  </div>
-                )}
+                <ImageUpload
+                  onImageUpload={handleCategoryImageUpload}
+                  onUploadStart={handleImageUploadStart}
+                  onUploadEnd={handleImageUploadEnd}
+                  currentImageUrl={newCategory.imageUrl}
+                  className="mb-2"
+                  disabled={creatingCategory}
+                />
               </div>
               <div className="flex items-center justify-end gap-3 pt-4">
                 <button
@@ -1624,13 +1567,13 @@ function AdminDashboard() {
                 </button>
                 <button
                   type="submit"
-                  disabled={creatingCategory}
+                  disabled={creatingCategory || isImageUploading}
                   className="px-4 py-2 bg-turquoise-600 text-white rounded-lg hover:bg-turquoise-700 disabled:opacity-50"
                 >
-                  {creatingCategory 
-                    ? 'Saving...' 
-                    : editingCategoryId 
-                      ? 'Update Category' 
+                  {creatingCategory || isImageUploading
+                    ? (isImageUploading ? 'Uploading Image...' : 'Saving...')
+                    : editingCategoryId
+                      ? 'Update Category'
                       : 'Create Category'}
                 </button>
               </div>

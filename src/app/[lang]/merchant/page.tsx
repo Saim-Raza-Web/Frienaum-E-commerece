@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useTranslation } from '@/i18n/TranslationProvider';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import ImageUpload from '@/components/ImageUpload';
 import {
   TrendingUp,
   ShoppingBag,
@@ -56,16 +57,6 @@ function MerchantDashboard() {
     imageUrl: '',
     category: 'General'
   });
-
-  // State for image upload
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string>('');
-  const [uploadingImage, setUploadingImage] = useState(false);
-
-  // State for edit image upload
-  const [selectedImageEdit, setSelectedImageEdit] = useState<File | null>(null);
-  const [imagePreviewEdit, setImagePreviewEdit] = useState<string>('');
-  const [uploadingImageEdit, setUploadingImageEdit] = useState(false);
   const [showViewModal, setShowViewModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<any>(null);
@@ -111,8 +102,7 @@ function MerchantDashboard() {
   const [newCategory, setNewCategory] = useState({ 
     name: '', 
     description: '',
-    image: null as File | null,
-    imagePreview: null as string | null
+    imageUrl: ''
   });
   const [creatingCategory, setCreatingCategory] = useState(false);
   const [customerSaving, setCustomerSaving] = useState(false);
@@ -166,13 +156,12 @@ function MerchantDashboard() {
       const formData = new FormData();
       formData.append('name', newCategory.name.trim());
       formData.append('description', newCategory.description.trim());
-      if (newCategory.image) {
-        formData.append('image', newCategory.image);
+      if (newCategory.imageUrl) {
+        formData.append('imageUrl', newCategory.imageUrl);
       }
 
       const response = await fetch('/api/categories', {
         method: 'POST',
-        // Don't set Content-Type header, let the browser set it with the correct boundary
         body: formData,
       });
 
@@ -184,17 +173,12 @@ function MerchantDashboard() {
       const createdCategory = await response.json();
       setCategories(prev => [...prev, createdCategory]);
       
-      // Reset form and cleanup
-      if (newCategory.imagePreview) {
-        URL.revokeObjectURL(newCategory.imagePreview);
-      }
+      // Reset form
       setNewCategory({ 
         name: '', 
         description: '',
-        image: null,
-        imagePreview: null
+        imageUrl: ''
       });
-      setShowNewCategoryModal(false);
       setShowNewCategoryModal(false);
       alert('Category created successfully!');
     } catch (error) {
@@ -763,7 +747,6 @@ function MerchantDashboard() {
         category: product.category || 'General'
       });
       // Set image preview for existing image
-      setImagePreviewEdit(product.imageUrl || '');
       setShowEditModal(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to load product for editing');
@@ -789,123 +772,18 @@ function MerchantDashboard() {
       category: 'General'
     });
     // Clear image upload state
-    setSelectedImage(null);
-    setImagePreview('');
-    setUploadingImage(false);
   };
 
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  const handleProductImageUpload = (url: string) => {
+    setNewProduct(prev => ({ ...prev, imageUrl: url }));
+  };
+  const handleEditImageUpload = (url: string) => {
+    setEditingProduct(prev => ({ ...prev, imageUrl: url }));
+  };
 
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      setError('Please select an image file.');
-      return;
-    }
-
-    // Validate file size (5MB limit)
-    const maxSize = 5 * 1024 * 1024;
-    if (file.size > maxSize) {
-      setError('Image size must be less than 5MB.');
-      return;
-    }
-
-    setSelectedImage(file);
-    setError('');
-
-    // Create preview URL
-    const previewUrl = URL.createObjectURL(file);
-    setImagePreview(previewUrl);
-
-    // Upload the image
-    try {
-      setUploadingImage(true);
-
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to upload image');
-      }
-
-      const result = await response.json();
-
-      // Update the newProduct state with the uploaded image URL
-      setNewProduct(prev => ({ ...prev, imageUrl: result.url }));
-
-    } catch (err) {
-      console.error('Image upload error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to upload image');
-      setSelectedImage(null);
-      setImagePreview('');
-    } finally {
-      setUploadingImage(false);
-    }
-  }
-  const handleImageUploadEdit = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      setError('Please select an image file.');
-      return;
-    }
-
-    // Validate file size (5MB limit)
-    const maxSize = 5 * 1024 * 1024;
-    if (file.size > maxSize) {
-      setError('Image size must be less than 5MB.');
-      return;
-    }
-
-    setSelectedImageEdit(file);
-    setError('');
-
-    // Create preview URL
-    const previewUrl = URL.createObjectURL(file);
-    setImagePreviewEdit(previewUrl);
-
-    // Upload the image
-    try {
-      setUploadingImageEdit(true);
-
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const response = await fetch('/api/upload', {
-        method: 'POST',
-        body: formData,
-        credentials: 'include',
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to upload image');
-      }
-
-      const result = await response.json();
-
-      // Update the editingProduct state with the uploaded image URL
-      setEditingProduct(prev => ({ ...prev, imageUrl: result.url }));
-
-    } catch (err) {
-      console.error('Image upload error:', err);
-      setError(err instanceof Error ? err.message : 'Failed to upload image');
-      setSelectedImageEdit(null);
-      setImagePreviewEdit('');
-    } finally {
-      setUploadingImageEdit(false);
-    }
-  }
+  const handleCategoryImageUpload = (url: string) => {
+    setNewCategory(prev => ({ ...prev, imageUrl: url }));
+  };
   const closeViewModal = () => {
     setShowViewModal(false);
     setSelectedProduct(null);
@@ -926,9 +804,6 @@ function MerchantDashboard() {
     });
     setUpdating(false);
     // Clear edit image upload state
-    setSelectedImageEdit(null);
-    setImagePreviewEdit('');
-    setUploadingImageEdit(false);
   };
 
   const updateProduct = async (e: React.FormEvent) => {
@@ -2247,38 +2122,12 @@ function MerchantDashboard() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Product Image</label>
-
-                  {/* Image Preview */}
-                  {imagePreviewEdit && (
-                    <div className="mb-3">
-                      <img
-                        src={imagePreviewEdit}
-                        alt="Preview"
-                        className="w-32 h-32 object-cover rounded-lg border border-gray-300"
-                      />
-                    </div>
-                  )}
-
-                  {/* File Input */}
-                  <div className="flex items-center space-x-3">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUploadEdit}
-                      disabled={uploadingImageEdit}
-                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                    />
-                    {uploadingImageEdit && (
-                      <div className="flex items-center text-blue-600">
-                        <svg className="animate-spin h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Uploading...
-                      </div>
-                    )}
-                  </div>
-
+                  <ImageUpload
+                    onImageUpload={handleEditImageUpload}
+                    currentImageUrl={editingProduct.imageUrl}
+                    className="mb-2"
+                  />
+                  
                   {/* Alternative: Manual URL Input */}
                   <div className="mt-2">
                     <label className="block text-xs font-medium text-gray-600 mb-1">Or enter image URL manually:</label>
@@ -2397,38 +2246,12 @@ function MerchantDashboard() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Product Image</label>
-
-                  {/* Image Preview */}
-                  {imagePreview && (
-                    <div className="mb-3">
-                      <img
-                        src={imagePreview}
-                        alt="Preview"
-                        className="w-32 h-32 object-cover rounded-lg border border-gray-300"
-                      />
-                    </div>
-                  )}
-
-                  {/* File Input */}
-                  <div className="flex items-center space-x-3">
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                      disabled={uploadingImage}
-                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
-                    />
-                    {uploadingImage && (
-                      <div className="flex items-center text-blue-600">
-                        <svg className="animate-spin h-4 w-4 mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Uploading...
-                      </div>
-                    )}
-                  </div>
-
+                  <ImageUpload
+                    onImageUpload={handleProductImageUpload}
+                    currentImageUrl={newProduct.imageUrl}
+                    className="mb-2"
+                  />
+                  
                   {/* Alternative: Manual URL Input */}
                   <div className="mt-2">
                     <label className="block text-xs font-medium text-gray-600 mb-1">Or enter image URL manually:</label>
@@ -2493,59 +2316,21 @@ function MerchantDashboard() {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Category Image</label>
-                <div className="mt-1 flex items-center">
-                  <label className="cursor-pointer">
-                    <span className="inline-block px-4 py-2 bg-white border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 hover:bg-gray-50">
-                      {newCategory.image ? 'Change Image' : 'Upload Image'}
-                    </span>
-                    <input
-                      type="file"
-                      className="sr-only"
-                      accept="image/*"
-                      onChange={(e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          // Revoke previous object URL to prevent memory leaks
-                          if (newCategory.imagePreview) {
-                            URL.revokeObjectURL(newCategory.imagePreview);
-                          }
-                          setNewCategory(prev => ({
-                            ...prev,
-                            image: file,
-                            imagePreview: URL.createObjectURL(file)
-                          }));
-                        }
-                      }}
-                    />
-                  </label>
-                  {newCategory.imagePreview && (
-                    <div className="ml-4">
-                      <img
-                        src={newCategory.imagePreview}
-                        alt="Category preview"
-                        className="h-16 w-16 object-cover rounded-md"
-                      />
-                    </div>
-                  )}
-                </div>
-                <p className="mt-1 text-xs text-gray-500">
-                  {newCategory.image ? newCategory.image.name : 'No file chosen'}
-                </p>
+                <ImageUpload
+                  onImageUpload={handleCategoryImageUpload}
+                  currentImageUrl={newCategory.imageUrl}
+                  className="mb-2"
+                />
               </div>
               <div className="flex items-center justify-end gap-3 pt-4">
                 <button
                   type="button"
                   onClick={() => {
                     setShowNewCategoryModal(false);
-                    // Clean up the object URL to prevent memory leaks
-                    if (newCategory.imagePreview) {
-                      URL.revokeObjectURL(newCategory.imagePreview);
-                    }
                     setNewCategory({ 
                       name: '', 
                       description: '',
-                      image: null,
-                      imagePreview: null
+                      imageUrl: ''
                     });
                   }}
                   className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
