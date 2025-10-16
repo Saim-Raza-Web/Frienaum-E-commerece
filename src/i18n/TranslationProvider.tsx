@@ -23,14 +23,17 @@ export const TranslationProvider = ({ children, initialLocale }: TranslationProv
   useEffect(() => {
     const loadTranslations = async () => {
       try {
-        const messages = await import(`./locales/${currentLocale}/common.json`);
+        console.log('Loading translations for locale:', currentLocale);
+        const messages = await import(`@/i18n/locales/${currentLocale}/common.json`);
+        console.log('Translations loaded successfully:', Object.keys(messages.default).length, 'keys');
         setTranslations(messages.default);
       } catch (error) {
         console.error(`Failed to load translations for locale: ${currentLocale}`, error);
         // Fallback to English
         if (currentLocale !== 'en') {
           try {
-            const fallbackMessages = await import('./locales/en/common.json');
+            console.log('Trying fallback to English');
+            const fallbackMessages = await import('@/i18n/locales/en/common.json');
             setTranslations(fallbackMessages.default);
           } catch (fallbackError) {
             console.error('Failed to load fallback translations', fallbackError);

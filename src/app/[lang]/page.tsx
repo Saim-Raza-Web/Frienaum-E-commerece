@@ -29,10 +29,45 @@ const CategoryCard = ({ category, index, lang, router }: {
   lang: string; 
   router: any 
 }) => {
+  const { translate } = useTranslation();
+
   // Fallback to first product image if category image is not available
   const imageSrc = category.image || 
                   (category.firstProduct?.imageUrl || 
                   '/images/placeholder-category.jpg');
+
+  // Translate category name using the translation keys
+  const getCategoryTranslationKey = (categoryName: string) => {
+    // Map common category names to translation keys (case-insensitive)
+    const categoryMap: { [key: string]: string } = {
+      'electronics': 'electronics',
+      'fashion': 'fashion',
+      'home & garden': 'home-garden',
+      'home and garden': 'home-garden',
+      'sports': 'sports',
+      'books': 'books',
+      'clothing': 'clothing',
+      'accessories': 'accessories',
+      'fitness': 'fitness',
+      'home': 'home'
+    };
+
+    // Try exact match first (case-insensitive)
+    const lowerCategoryName = categoryName.toLowerCase();
+    if (categoryMap[lowerCategoryName]) {
+      return categoryMap[lowerCategoryName];
+    }
+
+    // Try partial matches
+    for (const [key, value] of Object.entries(categoryMap)) {
+      if (lowerCategoryName.includes(key)) {
+        return value;
+      }
+    }
+
+    // Fallback to the original category name as translation key
+    return categoryName.toLowerCase().replace(/\s+/g, '-');
+  };
 
   return (
     <div
@@ -55,7 +90,30 @@ const CategoryCard = ({ category, index, lang, router }: {
         />
         <div className="absolute inset-0 bg-black bg-opacity-20 group-hover:bg-opacity-30 transition-all duration-300"></div>
         <h3 className="absolute bottom-4 left-0 right-0 mx-auto text-white text-lg font-semibold drop-shadow-lg px-4">
-          {category.name}
+          {(() => {
+            try {
+              // Test if basic translation works
+              const testTranslation = translate('electronics');
+              console.log('Test translation for "electronics":', testTranslation);
+
+              const translationKey = getCategoryTranslationKey(category.name);
+              console.log('Category:', category.name, 'Translation key:', translationKey);
+
+              const translated = translate(translationKey);
+              console.log('Translated result:', translated, 'Type:', typeof translated);
+
+              // Check if translation actually worked
+              if (translated && translated !== translationKey && translated !== category.name) {
+                return translated;
+              } else {
+                console.log('Translation failed, using fallback');
+                return category.name;
+              }
+            } catch (error) {
+              console.error('Translation error for category:', category.name, error);
+              return category.name;
+            }
+          })()}
         </h3>
       </div>
     </div>
@@ -76,8 +134,7 @@ function HomePage({ params }: HomePageProps) {
   
   // Typing animation state
   const [displayText, setDisplayText] = useState('');
-  const words = ['Living', 'Comfort', 'Elegance', 'Style'];
-  let wordIndex = 0;
+  const words = lang === 'de' ? ['Wohnen', 'Komfort', 'Eleganz', 'Stil'] : ['Living', 'Comfort', 'Elegance', 'Style'];
 
   // Fetch featured products and categories
   const fetchFeaturedProducts = async () => {
@@ -108,8 +165,8 @@ function HomePage({ params }: HomePageProps) {
       // Transform API data to match Product interface
       const transformedProducts: Product[] = productsData.map((product: any) => ({
         id: product.id.toString(),
-        name: product.title_en,
-        description: product.desc_en,
+        name: lang === 'de' ? product.title_de : product.title_en,
+        description: lang === 'de' ? product.desc_de : product.desc_en,
         price: product.price,
         originalPrice: product.price,
         images: [product.imageUrl || '/images/placeholder.jpg'],
@@ -125,6 +182,7 @@ function HomePage({ params }: HomePageProps) {
 
       // Use categories from database
       setCategories(categoriesData);
+      console.log('Categories loaded:', categoriesData);
     } catch (err) {
       console.error('Error fetching data:', err);
       setError('Failed to load data');
@@ -140,6 +198,10 @@ function HomePage({ params }: HomePageProps) {
 
   // Typing animation effect
   useEffect(() => {
+    // Reset animation state when language changes
+    setDisplayText('');
+    let wordIndex = 0;
+
     let currentIndex = 0;
     let isDeleting = false;
     let timeout: NodeJS.Timeout;
@@ -185,7 +247,7 @@ function HomePage({ params }: HomePageProps) {
     return () => {
       clearTimeout(timeout);
     };
-  }, []);
+  }, [lang]); // Add lang dependency to re-run animation when language changes
 
   const handleAddToCart = (product: Product) => {
     addToCart(product);
@@ -203,9 +265,9 @@ function HomePage({ params }: HomePageProps) {
             <div className="w-full lg:w-1/2 xl:pr-16">
               <div className="min-h-[240px] md:min-h-[260px] lg:min-h-[320px] flex flex-col justify-center pt-8 lg:pt-0">
                 <h1 className="text-5xl md:text-6xl lg:text-6xl xl:text-7xl font-serif text-[var(--color-primary-800)] leading-tight" style={{ fontFamily: 'var(--font-playfair), ui-serif, Georgia' }}>
-                  <div className="whitespace-nowrap">Timeless Style...</div>
+                  <div className="whitespace-nowrap">{translate('timelessStyle')}</div>
                   <div className="flex items-baseline">
-                    <span className="whitespace-nowrap">Modern&nbsp;</span>
+                    <span className="whitespace-nowrap">{translate('modern')}&nbsp;</span>
                     <span className="inline-block min-w-[180px] lg:min-w-[220px] text-left">
                       {displayText}
                       {!displayText && <span className="invisible">Comfort</span>}
@@ -213,21 +275,21 @@ function HomePage({ params }: HomePageProps) {
                   </div>
                 </h1>
                 <p className="mt-6 text-lg text-[var(--color-primary-700)] max-w-lg">
-                  Discover products that define elegance and comfort for your modern lifestyle.
+                  {translate('heroSubtitle')}
                 </p>
                 <div className="mt-10 flex flex-col sm:flex-row gap-4">
                   <button 
                     className="px-8 py-4 bg-[var(--color-primary-500)] text-white font-medium rounded-lg hover:bg-[var(--color-primary-700)] transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
                     onClick={() => router.push(`/${lang}/products`)}
                   >
-                    Shop Now
+                    {translate('shopNow')}
                   </button>
                   <button 
                     className="px-8 py-4 border-2 border-[#8C6A4A] text-[var(--color-primary-700)] font-medium rounded-lg hover:bg-[var(--color-hover-accent)] hover:text-[var(--color-primary-800)] transition-all duration-300"
                     style={{ borderStyle: 'solid' }}
                     onClick={() => router.push(`/${lang}/about`)}
                   >
-                    Learn More
+                    {translate('learnMore')}
                   </button>
                 </div>
               </div>
@@ -280,8 +342,8 @@ function HomePage({ params }: HomePageProps) {
       {/* Categories Section */}
       <section className="py-16 px-4 sm:px-6 lg:px-8 text-center bg-white">
         <div className="max-w-7xl mx-auto relative">
-          <h2 className="text-3xl font-semibold text-gray-900 mb-4">Shop by Category</h2>
-          <p className="text-gray-500 mb-10">Explore our range of products organized by category.</p>
+          <h2 className="text-3xl font-semibold text-gray-900 mb-4">{translate('shopByCategory')}</h2>
+          <p className="text-gray-500 mb-10">{translate('shopByCategoryDesc')}</p>
           
           {/* Navigation Buttons - Outside Swiper */}
           <button className="category-swiper-button-prev absolute left-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 flex items-center justify-center bg-white rounded-full shadow-lg hover:bg-gray-50 transition-colors">
