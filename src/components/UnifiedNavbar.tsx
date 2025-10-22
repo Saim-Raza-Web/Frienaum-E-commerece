@@ -104,81 +104,71 @@ export default function UnifiedNavbar() {
   ];
 
   return (
-    <nav className="bg-white border-b border-gray-100 sticky top-0 z-40" suppressHydrationWarning={true}>
-      <div className="max-w-7xl mx-auto px-8 md:px-20">
-        <div className="flex justify-between items-center py-4">
+    <nav className="bg-white/95 backdrop-blur-sm border-b border-primary-100 sticky top-0 z-40 shadow-sm" suppressHydrationWarning={true}>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center py-6">
           {/* Logo */}
           <div className="flex-shrink-0">
-            <Link href={`/${lang}/`} className="flex items-center gap-2">
+            <Link href={`/${lang}/`} className="flex items-center gap-3 group">
               <img 
                 src="/images/Logo.png" 
-                alt="Frienaum Logo" 
-                className="h-8 w-auto" 
-                style={{ filter: 'invert(37%) sepia(53%) saturate(946%) hue-rotate(336deg) brightness(90%) contrast(100%) drop-shadow(0 0 0.5px #00000066)' }}
+                alt="Feinraum Logo" 
+                className="h-10 w-auto transition-transform duration-200 group-hover:scale-105" 
+                style={{ filter: 'invert(37%) sepia(53%) saturate(946%) hue-rotate(336deg) brightness(90%) contrast(100%)' }}
               />
-              <span className="font-bold text-lg text-[#824a43]">Frienaum</span>
+              <span className="font-montserrat font-bold text-xl text-primary-800 group-hover:text-primary-600 transition-colors">Feinraum</span>
             </Link>
           </div>
 
-          {/* Desktop Navigation - Different content based on auth status */}
-          <div className="hidden md:block flex-1">
-            <div className="ml-10 flex items-center gap-8 text-gray-700 font-medium">
-              {isAuthenticated ? (
-                // Logged in navigation
-                <>
-                  <Link href={`/${lang}/`} className="hover:text-[var(--color-primary-700)] transition-colors">
-                    {translate('home')}
-                  </Link>
-                  <NavLink href="/products">{translate('navigation.products')}</NavLink>
-                  <NavLink href="/categories">{translate('navigation.categories')}</NavLink>
-                  <NavLink href="/about">{translate('about')}</NavLink>
-                  <NavLink href="/contact">{translate('contact')}</NavLink>
-                </>
-              ) : (
-                // Logged out navigation - moved to left side with logo
-                <>
-                  <NavLink href="/products">{translate('navigation.products')}</NavLink>
-                  <NavLink href="/categories">{translate('navigation.categories')}</NavLink>
-                </>
-              )}
+          {/* Desktop Navigation - Clean minimalist design */}
+          <div className="hidden lg:block flex-1">
+            <div className="ml-8 flex items-center gap-6">
+              <Link href={`/${lang}/`} className="font-lora text-primary-700 hover:text-primary-500 transition-colors duration-200">
+                {translate('home')}
+              </Link>
+              <NavLink href="/products" className="font-lora">{translate('navigation.products')}</NavLink>
+              <NavLink href="/categories" className="font-lora">{translate('navigation.categories')}</NavLink>
+              <NavLink href="/about" className="font-lora">{translate('about')}</NavLink>
+              <NavLink href="/contact" className="font-lora">{translate('contact')}</NavLink>
             </div>
           </div>
 
           {/* Right side - Search, Cart, User/Language */}
           <div className="flex items-center gap-4">
-            {/* Search Bar */}
+            {/* Search Bar - Prominent and clean */}
             <div className="hidden lg:block">
               <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-primary-400 w-4 h-4" />
                 <input
                   type="search"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={handleSearch}
-                  className="search-input block w-64 pl-9 pr-3 py-2 rounded-full placeholder-gray-500 text-sm transition-all duration-200 focus:outline-none"
-                  placeholder="Search..."
+                  className="w-64 pl-10 pr-4 py-3 bg-primary-50 border border-primary-200 rounded-full placeholder-primary-400 text-primary-800 font-lora text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-300 focus:border-primary-400 hover:bg-primary-100"
+                  placeholder="Search products..."
                 />
               </div>
             </div>
 
-            {/* Language Selector - Show for both logged in and out */}
+            {/* Language Selector - Minimalist design */}
             <div className="relative">
               <button 
                 onClick={() => setIsLanguageOpen(!isLanguageOpen)}
                 onBlur={() => setTimeout(() => setIsLanguageOpen(false), 200)}
-                className="flex items-center text-gray-600 hover:text-[var(--color-primary-700)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary-700)] focus:ring-opacity-50 rounded"
+                className="flex items-center text-primary-600 hover:text-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-300 rounded-lg px-3 py-2 transition-colors duration-200"
               >
-                <Globe className="h-5 w-5 mr-1" />
-                <span className="text-sm font-medium">{lang.toUpperCase()}</span>
-                <ChevronDown className="ml-1 h-4 w-4" />
+                <Globe className="h-4 w-4 mr-2" />
+                <span className="text-sm font-lora font-medium">{lang.toUpperCase()}</span>
+                <ChevronDown className="ml-1 h-3 w-3" />
               </button>
               <div 
-                className={`absolute right-0 mt-2 w-40 bg-white rounded-md shadow-lg py-1 ring-1 ring-black/5 border border-gray-100 ${isLanguageOpen ? 'block' : 'hidden'} z-[100]`}
+                className={`absolute right-0 mt-2 w-44 bg-white rounded-lg shadow-xl py-2 border border-primary-100 ${isLanguageOpen ? 'block' : 'hidden'} z-[100]`}
               >
                 {languages.map((language) => (
                   <button
                     key={language.code}
                     onClick={() => changeLanguage(language.code)}
-                    className={`w-full text-left px-4 py-2 text-sm ${lang === language.code ? 'bg-[var(--color-primary-50)] text-[var(--color-primary-700)]' : 'text-gray-700 hover:bg-[var(--color-primary-50)]'}`}
+                    className={`w-full text-left px-4 py-2 text-sm font-lora transition-colors duration-200 ${lang === language.code ? 'bg-primary-50 text-primary-700 font-medium' : 'text-primary-600 hover:bg-primary-50 hover:text-primary-700'}`}
                   >
                     {language.name}
                   </button>
@@ -186,11 +176,11 @@ export default function UnifiedNavbar() {
               </div>
             </div>
 
-            {/* Cart - Show for both logged in and out */}
-            <Link href={`/${lang}/cart`} className="relative p-2 text-gray-600 hover:text-[var(--color-primary-700)] transition-colors rounded hover:bg-[var(--color-primary-50)]">
-              <ShoppingCart className="w-6 h-6" />
+            {/* Cart - Clean minimalist design */}
+            <Link href={`/${lang}/cart`} className="relative p-3 text-primary-600 hover:text-primary-500 transition-colors duration-200 rounded-lg hover:bg-primary-50 group">
+              <ShoppingCart className="w-5 h-5 group-hover:scale-110 transition-transform duration-200" />
               {cartItemCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-primary-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                <span className="absolute -top-1 -right-1 bg-cta-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-montserrat font-bold shadow-sm">
                   {cartItemCount > 99 ? '99+' : cartItemCount}
                 </span>
               )}

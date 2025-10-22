@@ -27,15 +27,16 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
 
   return (
     <Link href={`/${lang}/product/${product.id}`} className="group h-full">
-      <div className="card overflow-hidden h-full flex flex-col bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300">
-        {/* Product Image */}
-        <div className="relative aspect-square overflow-hidden bg-white">
+      <div className="card overflow-hidden h-full flex flex-col bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 border border-primary-100 hover:border-primary-200">
+        {/* Product Image - High quality with white background */}
+        <div className="relative aspect-[4/3] overflow-hidden bg-white">
           <div className="w-full h-full">
             {product.images && product.images[0] ? (
               <img
                 src={product.images[0]}
                 alt={product.name}
-                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
+                loading="lazy"
                 onError={(e) => {
                   const target = e.target as HTMLImageElement;
                   target.onerror = null;
@@ -43,79 +44,79 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
                 }}
               />
             ) : (
-              <div className="w-full h-full bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center">
-                <span className="text-gray-500 text-sm">{translate('productImage')}</span>
+              <div className="w-full h-full bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center">
+                <span className="text-primary-400 text-sm font-lora">{translate('productImage')}</span>
               </div>
             )}
           </div>
           
-          {/* Wishlist Button */}
-          <button className="absolute top-2 right-2 p-2 bg-white rounded-full shadow-md opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-red-50">
-            <Heart className="w-4 h-4 text-gray-600 hover:text-red-500 transition-colors" />
+          {/* Wishlist Button - Minimalist design */}
+          <button className="absolute top-3 right-3 p-2 bg-white/90 backdrop-blur-sm rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-white hover:scale-110">
+            <Heart className="w-4 h-4 text-primary-400 hover:text-cta-500 transition-colors duration-200" />
           </button>
           
           {/* Out of Stock Badge */}
           {!product.inStock && (
-            <div className="absolute top-2 left-2 bg-red-500 text-white text-xs px-2 py-1 rounded-full">
+            <div className="absolute top-3 left-3 bg-cta-500 text-white text-xs px-3 py-1 rounded-full font-montserrat font-medium shadow-lg">
               {translate('outOfStock')}
             </div>
           )}
         </div>
 
-        {/* Product Info */}
+        {/* Product Info - Clean minimalist layout */}
         <div className="p-4 flex-1 flex flex-col">
           {/* Category */}
-          <p className="text-sm text-primary-600 font-medium mb-1">
+          <p className="text-xs text-primary-500 font-montserrat font-medium mb-2 uppercase tracking-wide">
             {product.category}
           </p>
           
-          {/* Product Name - Single line with ellipsis */}
-          <h3 className="font-semibold text-gray-900 mb-2 truncate group-hover:text-turquoise-600 transition-colors flex-1 min-h-[1.5em]" title={product.name}>
-            {product.name}
+          {/* Product Name - Clean typography with proper overflow handling */}
+          <h3 className="font-montserrat font-semibold text-primary-800 mb-2 group-hover:text-primary-600 transition-colors duration-200 flex-1 text-sm leading-tight" title={product.name}>
+            <span className="line-clamp-2 block">{product.name}</span>
           </h3>
           
-          {/* Rating */}
-          <div className="flex items-center mb-2">
+          {/* Rating - Clean design */}
+          <div className="flex items-center mb-3">
             <div className="flex items-center">
               {[...Array(5)].map((_, i) => (
                 <Star
                   key={i}
                   className={`w-4 h-4 ${
                     i < Math.floor(product.rating)
-                      ? 'text-yellow-400 fill-current'
-                      : 'text-gray-300'
+                      ? 'text-accent-400 fill-current'
+                      : 'text-primary-200'
                   }`}
                 />
               ))}
             </div>
-            <span className="text-sm text-gray-500 ml-2">
+            <span className="text-sm text-primary-500 font-lora ml-2">
               ({product.reviewCount})
             </span>
           </div>
           
-          {/* Price */}
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center space-x-2">
-              <span className="text-lg font-bold text-gray-900">
+          {/* Price - Clean typography */}
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center space-x-3">
+              <span className="text-xl font-montserrat font-bold text-primary-800">
                 ${product.price.toFixed(2)}
               </span>
               {product.originalPrice && (
-                <span className="text-sm text-gray-500 line-through">
+                <span className="text-sm text-primary-400 line-through font-lora">
                   ${product.originalPrice.toFixed(2)}
                 </span>
               )}
             </div>
           </div>
           
-          {/* Add to Cart Button */}
-          <div className="mt-auto pt-2">
+          {/* Add to Cart Button - CTA styling */}
+          <div className="mt-auto">
             <button
               onClick={handleAddToCart}
               disabled={!product.inStock}
-              className={`w-full flex items-center justify-center space-x-2 py-2 px-4 rounded-lg font-medium transition-colors ${
+              className={`w-full flex items-center justify-center space-x-2 py-2.5 px-4 rounded-lg font-montserrat font-semibold transition-all duration-200 focus:outline-none ${
                 product.inStock
-                  ? 'bg-[var(--color-primary-500)] hover:bg-[var(--color-primary-600)] text-white shadow-md hover:shadow-lg'
-                  : 'bg-gray-200 text-gray-500 cursor-not-allowed'
+                  ? 'btn-primary'
+                  : 'bg-primary-200 text-primary-400 cursor-not-allowed'
               }`}
             >
               <ShoppingCart className="w-4 h-4" />

@@ -57,8 +57,8 @@ export default function ContactPage() {
     {
       icon: Mail,
       title: translate('emailUs'),
-      details: ['support@shopease.com', 'business@shopease.com'],
-      color: 'text-turquoise-600'
+      details: ['support@feinraumshop.ch', 'business@feinraumshop.ch'],
+      color: 'text-primary-warm'
     },
     {
       icon: Phone,
@@ -166,7 +166,7 @@ export default function ContactPage() {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full bg-gradient-to-r from-turquoise-600 to-primary-600 text-white font-semibold py-3 px-6 rounded-lg hover:from-turquoise-700 hover:to-primary-700 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                className="btn-primary w-full"
               >
                 {isSubmitting ? (
                   <>

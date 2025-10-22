@@ -604,7 +604,7 @@ function AdminDashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">{translate('admin.panel')}</h1>
+              <h1 className="text-3xl font-montserrat font-bold text-primary-800">{translate('admin.panel')}</h1>
               <p className="mt-2 text-gray-600">{translate('admin.managePlatform')}</p>
             </div>
             <div className="flex items-center space-x-3">
@@ -639,10 +639,10 @@ function AdminDashboard() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">{stat.label}</p>
-                  <p className="text-2xl font-bold text-gray-900">{statsError ? '-' : stat.value}</p>
+                  <p className="text-2xl font-montserrat font-bold text-primary-800">{statsError ? '-' : stat.value}</p>
                 </div>
-                <div className="p-3 bg-turquoise-100 rounded-lg">
-                  <stat.icon className="w-6 h-6 text-turquoise-600" />
+                <div className="p-3 bg-primary-100 rounded-lg">
+                  <stat.icon className="w-6 h-6 text-primary-warm" />
                 </div>
               </div>
               {statsError && (
@@ -660,10 +660,10 @@ function AdminDashboard() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 text-left rounded-lg transition-colors ${
+                  className={`w-full flex items-center space-x-3 px-4 py-3 text-left rounded-lg transition-colors focus:outline-none ${
                     activeTab === tab.id
-                      ? 'bg-turquoise-100 text-turquoise-700 border-r-2 border-turquoise-500'
-                      : 'text-gray-600 hover:bg-gray-100'
+                      ? 'bg-primary-100 text-primary-800 font-semibold'
+                      : 'text-primary-600 hover:bg-primary-50'
                   }`}
                 >
                   <tab.icon className="w-5 h-5" />
@@ -681,7 +681,7 @@ function AdminDashboard() {
                 {/* Recent Activity */}
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200">
                   <div className="px-6 py-4 border-b border-gray-200">
-                    <h2 className="text-xl font-semibold text-gray-900">{translate('admin.recentActivity')}</h2>
+                    <h2 className="text-xl font-montserrat font-semibold text-primary-800">{translate('admin.recentActivity')}</h2>
                   </div>
                   <div className="p-6">
                     <div className="space-y-4">
@@ -693,7 +693,7 @@ function AdminDashboard() {
                             alert.type === 'success' ? 'bg-green-500' : 'bg-blue-500'
                           }`}></div>
                           <div className="flex-1">
-                            <p className="text-sm font-medium text-gray-900">{translate(alert.message)}</p>
+                            <p className="text-sm font-montserrat font-medium text-primary-800">{translate(alert.message)}</p>
                             <p className="text-xs text-gray-500">{formatRelativeTime(new Date(alert.ts))}</p>
                           </div>
                         </div>
@@ -709,8 +709,8 @@ function AdminDashboard() {
               <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
                 <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
                   <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-                    <h3 className="text-lg font-semibold text-gray-900">Merchant Details</h3>
-                    <button onClick={closeViewMerchant} className="text-gray-500 hover:text-gray-700">✕</button>
+                    <h3 className="text-lg font-montserrat font-semibold text-primary-800">Merchant Details</h3>
+                    <button onClick={closeViewMerchant} className="text-primary-500 hover:text-primary-700 focus:outline-none">✕</button>
                   </div>
                   <div className="p-6 space-y-4">
                     {viewing.loading ? (
@@ -722,19 +722,19 @@ function AdminDashboard() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
                             <p className="text-sm text-gray-500">Store Name</p>
-                            <p className="text-base font-medium text-gray-900">{viewing.data.storeName}</p>
+                            <p className="text-base font-montserrat font-medium text-primary-800">{viewing.data.storeName}</p>
                           </div>
                           <div>
                             <p className="text-sm text-gray-500">Status</p>
-                            <p className="text-base font-medium text-gray-900">{viewing.data.status}</p>
+                            <p className="text-base font-montserrat font-medium text-primary-800">{viewing.data.status}</p>
                           </div>
                           <div>
                             <p className="text-sm text-gray-500">User</p>
-                            <p className="text-base font-medium text-gray-900">{viewing.data.user?.name} ({viewing.data.user?.email})</p>
+                            <p className="text-base font-montserrat font-medium text-primary-800">{viewing.data.user?.name} ({viewing.data.user?.email})</p>
                           </div>
                           <div>
                             <p className="text-sm text-gray-500">Created</p>
-                            <p className="text-base font-medium text-gray-900">{new Date(viewing.data.createdAt).toLocaleString()}</p>
+                            <p className="text-base font-montserrat font-medium text-primary-800">{new Date(viewing.data.createdAt).toLocaleString()}</p>
                           </div>
                         </div>
 
@@ -754,7 +754,7 @@ function AdminDashboard() {
                         </div>
 
                         <div>
-                          <h4 className="text-sm font-semibold text-gray-900 mb-2">Latest Products</h4>
+                          <h4 className="text-sm font-montserrat font-semibold text-primary-800 mb-2">Latest Products</h4>
                           {viewing.data.latestProducts?.length ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                               {viewing.data.latestProducts.map((p: any) => (
@@ -773,12 +773,12 @@ function AdminDashboard() {
                         </div>
 
                         <div>
-                          <h4 className="text-sm font-semibold text-gray-900 mb-2">Latest Orders</h4>
+                          <h4 className="text-sm font-montserrat font-semibold text-primary-800 mb-2">Latest Orders</h4>
                           {viewing.data.latestOrders?.length ? (
                             <div className="space-y-2">
                               {viewing.data.latestOrders.map((o: any) => (
                                 <div key={o.id} className="p-3 border rounded-lg flex items-center justify-between">
-                                  <div className="text-sm text-gray-700">{o.status}</div>
+                                  <div className="text-sm text-primary-700">{o.status}</div>
                                   <div className="text-sm font-medium">{formatUSD(o.totalAmount)}</div>
                                   <div className="text-xs text-gray-500">{new Date(o.createdAt).toLocaleString()}</div>
                                 </div>
@@ -811,7 +811,7 @@ function AdminDashboard() {
             {activeTab === 'users' && (
               <div className="bg-white rounded-lg shadow-sm border border-gray-200">
                 <div className="px-6 py-4 border-b border-gray-200">
-                  <h2 className="text-xl font-semibold text-gray-900">{translate('admin.userManagement')}</h2>
+                  <h2 className="text-xl font-montserrat font-semibold text-primary-800">{translate('admin.userManagement')}</h2>
                 </div>
                 <div className="p-6">
                   <div className="overflow-x-auto">
@@ -835,7 +835,7 @@ function AdminDashboard() {
                             <tr key={u.id}>
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <div>
-                                  <div className="text-sm font-medium text-gray-900">{u.name || '—'}</div>
+                                  <div className="text-sm font-montserrat font-medium text-primary-800">{u.name || '—'}</div>
                                   <div className="text-sm text-gray-500">{u.email}</div>
                                 </div>
                               </td>
@@ -942,7 +942,7 @@ function AdminDashboard() {
             {activeTab === 'orders' && (
               <div className="bg-white rounded-lg shadow-sm border border-gray-200">
                 <div className="px-6 py-4 border-b border-gray-200">
-                  <h2 className="text-xl font-semibold text-gray-900">{translate('admin.orderManagement')}</h2>
+                      <h2 className="text-xl font-montserrat font-semibold text-primary-800">{translate('admin.orderManagement')}</h2>
                 </div>
                 <div className="p-6">
                   <div className="overflow-x-auto">
@@ -1028,12 +1028,12 @@ function AdminDashboard() {
                     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                   <div className="flex items-center justify-between">
                     <div>
-                      <h2 className="text-2xl font-bold text-gray-900">{translate('admin.productManagement')}</h2>
+                      <h2 className="text-xl font-montserrat font-semibold text-primary-800">{translate('admin.productManagement')}</h2>
                       <p className="text-gray-600 text-sm">Manage your product catalog</p>
                     </div>
                     <button
                       onClick={() => setShowForm(true)}
-                      className="inline-flex items-center px-5 py-2.5 bg-turquoise-600 text-white font-semibold rounded-md hover:bg-turquoise-700 transition-all duration-200"
+                      className="inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-turquoise-600 to-primary-600 text-white font-semibold rounded-md hover:from-turquoise-700 hover:to-primary-700 transition-all duration-200"
                     >
                       <Plus className="w-5 h-5 mr-2" />
                       Add Product
@@ -1073,14 +1073,14 @@ function AdminDashboard() {
                     ) : filteredProducts.length === 0 ? (
                       <div className="text-center py-12">
                         <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                        <h3 className="text-xl font-semibold text-gray-900 mb-2">No products found</h3>
+                        <h3 className="text-base font-montserrat font-semibold text-primary-800 mb-2">No products found</h3>
                         <p className="text-gray-600 mb-6 text-sm">
                           {searchTerm ? 'Try adjusting your search terms.' : 'Get started by adding your first product.'}
                         </p>
                         {!searchTerm && (
                           <button
                             onClick={() => setShowForm(true)}
-                            className="inline-flex items-center px-5 py-2.5 bg-turquoise-600 text-white font-semibold rounded-md hover:bg-turquoise-700"
+                            className="inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-turquoise-600 to-primary-600 text-white font-semibold rounded-md hover:from-turquoise-700 hover:to-primary-700"
                           >
                             <Plus className="w-5 h-5 mr-2" />
                             Add Your First Product
@@ -1099,9 +1099,9 @@ function AdminDashboard() {
                             <div className="p-6 flex-1 flex flex-col">
                               <div className="flex items-start justify-between mb-4 gap-3">
                                 <div className="min-w-0 flex-1">
-                                  <h3 className="font-semibold text-lg text-gray-900 mb-1 truncate" title={p.title_en}>{p.title_en}</h3>
-                                  <p className="text-sm text-gray-600 mb-2 truncate" title={p.title_de}>{p.title_de}</p>
-                                  <p className="text-xs text-gray-500 truncate">Slug: {p.slug}</p>
+                                  <h3 className="text-sm font-montserrat font-semibold text-primary-800 mb-1 line-clamp-2" title={p.title_en}>{p.title_en}</h3>
+                                  <p className="text-xs text-primary-600 mb-2 line-clamp-2" title={p.title_de}>{p.title_de}</p>
+                                  <p className="text-xs text-primary-500 truncate">Slug: {p.slug}</p>
                                 </div>
                                 <div className="flex space-x-2 flex-shrink-0 relative z-10">
                                   <button
@@ -1126,7 +1126,7 @@ function AdminDashboard() {
                               <div className="space-y-2">
                                 <div className="flex items-center justify-between">
                                   <span className="text-sm text-gray-600">Price:</span>
-                                  <span className="font-semibold text-lg text-green-600">{formatUSD(p.price)}</span>
+                                  <span className="font-montserrat font-semibold text-sm text-primary-warm">{formatUSD(p.price)}</span>
                                 </div>
                                 <div className="flex items-center justify-between">
                                   <span className="text-sm text-gray-600">Stock:</span>
@@ -1155,7 +1155,7 @@ function AdminDashboard() {
                     <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl md:max-w-3xl mx-4 max-h-[90vh] overflow-y-auto">
                       <div className="px-6 py-4 border-b border-gray-200">
                         <div className="flex items-center justify-between">
-                          <h2 className="text-xl font-semibold text-gray-900">
+                          <h2 className="text-xl font-montserrat font-semibold text-primary-800">
                             {editingProduct ? 'Edit Product' : 'Add New Product'}
                           </h2>
                           <button
@@ -1260,7 +1260,7 @@ function AdminDashboard() {
                               <button
                                 type="button"
                                 onClick={() => setShowNewCategoryModal(true)}
-                                className="px-3 py-2 bg-turquoise-600 text-white rounded-md hover:bg-turquoise-700 text-sm"
+                                className="px-3 py-2 bg-gradient-to-r from-turquoise-600 to-primary-600 text-white rounded-md hover:from-turquoise-700 hover:to-primary-700 text-sm"
                                 title="Add new category"
                               >
                                 +
@@ -1319,7 +1319,7 @@ function AdminDashboard() {
                           <button
                             type="submit"
                             disabled={loading}
-                            className="px-6 py-2 bg-turquoise-600 text-white rounded-lg hover:bg-turquoise-700 disabled:opacity-50 flex items-center"
+                            className="px-6 py-2 bg-gradient-to-r from-turquoise-600 to-primary-600 text-white rounded-lg hover:from-turquoise-700 hover:to-primary-700 disabled:opacity-50 flex items-center transition-all duration-200"
                           >
                             <Save className="w-4 h-4 mr-2" />
                             {loading ? 'Saving...' : (editingProduct ? 'Update Product' : 'Add Product')}
@@ -1359,9 +1359,9 @@ function AdminDashboard() {
                       {products.slice(0,4).map(p => (
                         <div key={p.id} className="flex items-center gap-3">
                           {p.imageUrl && <img src={p.imageUrl} alt={p.slug} className="w-10 h-10 object-cover rounded" />}
-                          <div className="flex-1">
+                          <div className="flex-1 min-w-0">
                             <div className="text-sm font-medium text-gray-900 truncate" title={p.title_en}>{p.title_en}</div>
-                            <div className="text-xs text-gray-500">{formatUSD(p.price)} • {p.stock} in stock</div>
+                            <div className="text-xs text-gray-500 truncate">{formatUSD(p.price)} • {p.stock} in stock</div>
                           </div>
                         </div>
                       ))}
@@ -1378,13 +1378,13 @@ function AdminDashboard() {
             {activeTab === 'categories' && (
               <div className="space-y-6">
                 <div className="flex justify-between items-center">
-                  <h2 className="text-2xl font-bold text-gray-900">Categories</h2>
+                  <h2 className="text-xl font-montserrat font-semibold text-primary-800">Categories</h2>
                   <button
                     onClick={() => {
                       resetCategoryForm();
                       setShowNewCategoryModal(true);
                     }}
-                    className="px-4 py-2 bg-turquoise-600 text-white rounded-lg hover:bg-turquoise-700 flex items-center gap-2"
+                    className="px-4 py-2 bg-gradient-to-r from-turquoise-600 to-primary-600 text-white rounded-lg hover:from-turquoise-700 hover:to-primary-700 flex items-center gap-2"
                   >
                     <Plus size={16} />
                     Add New Category
@@ -1400,7 +1400,7 @@ function AdminDashboard() {
                     <div className="text-red-600 mb-4">Error loading categories: {categoriesError}</div>
                     <button
                       onClick={fetchCategories}
-                      className="px-4 py-2 bg-turquoise-600 text-white rounded-lg hover:bg-turquoise-700"
+                      className="px-4 py-2 bg-gradient-to-r from-turquoise-600 to-primary-600 text-white rounded-lg hover:from-turquoise-700 hover:to-primary-700"
                     >
                       Retry
                     </button>
@@ -1437,7 +1437,7 @@ function AdminDashboard() {
                         </div>
                         <div className="p-4">
                           <div className="flex justify-between items-start">
-                            <h3 className="font-medium text-gray-900">{category.name}</h3>
+                            <h3 className="text-sm font-montserrat font-medium text-primary-800">{category.name}</h3>
                             <span className={`text-xs px-2 py-1 rounded-full ${
                               category.isActive 
                                 ? 'bg-green-100 text-green-800' 
@@ -1490,7 +1490,7 @@ function AdminDashboard() {
             {activeTab === 'settings' && (
               <div className="bg-white rounded-lg shadow-sm border border-gray-200">
                 <div className="px-6 py-4 border-b border-gray-200">
-                  <h2 className="text-xl font-semibold text-gray-900">{translate('admin.settings.title')}</h2>
+                  <h2 className="text-xl font-montserrat font-semibold text-primary-800">{translate('admin.settings.title')}</h2>
                 </div>
                 <SettingsForm />
               </div>
@@ -1568,7 +1568,7 @@ function AdminDashboard() {
                 <button
                   type="submit"
                   disabled={creatingCategory || isImageUploading}
-                  className="px-4 py-2 bg-turquoise-600 text-white rounded-lg hover:bg-turquoise-700 disabled:opacity-50"
+                  className="px-4 py-2 bg-gradient-to-r from-turquoise-600 to-primary-600 text-white rounded-lg hover:from-turquoise-700 hover:to-primary-700 disabled:opacity-50"
                 >
                   {creatingCategory || isImageUploading
                     ? (isImageUploading ? 'Uploading Image...' : 'Saving...')
@@ -1683,7 +1683,7 @@ function SettingsForm() {
             <button
               type="submit"
               disabled={saving}
-              className="px-5 py-2.5 bg-turquoise-600 text-white rounded-md hover:bg-turquoise-700 disabled:opacity-50"
+              className="px-5 py-2.5 bg-gradient-to-r from-turquoise-600 to-primary-600 text-white rounded-md hover:from-turquoise-700 hover:to-primary-700 disabled:opacity-50"
             >
               {saving ? 'Saving...' : translate('admin.settings.save')}
             </button>

@@ -11,6 +11,7 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation } from 'swiper/modules';
 import 'swiper/css';
 import 'swiper/css/navigation';
+import ReviewsSlider from '@/components/ReviewsSlider';
 
 // Dynamically import the ProductCard component with no SSR
 const ProductCard = dynamic(() => import('@/components/ProductCard'), {
@@ -89,7 +90,7 @@ const CategoryCard = ({ category, index, lang, router }: {
           }}
         />
         <div className="absolute inset-0 bg-black bg-opacity-20 group-hover:bg-opacity-30 transition-all duration-300"></div>
-        <h3 className="absolute bottom-4 left-0 right-0 mx-auto text-white text-lg font-semibold drop-shadow-lg px-4">
+        <h3 className="absolute bottom-4 left-0 right-0 mx-auto text-white text-base font-medium drop-shadow-lg px-4">
           {(() => {
             try {
               // Test if basic translation works
@@ -131,6 +132,7 @@ function HomePage({ params }: HomePageProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [categories, setCategories] = useState<{ id: string; name: string; productCount: number; firstProduct?: { imageUrl?: string; title?: string } }[]>([]);
+  const [topReviews, setTopReviews] = useState<{ id: string; customerName: string; reviewText: string; rating: number; customerPhoto?: string | null; productName?: string; createdAt: string }[]>([]);
   
   // Typing animation state
   const [displayText, setDisplayText] = useState('');
@@ -142,8 +144,8 @@ function HomePage({ params }: HomePageProps) {
       setLoading(true);
       setError('');
       
-      // Fetch products and categories in parallel with error handling for each
-      const [productsResponse, categoriesResponse] = await Promise.all([
+      // Fetch products, categories, and reviews in parallel with error handling for each
+      const [productsResponse, categoriesResponse, reviewsResponse] = await Promise.all([
         fetch('/api/products').then(res => {
           if (!res.ok) throw new Error('Failed to fetch products');
           return res.json();
@@ -157,10 +159,23 @@ function HomePage({ params }: HomePageProps) {
         }).catch(err => {
           console.error('Categories fetch error:', err);
           return []; // Return empty array for categories if fetch fails
+        }),
+        fetch('/api/top-reviews?rating=5&limit=8').then(res => {
+          if (!res.ok) {
+            console.error('Top reviews API response not ok:', res.status, res.statusText);
+            throw new Error(`Failed to fetch reviews: ${res.status} ${res.statusText}`);
+          }
+          return res.json();
+        }).catch(err => {
+          console.error('Top reviews fetch error:', err);
+          return { reviews: [] }; // Return empty array for reviews if fetch fails
         })
       ]);
 
-      const [productsData, categoriesData] = [productsResponse, categoriesResponse];
+      const [productsData, categoriesData, reviewsData] = [productsResponse, categoriesResponse, reviewsResponse];
+
+      // Set top reviews
+      setTopReviews(reviewsData.reviews || []);
 
       // Transform API data to match Product interface
       const transformedProducts: Product[] = productsData.map((product: any) => ({
@@ -256,37 +271,36 @@ function HomePage({ params }: HomePageProps) {
   // categories are built from products fetch above
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Hero Section */}
-      <section className="bg-[var(--color-accent-beige)]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
+    <div className="min-h-screen bg-gradient-to-br from-white to-primary-50">
+      {/* Hero Section - Minimalist design */}
+      <section className="bg-gradient-to-br from-white via-primary-50 to-accent-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-32">
           <div className="flex flex-col lg:flex-row items-center justify-between">
             {/* Text Content */}
             <div className="w-full lg:w-1/2 xl:pr-16">
               <div className="min-h-[240px] md:min-h-[260px] lg:min-h-[320px] flex flex-col justify-center pt-8 lg:pt-0">
-                <h1 className="text-5xl md:text-6xl lg:text-6xl xl:text-7xl font-serif text-[var(--color-primary-800)] leading-tight" style={{ fontFamily: 'var(--font-playfair), ui-serif, Georgia' }}>
+                <h1 className="text-5xl md:text-6xl lg:text-6xl xl:text-7xl font-montserrat font-bold text-primary-800 leading-tight">
                   <div className="whitespace-nowrap">{translate('timelessStyle')}</div>
                   <div className="flex items-baseline">
                     <span className="whitespace-nowrap">{translate('modern')}&nbsp;</span>
-                    <span className="inline-block min-w-[180px] lg:min-w-[220px] text-left">
+                    <span className="inline-block min-w-[180px] lg:min-w-[220px] text-left text-accent-600">
                       {displayText}
                       {!displayText && <span className="invisible">Comfort</span>}
                     </span>
                   </div>
                 </h1>
-                <p className="mt-6 text-lg text-[var(--color-primary-700)] max-w-lg">
+                <p className="mt-8 text-lg text-primary-600 font-lora max-w-lg leading-relaxed">
                   {translate('heroSubtitle')}
                 </p>
-                <div className="mt-10 flex flex-col sm:flex-row gap-4">
+                <div className="mt-12 flex flex-col sm:flex-row gap-4">
                   <button 
-                    className="px-8 py-4 bg-[var(--color-primary-500)] text-white font-medium rounded-lg hover:bg-[var(--color-primary-700)] transition-all shadow-md hover:shadow-lg transform hover:-translate-y-0.5"
+                    className="btn-primary px-8 py-4"
                     onClick={() => router.push(`/${lang}/products`)}
                   >
                     {translate('shopNow')}
                   </button>
                   <button 
-                    className="px-8 py-4 border-2 border-[#8C6A4A] text-[var(--color-primary-700)] font-medium rounded-lg hover:bg-[var(--color-hover-accent)] hover:text-[var(--color-primary-800)] transition-all duration-300"
-                    style={{ borderStyle: 'solid' }}
+                    className="px-8 py-4 bg-transparent border-2 border-primary-warm text-primary-warm font-montserrat font-semibold rounded-lg hover:bg-primary-warm hover:text-white transition-all duration-300 focus:outline-none"
                     onClick={() => router.push(`/${lang}/about`)}
                   >
                     {translate('learnMore')}
@@ -295,14 +309,15 @@ function HomePage({ params }: HomePageProps) {
               </div>
             </div>
 
-            {/* Image - Fixed dimensions to prevent movement */}
-            <div className="w-full lg:w-1/2 flex justify-center lg:justify-end mt-8 lg:mt-0">
-              <div className="relative w-full max-w-2xl h-[400px] md:h-[500px] lg:h-[600px] transform -translate-y-10">
+            {/* Image - High quality with clean presentation */}
+            <div className="w-full lg:w-1/2 flex justify-center lg:justify-end mt-12 lg:mt-0">
+              <div className="relative w-full max-w-2xl h-[400px] md:h-[500px] lg:h-[600px]">
                 <img 
                   src="/images/hero.png" 
                   alt="Elegant Home Decor" 
-                  className="w-full h-full object-contain lg:object-cover rounded-xl shadow-2xl" 
+                  className="w-full h-full object-contain lg:object-cover rounded-2xl shadow-2xl hover:shadow-3xl transition-shadow duration-500" 
                   style={{ objectPosition: 'center 10%' }}
+                  loading="eager"
                 />
               </div>
             </div>
@@ -310,49 +325,49 @@ function HomePage({ params }: HomePageProps) {
         </div>
       </section>
 
-      {/* Features Section */}
-      <section className="py-16 bg-white">
+      {/* Features Section - Trust and security badges */}
+      <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Truck className="w-8 h-8 text-primary-600" />
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+            <div className="text-center group">
+              <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-orange-200 transition-colors duration-300">
+                <Truck className="w-10 h-10 text-orange-600" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">{translate('freeShipping')}</h3>
-              <p className="text-gray-600">{translate('freeShippingDesc')}</p>
+              <h3 className="text-xl font-montserrat font-semibold mb-3 text-primary-800">{translate('freeShipping')}</h3>
+              <p className="text-primary-600 font-lora leading-relaxed">{translate('freeShippingDesc')}</p>
             </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Shield className="w-8 h-8 text-primary-600" />
+            <div className="text-center group">
+              <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-orange-200 transition-colors duration-300">
+                <Shield className="w-10 h-10 text-orange-600" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">{translate('securePayment')}</h3>
-              <p className="text-gray-600">{translate('securePaymentDesc')}</p>
+              <h3 className="text-xl font-montserrat font-semibold mb-3 text-primary-800">{translate('securePayment')}</h3>
+              <p className="text-primary-600 font-lora leading-relaxed">{translate('securePaymentDesc')}</p>
             </div>
-            <div className="text-center">
-              <div className="w-16 h-16 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Clock className="w-8 h-8 text-primary-600" />
+            <div className="text-center group">
+              <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6 group-hover:bg-orange-200 transition-colors duration-300">
+                <Clock className="w-10 h-10 text-orange-600" />
               </div>
-              <h3 className="text-xl font-semibold mb-2">{translate('support247')}</h3>
-              <p className="text-gray-600">{translate('support247Desc')}</p>
+              <h3 className="text-xl font-montserrat font-semibold mb-3 text-primary-800">{translate('support247')}</h3>
+              <p className="text-primary-600 font-lora leading-relaxed">{translate('support247Desc')}</p>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Categories Section */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 text-center bg-white">
+      {/* Categories Section - Clean minimalist design */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8 text-center bg-gradient-to-br from-primary-50 to-white">
         <div className="max-w-7xl mx-auto relative">
-          <h2 className="text-3xl font-semibold text-gray-900 mb-4">{translate('shopByCategory')}</h2>
-          <p className="text-gray-500 mb-10">{translate('shopByCategoryDesc')}</p>
+          <h2 className="text-4xl font-montserrat font-bold text-primary-800 mb-6">{translate('shopByCategory')}</h2>
+          <p className="text-lg text-primary-600 font-lora mb-16 max-w-2xl mx-auto leading-relaxed">{translate('shopByCategoryDesc')}</p>
           
-          {/* Navigation Buttons - Outside Swiper */}
-          <button className="category-swiper-button-prev absolute left-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 flex items-center justify-center bg-white rounded-full shadow-lg hover:bg-gray-50 transition-colors">
+          {/* Navigation Buttons - Clean minimalist design */}
+          <button className="category-swiper-button-prev absolute left-0 top-1/2 -translate-y-1/2 z-10 w-14 h-14 flex items-center justify-center bg-white rounded-full shadow-xl hover:bg-primary-50 transition-all duration-300 hover:scale-110">
             <svg className="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
           
-          <button className="category-swiper-button-next absolute right-0 top-1/2 -translate-y-1/2 z-10 w-12 h-12 flex items-center justify-center bg-white rounded-full shadow-lg hover:bg-gray-50 transition-colors">
+          <button className="category-swiper-button-next absolute right-0 top-1/2 -translate-y-1/2 z-10 w-14 h-14 flex items-center justify-center bg-white rounded-full shadow-xl hover:bg-primary-50 transition-all duration-300 hover:scale-110">
             <svg className="w-6 h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
@@ -457,19 +472,19 @@ function HomePage({ params }: HomePageProps) {
         }
       `}</style>
 
-      {/* Featured Products Section */}
-      <section className="py-16 bg-white">
+      {/* Featured Products Section - Clean minimalist design */}
+      <section className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-montserrat font-bold text-primary-800 mb-6">
               {translate('featuredProducts')}
             </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            <p className="text-lg text-primary-600 font-lora max-w-2xl mx-auto leading-relaxed">
               {translate('featuredProductsDesc')}
             </p>
           </div>
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-8">
             {loading ? (
               // Loading skeletons
               Array.from({ length: 5 }).map((_, index) => (
@@ -503,9 +518,9 @@ function HomePage({ params }: HomePageProps) {
             )}
           </div>
           
-          <div className="text-center mt-12">
+          <div className="text-center mt-16">
               <button 
-                className="btn-primary text-lg px-8 py-3" 
+                className="btn-primary text-lg px-10 py-4" 
                 onClick={() => router.push(`/${lang}/products`)}
               >
               {translate('viewAllProducts')}
@@ -513,6 +528,46 @@ function HomePage({ params }: HomePageProps) {
           </div>
         </div>
       </section>
+
+      {/* What Our Customers Say Section */}
+      <section className="py-20 bg-gradient-to-br from-orange-50 to-red-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl font-montserrat font-bold text-gray-800 mb-6">
+              What Our Customers Say
+            </h2>
+            <p className="text-lg text-gray-600 font-lora max-w-2xl mx-auto leading-relaxed">
+              Discover why thousands of customers trust us for their home and lifestyle needs
+            </p>
+          </div>
+          
+          <ReviewsSlider 
+            reviews={topReviews}
+            autoSlide={true}
+            slideInterval={6000}
+          />
+        </div>
+      </section>
+
+      {/* Reviews Section Responsive Styles */}
+      <style jsx global>{`
+        @media (max-width: 640px) {
+          .reviews-slider .flex-shrink-0 {
+            width: 100% !important;
+          }
+        }
+        @media (min-width: 641px) and (max-width: 1024px) {
+          .reviews-slider .flex-shrink-0 {
+            width: 50% !important;
+          }
+        }
+        @media (min-width: 1025px) {
+          .reviews-slider .flex-shrink-0 {
+            width: 33.333333% !important;
+          }
+        }
+      `}</style>
+
 
     </div>
   );

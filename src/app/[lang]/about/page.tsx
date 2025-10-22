@@ -63,15 +63,15 @@ export default function AboutPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gradient-to-br from-white to-primary-50">
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-turquoise-600 to-primary-600 text-white">
+      <div className="bg-gradient-to-br from-primary-100 to-accent-100">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
           <div className="text-center">
-            <h1 className="text-4xl md:text-5xl font-bold mb-6">
+            <h1 className="text-4xl md:text-5xl font-montserrat font-bold text-primary-800 mb-6">
               {translate('aboutFeinraum')}
             </h1>
-            <p className="text-xl md:text-2xl text-turquoise-100 max-w-3xl mx-auto">
+            <p className="text-xl md:text-2xl text-primary-600 font-lora max-w-3xl mx-auto leading-relaxed">
               {translate('aboutHeroDescription')}
             </p>
           </div>
@@ -83,35 +83,35 @@ export default function AboutPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center">
             <div>
-              <h2 className="text-3xl font-bold text-gray-900 mb-6">
+              <h2 className="text-3xl font-montserrat font-bold text-primary-800 mb-6">
                 {translate('ourMission')}
               </h2>
-              <p className="text-lg text-gray-600 mb-6">
+              <p className="text-lg text-primary-600 font-lora mb-6 leading-relaxed">
                 {translate('missionParagraph1')}
               </p>
-              <p className="text-lg text-gray-600 mb-6">
+              <p className="text-lg text-primary-600 font-lora mb-6 leading-relaxed">
                 {translate('missionParagraph2')}
               </p>
               <div className="flex items-center space-x-4">
                 <div className="flex items-center space-x-2">
-                  <Users className="w-5 h-5 text-turquoise-600" />
-                  <span className="text-gray-700">{translate('happyCustomers')}</span>
+                  <Users className="w-5 h-5 text-primary-warm" />
+                  <span className="text-primary-700 font-lora">{translate('happyCustomers')}</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Globe className="w-5 h-5 text-turquoise-600" />
-                  <span className="text-gray-700">{translate('countriesServed')}</span>
+                  <Globe className="w-5 h-5 text-primary-warm" />
+                  <span className="text-primary-700 font-lora">{translate('countriesServed')}</span>
                 </div>
               </div>
             </div>
-            <div className="bg-gradient-to-br from-turquoise-100 to-primary-100 rounded-2xl p-8">
+            <div className="bg-gradient-to-br from-primary-50 to-accent-50 rounded-2xl p-8 shadow-lg">
               <div className="text-center">
-                <div className="w-24 h-24 bg-gradient-to-r from-turquoise-500 to-primary-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                <div className="w-24 h-24 bg-gradient-to-r from-primary-warm to-primary-warm-hover rounded-full flex items-center justify-center mx-auto mb-6 shadow-lg">
                   <Heart className="w-12 h-12 text-white" />
                 </div>
-                <h3 className="text-2xl font-bold text-gray-900 mb-4">
+                <h3 className="text-2xl font-montserrat font-bold text-primary-800 mb-4">
                   {translate('customerCentricApproach')}
                 </h3>
-                <p className="text-gray-600">
+                <p className="text-primary-600 font-lora leading-relaxed">
                   {translate('customerCentricDescription')}
                 </p>
               </div>
@@ -121,27 +121,27 @@ export default function AboutPage() {
       </div>
 
       {/* Features Section */}
-      <div className="py-20 bg-gray-50">
+      <div className="py-20 bg-gradient-to-br from-primary-50 to-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl font-montserrat font-bold text-primary-800 mb-4">
               {translate('whyChooseFeinraum')}
             </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            <p className="text-lg text-primary-600 font-lora max-w-2xl mx-auto leading-relaxed">
               {translate('whyChooseDescription')}
             </p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {features.map((feature, index) => (
-              <div key={index} className="bg-white rounded-lg p-6 text-center shadow-sm hover:shadow-md transition-shadow">
-                <div className="w-16 h-16 bg-gradient-to-r from-turquoise-500 to-primary-500 rounded-full flex items-center justify-center mx-auto mb-4">
+              <div key={index} className="bg-white rounded-lg p-6 text-center shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
+                <div className="w-16 h-16 bg-gradient-to-r from-primary-warm to-primary-warm-hover rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
                   <feature.icon className="w-8 h-8 text-white" />
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                <h3 className="text-lg font-montserrat font-semibold text-primary-800 mb-2">
                   {feature.title}
                 </h3>
-                <p className="text-gray-600 text-sm">
+                <p className="text-primary-600 font-lora text-sm leading-relaxed">
                   {feature.description}
                 </p>
               </div>
@@ -154,29 +154,29 @@ export default function AboutPage() {
       <div className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl font-montserrat font-bold text-primary-800 mb-4">
               {translate('meetOurTeam')}
             </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            <p className="text-lg text-primary-600 font-lora max-w-2xl mx-auto leading-relaxed">
               {translate('teamDescription')}
             </p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
             {team.map((member, index) => (
-              <div key={index} className="text-center">
-                <div className="w-32 h-32 bg-gradient-to-r from-turquoise-200 to-primary-200 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-4xl font-bold text-gray-600">
+              <div key={index} className="text-center group">
+                <div className="w-32 h-32 bg-gradient-to-r from-primary-100 to-accent-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
+                  <span className="text-4xl font-montserrat font-bold text-primary-700">
                     {member.name.charAt(0)}
                   </span>
                 </div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-1">
+                <h3 className="text-lg font-montserrat font-semibold text-primary-800 mb-1">
                   {member.name}
                 </h3>
-                <p className="text-turquoise-600 font-medium mb-2">
+                <p className="text-primary-warm font-montserrat font-medium mb-2">
                   {member.role}
                 </p>
-                <p className="text-gray-600 text-sm">
+                <p className="text-primary-600 font-lora text-sm leading-relaxed">
                   {member.bio}
                 </p>
               </div>
@@ -186,50 +186,50 @@ export default function AboutPage() {
       </div>
 
       {/* Values Section */}
-      <div className="py-20 bg-gradient-to-r from-turquoise-50 to-primary-50">
+      <div className="py-20 bg-gradient-to-br from-primary-50 to-accent-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl font-montserrat font-bold text-primary-800 mb-4">
               {translate('ourValues')}
             </h2>
-            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+            <p className="text-lg text-primary-600 font-lora max-w-2xl mx-auto leading-relaxed">
               {translate('valuesDescription')}
             </p>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="w-20 h-20 bg-turquoise-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Heart className="w-10 h-10 text-turquoise-600" />
+            <div className="text-center group">
+              <div className="w-20 h-20 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
+                <Heart className="w-10 h-10 text-primary-warm" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              <h3 className="text-xl font-montserrat font-semibold text-primary-800 mb-2">
                 {translate('empathy')}
               </h3>
-              <p className="text-gray-600">
+              <p className="text-primary-600 font-lora leading-relaxed">
                 {translate('empathyDescription')}
               </p>
             </div>
             
-            <div className="text-center">
-              <div className="w-20 h-20 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Award className="w-10 h-10 text-primary-600" />
+            <div className="text-center group">
+              <div className="w-20 h-20 bg-accent-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
+                <Award className="w-10 h-10 text-accent-600" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              <h3 className="text-xl font-montserrat font-semibold text-primary-800 mb-2">
                 {translate('excellence')}
               </h3>
-              <p className="text-gray-600">
+              <p className="text-primary-600 font-lora leading-relaxed">
                 {translate('excellenceDescription')}
               </p>
             </div>
             
-            <div className="text-center">
-              <div className="w-20 h-20 bg-turquoise-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Users className="w-10 h-10 text-turquoise-600" />
+            <div className="text-center group">
+              <div className="w-20 h-20 bg-primary-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg group-hover:shadow-xl transition-all duration-300 group-hover:scale-105">
+                <Users className="w-10 h-10 text-primary-warm" />
               </div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              <h3 className="text-xl font-montserrat font-semibold text-primary-800 mb-2">
                 {translate('community')}
               </h3>
-              <p className="text-gray-600">
+              <p className="text-primary-600 font-lora leading-relaxed">
                 {translate('communityDescription')}
               </p>
             </div>
@@ -238,24 +238,24 @@ export default function AboutPage() {
       </div>
 
       {/* CTA Section */}
-      <div className="py-20 bg-gradient-to-r from-turquoise-600 to-primary-600">
+      <div className="py-20 bg-gradient-to-br from-primary-600 to-accent-600">
         <div className="max-w-4xl mx-auto text-center px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-white mb-4">
+          <h2 className="text-3xl font-montserrat font-bold text-white mb-4">
             {translate('readyToExperience')}
           </h2>
-          <p className="text-xl text-turquoise-100 mb-8">
+          <p className="text-xl text-primary-100 font-lora mb-8 leading-relaxed">
             {translate('ctaDescription')}
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link
               href={`/${lang}/products`}
-              className="bg-white text-turquoise-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
+              className="btn-primary px-8 py-3"
             >
               {translate('startShopping')}
             </Link>
             <Link
               href={`/${lang}/contact`}
-              className="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-turquoise-600 transition-colors"
+              className="px-8 py-3 bg-transparent border-2 border-white text-white font-montserrat font-semibold rounded-lg hover:bg-white hover:text-primary-600 transition-all duration-300 focus:outline-none"
             >
               {translate('contactUs')}
             </Link>

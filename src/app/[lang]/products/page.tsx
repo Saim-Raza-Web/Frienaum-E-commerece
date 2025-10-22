@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import ProductCard from '@/components/ProductCard';
 import { useCart } from '@/context/CartContext';
@@ -25,7 +25,6 @@ export default function ProductsPage() {
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const firstMatchRef = useRef<HTMLDivElement | null>(null);
 
   // Fetch products and categories from API
   useEffect(() => {
@@ -111,12 +110,7 @@ export default function ProductsPage() {
     setFilteredProducts(filtered);
   }, [selectedCategory, searchQuery, products]);
 
-  // After filtering with a search query, scroll to the first matching product for better UX
-  useEffect(() => {
-    if (searchQuery && firstMatchRef.current) {
-      firstMatchRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }
-  }, [filteredProducts, searchQuery]);
+  // Removed auto-scroll behavior to prevent any sidebar movement when searching
 
   const handleAddToCart = (product: Product) => {
     addToCart(product);
@@ -132,32 +126,35 @@ export default function ProductsPage() {
         <div className="flex flex-col lg:flex-row gap-8">
           {/* Sidebar Filters */}
           <div className="lg:w-64 flex-shrink-0">
-            <div className="bg-white rounded-lg shadow-md p-6 sticky top-24">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+            <div className="bg-white rounded-lg shadow-md p-6 sticky top-24 contain-layout contain-paint contain-content contain-strict">
+              <h3 className="text-base font-montserrat font-semibold text-primary-800 mb-4 flex items-center">
                 <Filter className="w-5 h-5 mr-2" />
                 {translate('filters')}
               </h3>
               
               {/* Search */}
               <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-montserrat font-medium text-primary-700 mb-2">
                   {translate('searchProducts')}
                 </label>
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                   <input
                     type="text"
                     placeholder={translate('searchPlaceholder')}
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-turquoise-500 focus:border-transparent"
+                    className="w-full h-10 px-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-inset focus:ring-1 focus:ring-turquoise-500 focus:border-turquoise-600 transition-all duration-150"
+                    style={{
+                      boxSizing: 'border-box',
+                      contain: 'layout style paint'
+                    }}
                   />
                 </div>
               </div>
 
               {/* Categories */}
               <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-3">
+                <label className="block text-sm font-montserrat font-medium text-primary-700 mb-3">
                   {translate('categories')}
                 </label>
                 <div className="space-y-2">
@@ -192,7 +189,7 @@ export default function ProductsPage() {
 
               {/* Price Range */}
               <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-3">
+                <label className="block text-sm font-montserrat font-medium text-primary-700 mb-3">
                   {translate('priceRange')}
                 </label>
                 <div className="space-y-2">
@@ -214,8 +211,8 @@ export default function ProductsPage() {
           </div>
 
           {/* Main Content */}
-          <div className="flex-1">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <div className="flex-1 contain-content">
+            <h1 className="text-3xl font-montserrat font-bold text-primary-800 mb-2">
               {selectedCategory === 'all' ? translate('allProducts') : `${translate(selectedCategory)} ${translate('categoryProducts').replace('{category}', '')}`}
             </h1>
             <p className="text-gray-600 mb-6">
@@ -235,7 +232,7 @@ export default function ProductsPage() {
             {error && (
               <div className="text-center py-12">
                 <div className="text-red-400 text-6xl mb-4">⚠️</div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
+                <h3 className="text-base font-montserrat font-medium text-primary-800 mb-2">
                   {translate('errorLoadingProducts')}
                 </h3>
                 <p className="text-gray-600">{error}</p>
@@ -246,7 +243,7 @@ export default function ProductsPage() {
               <>
                 <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                   {filteredProducts.map((product, idx) => (
-                    <div key={product.id} ref={idx === 0 ? firstMatchRef : undefined}>
+                    <div key={product.id}>
                       <ProductCard
                         product={product}
                         onAddToCart={handleAddToCart}
@@ -258,7 +255,7 @@ export default function ProductsPage() {
                 {filteredProducts.length === 0 && (
                   <div className="text-center py-12">
                     <div className="text-gray-400 text-6xl mb-4">🔍</div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">
+                    <h3 className="text-base font-montserrat font-medium text-primary-800 mb-2">
                       {translate('noProductsFound')}
                     </h3>
                     <p className="text-gray-600">

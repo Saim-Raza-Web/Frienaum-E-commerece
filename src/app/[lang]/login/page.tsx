@@ -165,7 +165,7 @@ export default function LoginPage() {
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <div className="flex justify-center">
-          <div className="w-12 h-12 bg-gradient-to-r from-turquoise-500 to-primary-500 rounded-lg flex items-center justify-center">
+          <div className="w-12 h-12 bg-gradient-to-r from-primary-warm to-primary-500 rounded-lg flex items-center justify-center">
             <span className="text-white text-xl font-bold">S</span>
           </div>
         </div>
@@ -179,7 +179,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={toggleMode}
-                className="font-medium text-turquoise-600 hover:text-turquoise-500"
+                className="font-medium text-primary-warm hover:text-primary-warm-hover"
               >
                 {translate('create a new account')}
               </button>
@@ -190,7 +190,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={toggleMode}
-                className="font-medium text-turquoise-600 hover:text-turquoise-500"
+                className="font-medium text-primary-warm hover:text-primary-warm-hover"
               >
                 {translate('Sign in here')}
               </button>
@@ -334,7 +334,7 @@ export default function LoginPage() {
                   <button
                     type="button"
                     onClick={() => setIsForgotPassword(true)}
-                    className="font-medium text-turquoise-600 hover:text-turquoise-500"
+                    className="font-medium text-primary-warm hover:text-primary-warm-hover"
                   >
                     {translate('Forgot your password?')}
                   </button>
@@ -389,7 +389,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-turquoise-600 to-primary-600 hover:from-turquoise-700 hover:to-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turquoise-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                className="btn-primary w-full"
               >
               {isLoading ? (
                   <>
@@ -426,7 +426,7 @@ export default function LoginPage() {
                     </p>
                     <button
                       onClick={resetForgotPassword}
-                      className="font-medium text-turquoise-600 hover:text-turquoise-500"
+                      className="font-medium text-primary-warm hover:text-primary-warm-hover"
                     >
                       {translate('Back to sign in')}
                     </button>
@@ -507,7 +507,7 @@ export default function LoginPage() {
                       <button
                         type="submit"
                         disabled={forgotPasswordLoading}
-                        className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-gradient-to-r from-turquoise-600 to-primary-600 hover:from-turquoise-700 hover:to-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turquoise-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                        className="btn-primary w-full"
                       >
                         {forgotPasswordLoading ? (
                           <>

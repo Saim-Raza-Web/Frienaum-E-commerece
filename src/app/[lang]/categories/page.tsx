@@ -102,7 +102,7 @@ export default function CategoriesPage() {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center p-6 max-w-md mx-auto bg-white rounded-lg shadow-md">
           <AlertCircle className="mx-auto h-12 w-12 text-red-500" />
-          <h2 className="mt-4 text-xl font-semibold text-gray-900">
+          <h2 className="mt-4 text-xl font-montserrat font-semibold text-primary-800">
             {translate('errorLoadingCategories')}
           </h2>
           <p className="mt-2 text-gray-600">
@@ -124,7 +124,7 @@ export default function CategoriesPage() {
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <h1 className="text-3xl font-bold text-gray-900">{translate('Categories')}</h1>
+          <h1 className="text-3xl font-montserrat font-bold text-primary-800">{translate('Categories')}</h1>
           <p className="mt-2 text-gray-600">{translate('shopByCategoryDesc')}</p>
         </div>
       </div>
@@ -142,7 +142,7 @@ export default function CategoriesPage() {
                   placeholder={translate('searchCategories')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-16 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-turquoise-500 focus:border-transparent text-gray-900 placeholder-gray-500 shadow-sm hover:shadow-md transition-shadow duration-200"
+                  className="w-full pl-16 pr-4 py-3 border border-primary-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-warm focus:border-transparent text-primary-800 placeholder-primary-500 shadow-sm hover:shadow-md transition-shadow duration-200"
                 />
               </div>
             </div>
@@ -154,7 +154,7 @@ export default function CategoriesPage() {
                 className={`p-2 rounded-md transition-all duration-200 ${
                   viewMode === 'grid'
                     ? 'bg-white text-turquoise-600 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                    : 'text-primary-500 hover:text-primary-700 hover:bg-primary-50'
                 }`}
                 title="Grid View"
               >
@@ -165,7 +165,7 @@ export default function CategoriesPage() {
                 className={`p-2 rounded-md transition-all duration-200 ${
                   viewMode === 'list'
                     ? 'bg-white text-turquoise-600 shadow-sm'
-                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                    : 'text-primary-500 hover:text-primary-700 hover:bg-primary-50'
                 }`}
                 title="List View"
               >
@@ -186,7 +186,7 @@ export default function CategoriesPage() {
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <span className="text-red-600 text-2xl">⚠</span>
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
+            <h3 className="text-base font-montserrat font-medium text-primary-800 mb-2">
               {translate('errorLoadingCategories')}
             </h3>
             <p className="text-gray-600 mb-4">{error}</p>
@@ -202,7 +202,7 @@ export default function CategoriesPage() {
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <Search className="w-8 h-8 text-gray-400" />
             </div>
-            <h3 className="text-lg font-medium text-gray-900 mb-2">
+            <h3 className="text-base font-montserrat font-medium text-primary-800 mb-2">
               {translate('noCategoriesFound')}
             </h3>
             <p className="text-gray-600">
@@ -238,7 +238,7 @@ export default function CategoriesPage() {
                   
                   {/* Card Content */}
                   <div className="p-5 flex-1 flex flex-col">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2 group-hover:text-turquoise-600 transition-colors">
+                    <h3 className="text-base font-montserrat font-semibold text-primary-800 mb-2 group-hover:text-primary-warm transition-colors">
                       {translate(category.name)}
                     </h3>
                     
@@ -258,7 +258,7 @@ export default function CategoriesPage() {
                         <span className="text-sm font-medium text-gray-600">
                           {category.productCount} {translate('products')}
                         </span>
-                        <span className="text-sm font-medium text-turquoise-600 group-hover:text-turquoise-700 transition-colors flex items-center">
+                        <span className="text-sm font-medium text-primary-warm group-hover:text-primary-warm-hover transition-colors flex items-center">
                           {translate('explore')} <span className="ml-1 group-hover:translate-x-1 transition-transform">→</span>
                         </span>
                       </div>

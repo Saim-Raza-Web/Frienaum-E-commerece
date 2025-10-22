@@ -7,7 +7,7 @@ import { AuthContextType, AuthState, User, LoginCredentials, RegisterData } from
 const mockUsers: User[] = [
   {
     id: '1',
-    email: 'admin@shopease.com',
+    email: 'admin@feinraumshop.ch',
     firstName: 'Admin',
     lastName: 'User',
     role: 'admin',
@@ -17,7 +17,7 @@ const mockUsers: User[] = [
   },
   {
     id: '2',
-    email: 'merchant@shopease.com',
+    email: 'merchant@feinraumshop.ch',
     firstName: 'Sarah',
     lastName: 'Johnson',
     role: 'merchant',
@@ -27,7 +27,7 @@ const mockUsers: User[] = [
   },
   {
     id: '3',
-    email: 'customer@shopease.com',
+    email: 'customer@feinraumshop.ch',
     firstName: 'John',
     lastName: 'Doe',
     role: 'customer',
@@ -39,9 +39,9 @@ const mockUsers: User[] = [
 
 // Mock passwords (in real app, these would be hashed)
 const mockPasswords: Record<string, string> = {
-  'admin@shopease.com': 'admin123',
-  'merchant@shopease.com': 'merchant123',
-  'customer@shopease.com': 'customer123'
+  'admin@feinraumshop.ch': 'admin123',
+  'merchant@feinraumshop.ch': 'merchant123',
+  'customer@feinraumshop.ch': 'customer123'
 };
 
 type AuthAction =
@@ -123,7 +123,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     const checkAuthStatus = () => {
       // First, try to get user from localStorage
-      const storedUser = localStorage.getItem('shopease_user');
+      const storedUser = localStorage.getItem('feinraum_user');
       if (storedUser) {
         try {
           const userFromStorage = JSON.parse(storedUser);
@@ -151,7 +151,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               createdAt: new Date().toISOString(),
               lastLogin: new Date().toISOString()
             };
-            localStorage.setItem('shopease_user', JSON.stringify(user));
+            localStorage.setItem('feinraum_user', JSON.stringify(user));
             dispatch({ type: 'SET_USER', payload: user });
           }).catch(() => {
             // Token is invalid, but keep the user in localStorage for now
@@ -159,7 +159,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           });
         } catch (e) {
           // Invalid localStorage data, remove it
-          localStorage.removeItem('shopease_user');
+          localStorage.removeItem('feinraum_user');
           dispatch({ type: 'SET_USER', payload: null });
         }
       } else {
@@ -202,7 +202,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       };
 
       // Save to localStorage
-      localStorage.setItem('shopease_user', JSON.stringify(user));
+      localStorage.setItem('feinraum_user', JSON.stringify(user));
 
       dispatch({ type: 'LOGIN_SUCCESS', payload: user });
     } catch (error) {
@@ -253,7 +253,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       };
 
       // Persist session locally (this app uses localStorage-based auth context)
-      localStorage.setItem('shopease_user', JSON.stringify(user));
+      localStorage.setItem('feinraum_user', JSON.stringify(user));
 
       dispatch({ type: 'REGISTER_SUCCESS', payload: user });
     } catch (e) {
@@ -270,7 +270,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Ignore logout API errors
     }
 
-    localStorage.removeItem('shopease_user');
+    localStorage.removeItem('feinraum_user');
     dispatch({ type: 'LOGOUT' });
   }, []);
 
