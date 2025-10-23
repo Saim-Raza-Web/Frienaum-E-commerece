@@ -55,16 +55,29 @@ export default function ContactPage() {
 
   const contactInfo = [
     {
-      icon: Mail,
-      title: translate('emailUs'),
-      details: ['support@feinraumshop.ch', 'business@feinraumshop.ch'],
-      color: 'text-primary-warm'
+      icon: MapPin,
+      title: translate('visitUs'),
+      details: [
+        'Sandro Hauser',
+        'Landquartstrasse 30',
+        '9320 Arbon',
+        'Switzerland'
+      ],
+      color: 'text-primary-warm',
+      clickable: true,
+      mapUrl: 'https://maps.google.com/?q=Landquartstrasse+30,+9320+Arbon,+Switzerland'
     },
     {
       icon: Phone,
       title: translate('callUs'),
-      details: ['+1 (555) 123-4567', '+1 (555) 987-6543'],
+      details: ['+41 76 430 87 18'],
       color: 'text-primary-600'
+    },
+    {
+      icon: Mail,
+      title: translate('emailUs'),
+      details: ['support@feinraumshop.ch', 'business@feinraumshop.ch'],
+      color: 'text-primary-warm'
     },
     {
       icon: Clock,
@@ -200,11 +213,26 @@ export default function ContactPage() {
                   </div>
                   <div>
                     <h3 className="font-semibold text-gray-900 mb-1">{info.title}</h3>
-                    {info.details.map((detail, detailIndex) => (
-                      <p key={detailIndex} className="text-gray-600 text-sm">
-                        {detail}
-                      </p>
-                    ))}
+                    {info.clickable && info.mapUrl ? (
+                      <a 
+                        href={info.mapUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="block hover:bg-gray-50 p-2 rounded-lg transition-colors"
+                      >
+                        {info.details.map((detail, detailIndex) => (
+                          <p key={detailIndex} className="text-gray-600 text-sm hover:text-primary-600 transition-colors">
+                            {detail}
+                          </p>
+                        ))}
+                      </a>
+                    ) : (
+                      info.details.map((detail, detailIndex) => (
+                        <p key={detailIndex} className="text-gray-600 text-sm">
+                          {detail}
+                        </p>
+                      ))
+                    )}
                   </div>
                 </div>
               ))}

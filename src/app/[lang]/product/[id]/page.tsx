@@ -157,7 +157,7 @@ export default function ProductDetailPage() {
                   onClick={() => handleImageChange(index)}
                   className={`w-20 h-20 rounded-lg overflow-hidden border-2 transition-colors ${
                     index === selectedImageIndex
-                      ? 'border-turquoise-500'
+                      ? 'border-orange-500'
                       : 'border-gray-200 hover:border-gray-300'
                   }`}
                 >
@@ -174,7 +174,7 @@ export default function ProductDetailPage() {
           {/* Product Info */}
           <div className="space-y-6">
             {/* Category */}
-            <p className="text-turquoise-600 font-medium">{product.category}</p>
+            <p className="text-orange-600 font-medium">{product.category}</p>
 
             {/* Product Name */}
             <h1 className="text-3xl font-bold text-gray-900">{product.name}</h1>
@@ -265,7 +265,7 @@ export default function ProductDetailPage() {
                   disabled={!product.inStock}
                   className={`flex-1 flex items-center justify-center space-x-2 py-3 px-6 rounded-lg font-medium transition-colors ${
                     product.inStock
-                      ? 'bg-turquoise-500 hover:bg-turquoise-600 text-white'
+                      ? 'btn-primary'
                       : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                   }`}
                 >
@@ -282,15 +282,15 @@ export default function ProductDetailPage() {
             {/* Features */}
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-6 border-t border-gray-200">
               <div className="flex items-center space-x-2">
-                <Truck className="w-5 h-5 text-turquoise-600" />
+                <Truck className="w-5 h-5 text-orange-600" />
                 <span className="text-sm text-gray-600">{t('freeShipping')}</span>
               </div>
               <div className="flex items-center space-x-2">
-                <Shield className="w-5 h-5 text-turquoise-600" />
+                <Shield className="w-5 h-5 text-orange-600" />
                 <span className="text-sm text-gray-600">{t('securePayment')}</span>
               </div>
               <div className="flex items-center space-x-2">
-                <Clock className="w-5 h-5 text-turquoise-600" />
+                <Clock className="w-5 h-5 text-orange-600" />
                 <span className="text-sm text-gray-600">{t('fastDelivery')}</span>
               </div>
             </div>

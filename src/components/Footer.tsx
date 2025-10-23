@@ -102,11 +102,22 @@ export default function Footer() {
             </div>
             <div className="flex items-center space-x-4">
               <Phone className="w-6 h-6 text-primary-600" />
-              <p className="text-primary-700 font-lora">+1 (555) 123-4567</p>
+              <a href="tel:+41764308718" className="text-primary-700 font-lora hover:text-primary-800 hover:underline transition-colors">
+                +41 76 430 87 18
+              </a>
             </div>
             <div className="flex items-center space-x-4">
               <MapPin className="w-6 h-6 text-primary-600" />
-              <p className="text-primary-700 font-lora">123 Commerce St, City, State</p>
+              <a 
+                href="https://maps.google.com/?q=Landquartstrasse+30,+9320+Arbon,+Switzerland" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-primary-700 font-lora hover:text-primary-800 hover:underline transition-colors"
+              >
+                <p>Sandro Hauser</p>
+                <p>Landquartstrasse 30</p>
+                <p>9320 Arbon, Switzerland</p>
+              </a>
             </div>
           </div>
         </div>
