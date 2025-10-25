@@ -16,7 +16,6 @@ import {
   Settings,
   ShoppingBag,
   Package,
-  Search,
   Globe
 } from 'lucide-react';
 
@@ -138,13 +137,12 @@ export default function UnifiedNavbar() {
             {/* Search Bar - Responsive design */}
             <div className="hidden sm:block">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-primary-400 w-4 h-4" />
                 <input
                   type="search"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={handleSearch}
-                  className="w-48 sm:w-56 lg:w-64 pl-10 pr-4 py-2 sm:py-3 bg-primary-50 border border-primary-200 rounded-full placeholder-primary-400 text-primary-800 font-lora text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-300 focus:border-primary-400 hover:bg-primary-100"
+                  className="w-48 sm:w-56 lg:w-64 px-4 py-2 sm:py-3 bg-primary-50 border border-primary-200 rounded-full placeholder-primary-400 text-gray-900 font-lora text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-300 focus:border-primary-400 hover:bg-primary-100"
                   placeholder="Search products..."
                 />
               </div>
@@ -291,13 +289,12 @@ export default function UnifiedNavbar() {
             {/* Mobile Search */}
             <div className="py-2">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <input
                   type="search"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={handleSearch}
-                  className="search-input block w-full pl-9 pr-3 py-2 rounded-full placeholder-gray-500 text-sm transition-all duration-200 focus:outline-none"
+                  className="search-input block w-full px-4 py-2 rounded-full placeholder-gray-500 text-gray-900 text-sm transition-all duration-200 focus:outline-none"
                   placeholder="Search..."
                 />
               </div>

@@ -271,9 +271,9 @@ function HomePage({ params }: HomePageProps) {
   // categories are built from products fetch above
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-white to-primary-50">
+    <div className="min-h-screen bg-primary-50 overflow-x-hidden">
       {/* Hero Section - Responsive design */}
-      <section className="bg-gradient-to-br from-white via-primary-50 to-accent-50">
+      <section className="bg-primary-50 overflow-hidden">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-12 sm:py-16 md:py-20 lg:py-32">
           <div className="flex flex-col lg:flex-row items-center justify-between gap-8 lg:gap-12">
             {/* Text Content */}
@@ -355,19 +355,19 @@ function HomePage({ params }: HomePageProps) {
       </section>
 
       {/* Categories Section - Responsive design */}
-      <section className="py-12 sm:py-16 md:py-20 px-3 sm:px-4 lg:px-8 text-center bg-gradient-to-br from-primary-50 to-white">
+      <section className="py-12 sm:py-16 md:py-20 px-3 sm:px-4 lg:px-8 text-center bg-primary-50 overflow-hidden">
         <div className="max-w-7xl mx-auto relative">
           <h2 className="text-2xl sm:text-3xl md:text-4xl font-montserrat font-bold text-primary-800 mb-3 sm:mb-4 md:mb-6">{translate('shopByCategory')}</h2>
           <p className="text-sm sm:text-base md:text-lg text-primary-600 font-lora mb-6 sm:mb-8 md:mb-12 max-w-2xl mx-auto leading-relaxed">{translate('shopByCategoryDesc')}</p>
           
           {/* Navigation Buttons - Responsive design */}
-          <button className="category-swiper-button-prev absolute left-0 sm:left-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 flex items-center justify-center bg-white rounded-full shadow-md sm:shadow-lg md:shadow-xl hover:bg-primary-50 transition-all duration-300 hover:scale-110">
+          <button className="category-swiper-button-prev absolute left-2 sm:left-4 top-1/2 -translate-y-1/2 z-10 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 flex items-center justify-center bg-white rounded-full shadow-md sm:shadow-lg md:shadow-xl hover:bg-primary-50 transition-all duration-300 hover:scale-110">
             <svg className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 lg:w-6 lg:h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
           
-          <button className="category-swiper-button-next absolute right-0 sm:right-2 top-1/2 -translate-y-1/2 z-10 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 flex items-center justify-center bg-white rounded-full shadow-md sm:shadow-lg md:shadow-xl hover:bg-primary-50 transition-all duration-300 hover:scale-110">
+          <button className="category-swiper-button-next absolute right-2 sm:right-4 top-1/2 -translate-y-1/2 z-10 w-8 h-8 sm:w-10 sm:h-10 md:w-12 md:h-12 lg:w-14 lg:h-14 flex items-center justify-center bg-white rounded-full shadow-md sm:shadow-lg md:shadow-xl hover:bg-primary-50 transition-all duration-300 hover:scale-110">
             <svg className="w-3 h-3 sm:w-4 sm:h-4 md:w-5 md:h-5 lg:w-6 lg:h-6 text-primary-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>
@@ -464,17 +464,16 @@ function HomePage({ params }: HomePageProps) {
           height: 40px;
           box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
           color: #4f46e5;
+          left: 8px;
+        }
+        .category-swiper-button-next {
+          right: 8px;
+          left: auto;
         }
         .category-swiper-button-prev:after,
         .category-swiper-button-next:after {
           font-size: 16px;
           font-weight: bold;
-        }
-        .category-swiper-button-prev {
-          left: 0;
-        }
-        .category-swiper-button-next {
-          right: 0;
         }
       `}</style>
 
@@ -536,7 +535,7 @@ function HomePage({ params }: HomePageProps) {
       </section>
 
       {/* What Our Customers Say Section */}
-      <section className="py-16 sm:py-20 bg-gradient-to-br from-orange-50 to-red-50">
+      <section className="py-16 sm:py-20 bg-primary-50 overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8 sm:mb-12 lg:mb-16">
             <h2 className="text-3xl sm:text-4xl font-montserrat font-bold text-gray-800 mb-4 sm:mb-6">
@@ -574,6 +573,53 @@ function HomePage({ params }: HomePageProps) {
         }
       `}</style>
 
+      {/* Additional CSS for complete horizontal scroll prevention */}
+      <style jsx global>{`
+        /* Ensure all sections are properly contained */
+        .main-container {
+          max-width: 100vw;
+          overflow-x: hidden;
+        }
+
+        /* Swiper overflow fixes */
+        .swiper {
+          overflow: hidden !important;
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        .swiper::-webkit-scrollbar {
+          display: none;
+        }
+
+        /* Mobile responsive fixes */
+        @media (max-width: 767px) {
+          .mobile-responsive {
+            padding-left: 0.75rem;
+            padding-right: 0.75rem;
+          }
+
+          .mobile-card {
+            margin-left: 0;
+            margin-right: 0;
+          }
+
+          /* Ensure buttons don't overflow */
+          button {
+            white-space: nowrap;
+          }
+        }
+
+        /* Ensure images don't cause overflow */
+        img {
+          max-width: 100%;
+          height: auto;
+        }
+
+        /* Fix any potential gradient overflow */
+        [class*="bg-gradient"] {
+          max-width: 100%;
+        }
+      `}</style>
 
     </div>
   );

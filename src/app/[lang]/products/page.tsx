@@ -197,7 +197,7 @@ export default function ProductsPage() {
                         setIsMobileSidebarOpen(false);
                       }
                     }}
-                    className="w-full h-8 sm:h-10 px-3 sm:px-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-inset focus:ring-1 focus:ring-turquoise-500 focus:border-turquoise-600 transition-all duration-150 text-sm"
+                    className="w-full h-8 sm:h-10 px-3 sm:px-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-inset focus:ring-1 focus:ring-turquoise-500 focus:border-turquoise-600 transition-all duration-150 text-sm text-gray-900"
                     style={{
                       boxSizing: 'border-box',
                       contain: 'layout style paint'

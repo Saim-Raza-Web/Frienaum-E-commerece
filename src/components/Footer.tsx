@@ -12,7 +12,7 @@ export default function Footer() {
   const segments = pathname.split('/');
   const lang = segments[1] || 'en';
   return (
-    <footer className="bg-gradient-to-br from-primary-50 to-accent-50 text-primary-800">
+    <footer className="bg-primary-50 text-primary-800 overflow-hidden">
       <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-12 sm:py-16">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
           {/* Company Info */}

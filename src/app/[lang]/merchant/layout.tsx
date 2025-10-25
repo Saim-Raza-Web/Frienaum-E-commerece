@@ -71,7 +71,7 @@ export default function MerchantLayout({
               <X className="h-6 w-6" />
             </button>
           </div>
-          <nav className="flex-1 space-y-1 px-2 py-4">
+          <nav className="merchant-layout-sidebar flex-1 space-y-1 px-2 py-4">
             {navigation.map((item) => (
               <Link
                 key={item.name}
@@ -79,7 +79,7 @@ export default function MerchantLayout({
                 className={`group flex items-center px-3 py-3 text-sm font-medium rounded-md ${
                   isActive(item)
                     ? 'bg-primary-50 text-primary-600 font-medium'
-                    : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
                 } transition-colors duration-200`}
               >
                 <item.icon

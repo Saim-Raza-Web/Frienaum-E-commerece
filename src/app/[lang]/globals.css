@@ -203,3 +203,89 @@ nav button.profile-sidebar-active,
   background-color: #f3f4f6 !important;
   color: #1f2937 !important;
 }
+
+/* Mobile sidebar fixes for merchant dashboard */
+@media (max-width: 1024px) {
+  /* Ensure sidebar links have proper contrast on mobile */
+  .merchant-sidebar a,
+  .merchant-sidebar button {
+    color: #333 !important;
+  }
+  
+  .merchant-sidebar a:hover,
+  .merchant-sidebar button:hover {
+    color: #111 !important;
+  }
+  
+  /* Active state for mobile */
+  .merchant-sidebar a.profile-sidebar-active,
+  .merchant-sidebar button.profile-sidebar-active {
+    color: var(--color-primary-800) !important;
+  }
+}
+
+/* Dark theme support for merchant sidebar */
+@media (prefers-color-scheme: dark) {
+  .merchant-sidebar a,
+  .merchant-sidebar button {
+    color: #e5e7eb !important;
+  }
+  
+  .merchant-sidebar a:hover,
+  .merchant-sidebar button:hover {
+    color: #f9fafb !important;
+  }
+  
+  .merchant-sidebar a.profile-sidebar-active,
+  .merchant-sidebar button.profile-sidebar-active {
+    color: var(--color-primary-200) !important;
+  }
+}
+
+/* Additional merchant layout sidebar fixes */
+.merchant-layout-sidebar nav a {
+  color: #333 !important;
+}
+
+.merchant-layout-sidebar nav a:hover {
+  color: #111 !important;
+}
+
+.merchant-layout-sidebar nav a:focus {
+  color: #111 !important;
+}
+
+/* Ensure proper contrast for merchant dashboard sidebar */
+@media (max-width: 1024px) {
+  .merchant-layout-sidebar nav a {
+    color: #333 !important;
+    font-weight: 500;
+  }
+  
+  .merchant-layout-sidebar nav a:hover {
+    color: #111 !important;
+    background-color: #f9fafb !important;
+  }
+  
+  .merchant-layout-sidebar nav a:focus {
+    color: #111 !important;
+    background-color: #f3f4f6 !important;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .merchant-sidebar a,
+  .merchant-sidebar button,
+  .merchant-layout-sidebar nav a {
+    color: #000 !important;
+    border: 1px solid transparent;
+  }
+  
+  .merchant-sidebar a:hover,
+  .merchant-sidebar button:hover,
+  .merchant-layout-sidebar nav a:hover {
+    color: #000 !important;
+    border: 1px solid #000;
+  }
+}

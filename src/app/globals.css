@@ -337,12 +337,109 @@ input[type='search'],
 .search-input {
   background-color: var(--color-accent-beige);
   border: 1px solid var(--color-primary-200);
+  color: #111 !important; /* Ensure dark text color */
 }
 
 /* Search input hover state - only border color changes */
 input[type='search']:hover,
 .search-input:hover {
   border-color: var(--color-primary-300);
+}
+
+/* Search input focus state */
+input[type='search']:focus,
+.search-input:focus {
+  color: #111 !important; /* Ensure dark text color on focus */
+  background-color: white !important;
+}
+
+/* Search input placeholder styling */
+input[type='search']::placeholder,
+.search-input::placeholder {
+  color: #999 !important; /* Light placeholder text */
+}
+
+/* Mobile search input fixes */
+@media (max-width: 768px) {
+  input[type='search'],
+  .search-input {
+    color: #111 !important;
+    background-color: white !important;
+    border: 1px solid var(--color-primary-200);
+    padding: 0.75rem 1rem;
+    font-size: 1rem; /* Prevent zoom on iOS */
+    min-height: 44px; /* Touch target minimum */
+  }
+  
+  input[type='search']:focus,
+  .search-input:focus {
+    color: #111 !important;
+    background-color: white !important;
+  }
+  
+  input[type='search']::placeholder,
+  .search-input::placeholder {
+    color: #999 !important;
+  }
+}
+
+/* Universal search input styling for consistency */
+input[type="text"][placeholder*="search" i],
+input[type="text"][placeholder*="Search" i],
+input[type="search"],
+.search-input {
+  color: #111 !important;
+  background-color: white !important;
+}
+
+input[type="text"][placeholder*="search" i]::placeholder,
+input[type="text"][placeholder*="Search" i]::placeholder,
+input[type="search"]::placeholder,
+.search-input::placeholder {
+  color: #999 !important;
+}
+
+/* Ensure consistent height and padding for all search inputs */
+input[type="search"],
+.search-input {
+  min-height: 44px;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid var(--color-primary-200);
+  transition: all 0.2s ease-in-out;
+}
+
+/* Tablet responsive design for search inputs */
+@media (min-width: 641px) and (max-width: 1024px) {
+  input[type="search"],
+  .search-input {
+    min-height: 48px;
+    padding: 0.875rem 1.25rem;
+  }
+}
+
+/* Desktop responsive design for search inputs */
+@media (min-width: 1025px) {
+  input[type="search"],
+  .search-input {
+    min-height: 44px;
+    padding: 0.75rem 1rem;
+  }
+}
+
+/* Additional responsive fixes for merchant sidebar */
+@media (min-width: 641px) and (max-width: 1024px) {
+  .merchant-layout-sidebar nav a {
+    font-size: 0.875rem;
+    padding: 0.75rem 1rem;
+  }
+}
+
+@media (min-width: 1025px) {
+  .merchant-layout-sidebar nav a {
+    font-size: 0.875rem;
+    padding: 0.75rem 1rem;
+  }
 }
 
 /* Remove duplicate select focus styles as they're now handled in the main focus rule */

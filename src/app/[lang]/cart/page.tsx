@@ -83,31 +83,31 @@ export default function CartPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 overflow-x-hidden">
       <CheckoutPopup 
         isOpen={isCheckoutOpen} 
         onClose={() => setIsCheckoutOpen(false)} 
       />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-6 sm:py-8">
         {/* Header */}
         <div className="mb-8">
           <Link
             href={`/${currentLang}/products`}
-            className="inline-flex items-center text-turquoise-600 hover:text-turquoise-700 mb-4"
+            className="inline-flex items-center text-turquoise-600 hover:text-turquoise-700 mb-4 text-sm sm:text-base"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             {translate('cart.continueShopping')}
           </Link>
-          <h1 className="text-3xl font-bold text-gray-900">{translate('cart.shoppingCart')}</h1>
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900">{translate('cart.shoppingCart')}</h1>
         </div>
 
         {cartItems.length === 0 ? (
           /* Empty Cart */
-          <div className="text-center py-20">
-            <div className="text-gray-400 text-6xl mb-4">🛒</div>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">{translate('cart.emptyCart')}</h2>
-            <p className="text-gray-600 mb-8">{translate('cart.emptyCartMessage')}</p>
-            <Link href={`/${currentLang}/products`} className="btn-primary text-lg px-8 py-3">
+          <div className="text-center py-16 sm:py-20">
+            <div className="text-gray-400 text-5xl sm:text-6xl mb-4">🛒</div>
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-4">{translate('cart.emptyCart')}</h2>
+            <p className="text-gray-600 mb-6 sm:mb-8 text-sm sm:text-base px-4">{translate('cart.emptyCartMessage')}</p>
+            <Link href={`/${currentLang}/products`} className="btn-primary text-base sm:text-lg px-6 sm:px-8 py-3 sm:py-4">
               {translate('cart.startShopping')}
             </Link>
           </div>
@@ -116,16 +116,16 @@ export default function CartPage() {
             {/* Cart Items */}
             <div className="lg:col-span-2">
               <div className="bg-white rounded-lg shadow-md">
-                <div className="p-6 border-b border-gray-200">
-                  <h2 className="text-lg font-semibold text-gray-900">
+                <div className="p-4 sm:p-6 border-b border-gray-200">
+                  <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
                     {translate('cart.cartItems')} ({cartItems.length})
                   </h2>
                 </div>
                 
                 <div className="divide-y divide-gray-200">
                   {cartItems.map((item) => (
-                    <div key={item.product.id} className="p-6">
-                      <div className="flex items-center space-x-4">
+                    <div key={item.product.id} className="p-4 sm:p-6">
+                      <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
                         {/* Product Image */}
                         <div className="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
                           <ShoppingBag className="w-8 h-8 text-gray-400" />
@@ -133,7 +133,7 @@ export default function CartPage() {
                         
                         {/* Product Info */}
                         <div className="flex-1 min-w-0">
-                          <h3 className="text-lg font-medium text-gray-900 mb-1">
+                          <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-1">
                             {(() => {
                               const productKey = `products.${getProductKey(item.product.name)}`;
                               const translatedName = translate(productKey);
@@ -141,7 +141,7 @@ export default function CartPage() {
                               return translatedName === productKey ? item.product.name : translatedName;
                             })()}
                           </h3>
-                          <p className="text-sm text-gray-500 mb-2">
+                          <p className="text-xs sm:text-sm text-gray-500 mb-2">
                             {(() => {
                               const categoryKey = `categories.${item.product.category.toLowerCase()}`;
                               const translatedCategory = translate(categoryKey);
@@ -150,7 +150,7 @@ export default function CartPage() {
                             })()}
                           </p>
                           <div className="flex items-center space-x-2">
-                            <span className="text-lg font-bold text-gray-900">
+                            <span className="text-base sm:text-lg font-bold text-gray-900">
                               ${item.product.price.toFixed(2)}
                             </span>
                             {item.product.originalPrice && (
@@ -162,36 +162,38 @@ export default function CartPage() {
                         </div>
                         
                         {/* Quantity Controls */}
-                        <div className="flex items-center space-x-2">
-                          <button
-                            onClick={() => handleUpdateQuantity(item.product.id, item.quantity - 1)}
-                            className="w-8 h-8 border border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-50 transition-colors"
-                          >
-                            -
-                          </button>
-                          <span className="w-12 text-center text-gray-900 font-medium">
-                            {item.quantity}
-                          </span>
-                          <button
-                            onClick={() => handleUpdateQuantity(item.product.id, item.quantity + 1)}
-                            className="w-8 h-8 border border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-50 transition-colors"
-                          >
-                            +
-                          </button>
-                        </div>
-                        
-                        {/* Item Total */}
-                        <div className="text-right">
-                          <div className="text-lg font-bold text-gray-900">
-                            ${(item.product.price * item.quantity).toFixed(2)}
+                        <div className="flex items-center justify-between sm:justify-start space-x-4 sm:space-x-2">
+                          <div className="flex items-center space-x-2">
+                            <button
+                              onClick={() => handleUpdateQuantity(item.product.id, item.quantity - 1)}
+                              className="w-8 h-8 sm:w-8 sm:h-8 border border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-50 transition-colors text-sm sm:text-base"
+                            >
+                              -
+                            </button>
+                            <span className="w-8 sm:w-12 text-center text-gray-900 font-medium text-sm sm:text-base">
+                              {item.quantity}
+                            </span>
+                            <button
+                              onClick={() => handleUpdateQuantity(item.product.id, item.quantity + 1)}
+                              className="w-8 h-8 sm:w-8 sm:h-8 border border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-50 transition-colors text-sm sm:text-base"
+                            >
+                              +
+                            </button>
                           </div>
-                          <button
-                            onClick={() => handleRemoveItem(item.product.id)}
-                            className="text-red-600 hover:text-red-700 text-sm flex items-center mt-1"
-                          >
-                            <Trash2 className="w-4 h-4 mr-1" />
-                            {translate('cart.remove')}
-                          </button>
+
+                          {/* Item Total - Mobile optimized */}
+                          <div className="text-left sm:text-right">
+                            <div className="text-base sm:text-lg font-bold text-gray-900">
+                              ${(item.product.price * item.quantity).toFixed(2)}
+                            </div>
+                            <button
+                              onClick={() => handleRemoveItem(item.product.id)}
+                              className="text-red-600 hover:text-red-700 text-xs sm:text-sm flex items-center mt-1"
+                            >
+                              <Trash2 className="w-3 h-3 sm:w-4 sm:h-4 mr-1" />
+                              {translate('cart.remove')}
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -202,21 +204,21 @@ export default function CartPage() {
 
             {/* Order Summary */}
             <div className="lg:col-span-1">
-              <div className="bg-white rounded-lg shadow-md p-6 sticky top-24">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4">{translate('cart.orderSummary')}</h2>
+              <div className="bg-white rounded-lg shadow-md p-4 sm:p-6 order-summary-sticky">
+                <h2 className="text-lg sm:text-xl font-semibold text-gray-900 mb-4">{translate('cart.orderSummary')}</h2>
 
                 <div className="space-y-3 mb-6">
-                  <div className="flex justify-between text-gray-600">
+                  <div className="flex justify-between text-gray-600 text-sm sm:text-base">
                     <span>{translate('cart.subtotal')}</span>
-                    <span>${calculateSubtotal().toFixed(2)}</span>
+                    <span className="font-medium">${calculateSubtotal().toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between text-gray-600">
+                  <div className="flex justify-between text-gray-600 text-sm sm:text-base">
                     <span>{translate('cart.tax')}</span>
-                    <span>${calculateTax().toFixed(2)}</span>
+                    <span className="font-medium">${calculateTax().toFixed(2)}</span>
                   </div>
-                  <div className="flex justify-between text-gray-600">
+                  <div className="flex justify-between text-gray-600 text-sm sm:text-base">
                     <span>{translate('cart.shipping')}</span>
-                    <span className={calculateShipping() === 0 ? 'text-green-600' : ''}>
+                    <span className={`font-medium ${calculateShipping() === 0 ? 'text-green-600' : ''}`}>
                       {calculateShipping() === 0 ? translate('cart.free') : `$${calculateShipping().toFixed(2)}`}
                     </span>
                   </div>
@@ -228,16 +230,16 @@ export default function CartPage() {
                   )}
 
                   <div className="border-t border-gray-200 pt-3">
-                    <div className="flex justify-between text-lg font-bold text-gray-900">
+                    <div className="flex justify-between text-lg sm:text-xl font-bold text-gray-900">
                       <span>{translate('cart.total')}</span>
-                      <span>${calculateTotal().toFixed(2)}</span>
+                      <span className="text-xl sm:text-2xl">${calculateTotal().toFixed(2)}</span>
                     </div>
                   </div>
                 </div>
 
                 <button
                   onClick={() => setIsCheckoutOpen(true)}
-                  className="w-full bg-blue-600 hover:bg-blue-700 text-white text-center py-3 px-4 rounded-lg text-lg font-medium flex items-center justify-center space-x-2"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white text-center py-3 sm:py-4 px-4 rounded-lg text-base sm:text-lg font-medium flex items-center justify-center space-x-2 transition-colors"
                   disabled={cartItems.length === 0}
                 >
                   <CreditCard className="w-5 h-5" />
@@ -247,7 +249,7 @@ export default function CartPage() {
                 <div className="mt-4 text-center">
                   <Link
                     href={`/${currentLang}/products`}
-                    className="text-turquoise-600 hover:text-turquoise-700 text-sm"
+                    className="text-turquoise-600 hover:text-turquoise-700 text-sm sm:text-base font-medium"
                   >
                     {translate('cart.continueShopping')}
                   </Link>
@@ -256,7 +258,74 @@ export default function CartPage() {
             </div>
           </div>
         )}
-      </div>
+      {/* Additional CSS for complete cart page responsiveness */}
+      <style jsx global>{`
+        /* Cart page specific responsive fixes */
+        .cart-container {
+          max-width: 100vw;
+          overflow-x: hidden;
+        }
+
+        /* Mobile cart item improvements */
+        @media (max-width: 640px) {
+          .cart-item-mobile {
+            padding: 1rem;
+          }
+
+          .cart-quantity-controls {
+            width: 100%;
+            justify-content: space-between;
+          }
+
+          .cart-item-total {
+            text-align: left;
+            margin-top: 0.5rem;
+          }
+
+          /* Ensure buttons don't overflow */
+          .cart-checkout-btn {
+            padding: 0.75rem 1rem;
+            font-size: 0.875rem;
+          }
+
+          /* Improve spacing for mobile */
+          .cart-spacing {
+            margin-bottom: 1rem;
+          }
+        }
+
+        /* Ensure all text scales properly */
+        .cart-text-responsive {
+          word-wrap: break-word;
+          overflow-wrap: break-word;
+        }
+
+        /* Sticky order summary improvements */
+        .order-summary-sticky {
+          top: 6rem;
+        }
+
+        @media (max-width: 1024px) {
+          .order-summary-sticky {
+            position: static;
+            margin-top: 2rem;
+          }
+        }
+
+        /* Button responsiveness */
+        button:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+
+        /* Image responsiveness */
+        .cart-item-image {
+          max-width: 100%;
+          height: auto;
+          object-fit: contain;
+        }
+      `}</style>
+    </div>
     </div>
   );
 }
