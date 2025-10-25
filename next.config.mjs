@@ -3,9 +3,15 @@ const nextConfig = {
   // Enable React Strict Mode
   reactStrictMode: true,
   
-  // Configure images
+  // Configure images for better performance
   images: {
-    domains: [], // Add any external image domains here
+    domains: ['res.cloudinary.com'], // Add Cloudinary domain for image optimization
+    formats: ['image/webp', 'image/avif'], // Use modern image formats
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840], // Responsive image sizes
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384], // Icon and thumbnail sizes
+    minimumCacheTTL: 60 * 60 * 24 * 30, // 30 days cache
+    dangerouslyAllowSVG: true,
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
   
   // Enable static exports for static site generation
@@ -13,11 +19,34 @@ const nextConfig = {
   
   // Enable webpack optimizations
   webpack: (config, { isServer }) => {
-    // Add any webpack configurations here if needed
+    // Optimize bundle size
+    if (!isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+      };
+    }
+    
+    // Optimize for production
+    if (config.mode === 'production') {
+      config.optimization.splitChunks = {
+        chunks: 'all',
+        cacheGroups: {
+          vendor: {
+            test: /[\\/]node_modules[\\/]/,
+            name: 'vendors',
+            chunks: 'all',
+          },
+        },
+      };
+    }
+    
     return config;
   },
   
-  // Configure headers for security
+  // Configure headers for security and performance
   async headers() {
     return [
       {
@@ -35,6 +64,32 @@ const nextConfig = {
             key: 'X-XSS-Protection',
             value: '1; mode=block',
           },
+          {
+            key: 'Referrer-Policy',
+            value: 'origin-when-cross-origin',
+          },
+          {
+            key: 'Permissions-Policy',
+            value: 'camera=(), microphone=(), geolocation=()',
+          },
+        ],
+      },
+      {
+        source: '/images/(.*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      {
+        source: '/api/(.*)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=300, s-maxage=300',
+          },
         ],
       },
     ];
@@ -44,7 +99,16 @@ const nextConfig = {
   trailingSlash: false,
   
   // Enable production source maps
-  productionBrowserSourceMaps: true,
+  productionBrowserSourceMaps: false, // Disable for better performance
+  
+  // Enable compression
+  compress: true,
+  
+  // Enable experimental features for better performance
+  experimental: {
+    optimizeCss: true,
+    optimizePackageImports: ['lucide-react'],
+  },
 };
 
 export default nextConfig;

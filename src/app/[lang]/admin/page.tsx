@@ -116,6 +116,8 @@ function AdminDashboard() {
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(false);
   const [ordersError, setOrdersError] = useState('');
+  const [showOrderModal, setShowOrderModal] = useState(false);
+  const [selectedOrder, setSelectedOrder] = useState<AdminOrder | null>(null);
 
   const loadStats = async () => {
     try {
@@ -349,6 +351,17 @@ function AdminDashboard() {
     } catch (e: any) {
       alert(e?.message || 'Failed to delete order');
     }
+  };
+
+  // Order viewing functions
+  const openOrderModal = (order: AdminOrder) => {
+    setSelectedOrder(order);
+    setShowOrderModal(true);
+  };
+
+  const closeOrderModal = () => {
+    setSelectedOrder(null);
+    setShowOrderModal(false);
   };
 
   const setMerchantStatus = async (merchantId: string, status: 'PENDING' | 'ACTIVE' | 'SUSPENDED') => {
@@ -599,25 +612,25 @@ function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
+      {/* Header - Responsive design */}
       <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-montserrat font-bold text-primary-800">{translate('admin.panel')}</h1>
-              <p className="mt-2 text-gray-600">{translate('admin.managePlatform')}</p>
+              <h1 className="text-xl sm:text-2xl md:text-3xl font-montserrat font-bold text-primary-800">{translate('admin.panel')}</h1>
+              <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600">{translate('admin.managePlatform')}</p>
             </div>
-            <div className="flex items-center space-x-3">
-              <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="text-sm text-gray-600">{translate('admin.systemOnline')}</span>
+            <div className="flex items-center space-x-2 sm:space-x-3">
+              <div className="w-2 h-2 sm:w-3 sm:h-3 bg-green-500 rounded-full animate-pulse"></div>
+              <span className="text-xs sm:text-sm text-gray-600">{translate('admin.systemOnline')}</span>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats Grid (live) */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
+        {/* Stats Grid - Responsive design */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
           {[{
               label: translate('admin.totalUsers'),
               value: statsLoading ? '...' : stats.totalUsers.toString(),
@@ -652,21 +665,21 @@ function AdminDashboard() {
           ))}
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Sidebar Navigation */}
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
+          {/* Sidebar Navigation - Responsive design */}
           <div className="lg:col-span-1">
-            <nav className="space-y-2">
+            <nav className="space-y-1 sm:space-y-2">
               {tabs.map((tab) => (
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 text-left rounded-lg transition-colors focus:outline-none ${
+                  className={`w-full flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-3 text-left rounded-lg transition-colors focus:outline-none text-sm sm:text-base ${
                     activeTab === tab.id
                       ? 'bg-primary-100 text-primary-800 font-semibold'
                       : 'text-primary-600 hover:bg-primary-50'
                   }`}
                 >
-                  <tab.icon className="w-5 h-5" />
+                  <tab.icon className="w-4 h-4 sm:w-5 sm:h-5" />
                   <span className="font-medium">{tab.label}</span>
                 </button>
               ))}
@@ -798,7 +811,7 @@ function AdminDashboard() {
                               Delete Merchant
                             </button>
                           )}
-                          <button className="px-3 py-2 rounded-md border border-gray-300 hover:bg-gray-50" onClick={closeViewMerchant}>Close</button>
+                          <button className="btn-secondary" onClick={closeViewMerchant}>Close</button>
                         </div>
                       </div>
                     ) : null}
@@ -1000,7 +1013,10 @@ function AdminDashboard() {
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                                 <div className="flex items-center gap-3">
-                                  <button className="text-blue-600 hover:text-blue-900">
+                                  <button 
+                                    onClick={() => openOrderModal(order)}
+                                    className="text-blue-600 hover:text-blue-900"
+                                  >
                                     View Details
                                   </button>
                                   <button
@@ -1033,7 +1049,7 @@ function AdminDashboard() {
                     </div>
                     <button
                       onClick={() => setShowForm(true)}
-                      className="inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-turquoise-600 to-primary-600 text-white font-semibold rounded-md hover:from-turquoise-700 hover:to-primary-700 transition-all duration-200"
+                      className="btn-primary"
                     >
                       <Plus className="w-5 h-5 mr-2" />
                       Add Product
@@ -1080,7 +1096,7 @@ function AdminDashboard() {
                         {!searchTerm && (
                           <button
                             onClick={() => setShowForm(true)}
-                            className="inline-flex items-center px-5 py-2.5 bg-gradient-to-r from-turquoise-600 to-primary-600 text-white font-semibold rounded-md hover:from-turquoise-700 hover:to-primary-700"
+                            className="btn-primary"
                           >
                             <Plus className="w-5 h-5 mr-2" />
                             Add Your First Product
@@ -1151,7 +1167,7 @@ function AdminDashboard() {
 
                 {/* Add/Edit Form Modal */}
                 {showForm && (
-                  <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+                  <div className="modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
                     <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl md:max-w-3xl mx-4 max-h-[90vh] overflow-y-auto">
                       <div className="px-6 py-4 border-b border-gray-200">
                         <div className="flex items-center justify-between">
@@ -1260,7 +1276,7 @@ function AdminDashboard() {
                               <button
                                 type="button"
                                 onClick={() => setShowNewCategoryModal(true)}
-                                className="px-3 py-2 bg-gradient-to-r from-turquoise-600 to-primary-600 text-white rounded-md hover:from-turquoise-700 hover:to-primary-700 text-sm"
+                                className="btn-primary text-sm"
                                 title="Add new category"
                               >
                                 +
@@ -1312,14 +1328,14 @@ function AdminDashboard() {
                           <button
                             type="button"
                             onClick={resetForm}
-                            className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+                            className="btn-secondary focus:outline-none"
                           >
                             {isUploading ? 'Cancel Upload' : 'Cancel'}
                           </button>
                           <button
                             type="submit"
                             disabled={loading}
-                            className="px-6 py-2 bg-gradient-to-r from-turquoise-600 to-primary-600 text-white rounded-lg hover:from-turquoise-700 hover:to-primary-700 disabled:opacity-50 flex items-center transition-all duration-200"
+                            className="btn-primary disabled:opacity-50 flex items-center focus:outline-none"
                           >
                             <Save className="w-4 h-4 mr-2" />
                             {loading ? 'Saving...' : (editingProduct ? 'Update Product' : 'Add Product')}
@@ -1384,7 +1400,7 @@ function AdminDashboard() {
                       resetCategoryForm();
                       setShowNewCategoryModal(true);
                     }}
-                    className="px-4 py-2 bg-gradient-to-r from-turquoise-600 to-primary-600 text-white rounded-lg hover:from-turquoise-700 hover:to-primary-700 flex items-center gap-2"
+                    className="btn-primary flex items-center gap-2"
                   >
                     <Plus size={16} />
                     Add New Category
@@ -1400,7 +1416,7 @@ function AdminDashboard() {
                     <div className="text-red-600 mb-4">Error loading categories: {categoriesError}</div>
                     <button
                       onClick={fetchCategories}
-                      className="px-4 py-2 bg-gradient-to-r from-turquoise-600 to-primary-600 text-white rounded-lg hover:from-turquoise-700 hover:to-primary-700"
+                      className="btn-primary"
                     >
                       Retry
                     </button>
@@ -1501,7 +1517,7 @@ function AdminDashboard() {
 
       {/* Category Modal */}
       {showNewCategoryModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 overflow-y-auto py-8">
+        <div className="modal fixed inset-0 bg-black bg-opacity-50 flex items-start justify-center z-50 overflow-y-auto py-8">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 my-8">
             <div className="px-6 py-4 border-b border-gray-200 sticky top-0 bg-white z-10">
               <div className="flex justify-between items-center">
@@ -1560,7 +1576,7 @@ function AdminDashboard() {
                 <button
                   type="button"
                   onClick={resetCategoryForm}
-                  className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+                  className="btn-secondary focus:outline-none"
                   disabled={creatingCategory}
                 >
                   Cancel
@@ -1568,7 +1584,7 @@ function AdminDashboard() {
                 <button
                   type="submit"
                   disabled={creatingCategory || isImageUploading}
-                  className="px-4 py-2 bg-gradient-to-r from-turquoise-600 to-primary-600 text-white rounded-lg hover:from-turquoise-700 hover:to-primary-700 disabled:opacity-50"
+                  className="btn-primary disabled:opacity-50 focus:outline-none"
                 >
                   {creatingCategory || isImageUploading
                     ? (isImageUploading ? 'Uploading Image...' : 'Saving...')
@@ -1578,6 +1594,119 @@ function AdminDashboard() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Order Details Modal */}
+      {showOrderModal && selectedOrder && (
+        <div className="modal fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-4xl bg-white rounded-lg shadow-lg max-h-[85vh] flex flex-col">
+            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white rounded-t-lg">
+              <h3 className="text-lg font-semibold text-gray-900">Order #{selectedOrder.id?.slice(-8)}</h3>
+              <button onClick={closeOrderModal} className="text-gray-500 hover:text-gray-700 focus:outline-none">✕</button>
+            </div>
+            <div className="p-6 overflow-y-auto space-y-6">
+              {/* Order Status and Basic Info */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Status</label>
+                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                    selectedOrder.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
+                    selectedOrder.status === 'PROCESSING' ? 'bg-blue-100 text-blue-800' :
+                    selectedOrder.status === 'SHIPPED' ? 'bg-purple-100 text-purple-800' :
+                    selectedOrder.status === 'DELIVERED' ? 'bg-green-100 text-green-800' :
+                    'bg-red-100 text-red-800'
+                  }`}>
+                    {translate(`status.${selectedOrder.status.toLowerCase()}`)}
+                  </span>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Total Amount</label>
+                  <p className="mt-1 text-sm text-gray-900">{formatUSD(selectedOrder.grandTotal)}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Order Date</label>
+                  <p className="mt-1 text-sm text-gray-900">{new Date(selectedOrder.createdAt).toLocaleDateString()}</p>
+                </div>
+              </div>
+
+              {/* Customer Information */}
+              <div>
+                <h4 className="text-lg font-medium text-gray-900 mb-3">Customer Information</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Name</label>
+                    <p className="mt-1 text-sm text-gray-900 bg-gray-50 p-2 rounded">{selectedOrder.customer.name || '—'}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Email</label>
+                    <p className="mt-1 text-sm text-gray-900 bg-gray-50 p-2 rounded">{selectedOrder.customer.email}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Merchant Information */}
+              <div>
+                <h4 className="text-lg font-medium text-gray-900 mb-3">Merchant Information</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Store Name</label>
+                    <p className="mt-1 text-sm text-gray-900 bg-gray-50 p-2 rounded">{selectedOrder.merchant.storeName}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Merchant Contact</label>
+                    <p className="mt-1 text-sm text-gray-900 bg-gray-50 p-2 rounded">{selectedOrder.merchant.user.name || selectedOrder.merchant.user.email}</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Shipping Address */}
+              <div>
+                <h4 className="text-lg font-medium text-gray-900 mb-3">Shipping Address</h4>
+                <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded">{selectedOrder.shippingAddress}</p>
+              </div>
+
+              {/* Order Items */}
+              <div>
+                <h4 className="text-lg font-medium text-gray-900 mb-3">Order Items</h4>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {selectedOrder.items.map((item) => (
+                        <tr key={item.id}>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              {item.product.imageUrl && (
+                                <img className="h-10 w-10 rounded-lg object-cover mr-3" src={item.product.imageUrl} alt={item.product.title_en} />
+                              )}
+                              <div>
+                                <div className="text-sm font-medium text-gray-900">{item.product.title_en}</div>
+                                <div className="text-sm text-gray-500">{item.product.title_de}</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.quantity}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatUSD(item.price)}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatUSD(item.price * item.quantity)}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+            <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-end gap-3">
+              <button onClick={closeOrderModal} className="btn-secondary">Close</button>
+            </div>
           </div>
         </div>
       )}
@@ -1683,7 +1812,7 @@ function SettingsForm() {
             <button
               type="submit"
               disabled={saving}
-              className="px-5 py-2.5 bg-gradient-to-r from-turquoise-600 to-primary-600 text-white rounded-md hover:from-turquoise-700 hover:to-primary-700 disabled:opacity-50"
+              className="btn-primary disabled:opacity-50 focus:outline-none"
             >
               {saving ? 'Saving...' : translate('admin.settings.save')}
             </button>

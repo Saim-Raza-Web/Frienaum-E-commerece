@@ -105,18 +105,18 @@ export default function UnifiedNavbar() {
 
   return (
     <nav className="bg-white/95 backdrop-blur-sm border-b border-primary-100 sticky top-0 z-40 shadow-sm" suppressHydrationWarning={true}>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center py-6">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
+        <div className="flex justify-between items-center py-3 sm:py-4 lg:py-6">
           {/* Logo */}
           <div className="flex-shrink-0">
-            <Link href={`/${lang}/`} className="flex items-center gap-3 group">
+            <Link href={`/${lang}/`} className="flex items-center gap-2 sm:gap-3 group">
               <img 
                 src="/images/Logo.png" 
                 alt="Feinraum Logo" 
-                className="h-10 w-auto transition-transform duration-200 group-hover:scale-105" 
+                className="h-8 w-auto sm:h-10 transition-transform duration-200 group-hover:scale-105" 
                 style={{ filter: 'invert(37%) sepia(53%) saturate(946%) hue-rotate(336deg) brightness(90%) contrast(100%)' }}
               />
-              <span className="font-montserrat font-bold text-xl text-primary-800 group-hover:text-primary-600 transition-colors">Feinraum</span>
+              <span className="font-montserrat font-bold text-lg sm:text-xl text-primary-800 group-hover:text-primary-600 transition-colors">Feinraum</span>
             </Link>
           </div>
 
@@ -134,9 +134,9 @@ export default function UnifiedNavbar() {
           </div>
 
           {/* Right side - Search, Cart, User/Language */}
-          <div className="flex items-center gap-4">
-            {/* Search Bar - Prominent and clean */}
-            <div className="hidden lg:block">
+          <div className="flex items-center gap-2 sm:gap-3 lg:gap-4">
+            {/* Search Bar - Responsive design */}
+            <div className="hidden sm:block">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-primary-400 w-4 h-4" />
                 <input
@@ -144,21 +144,21 @@ export default function UnifiedNavbar() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   onKeyDown={handleSearch}
-                  className="w-64 pl-10 pr-4 py-3 bg-primary-50 border border-primary-200 rounded-full placeholder-primary-400 text-primary-800 font-lora text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-300 focus:border-primary-400 hover:bg-primary-100"
+                  className="w-48 sm:w-56 lg:w-64 pl-10 pr-4 py-2 sm:py-3 bg-primary-50 border border-primary-200 rounded-full placeholder-primary-400 text-primary-800 font-lora text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-300 focus:border-primary-400 hover:bg-primary-100"
                   placeholder="Search products..."
                 />
               </div>
             </div>
 
-            {/* Language Selector - Minimalist design */}
+            {/* Language Selector - Responsive design */}
             <div className="relative">
               <button 
                 onClick={() => setIsLanguageOpen(!isLanguageOpen)}
                 onBlur={() => setTimeout(() => setIsLanguageOpen(false), 200)}
-                className="flex items-center text-primary-600 hover:text-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-300 rounded-lg px-3 py-2 transition-colors duration-200"
+                className="flex items-center text-primary-600 hover:text-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-300 rounded-lg px-2 sm:px-3 py-2 transition-colors duration-200"
               >
-                <Globe className="h-4 w-4 mr-2" />
-                <span className="text-sm font-lora font-medium">{lang.toUpperCase()}</span>
+                <Globe className="h-4 w-4 mr-1 sm:mr-2" />
+                <span className="text-xs sm:text-sm font-lora font-medium">{lang.toUpperCase()}</span>
                 <ChevronDown className="ml-1 h-3 w-3" />
               </button>
               <div 
@@ -176,33 +176,33 @@ export default function UnifiedNavbar() {
               </div>
             </div>
 
-            {/* Cart - Clean minimalist design */}
-            <Link href={`/${lang}/cart`} className="relative p-3 text-primary-600 hover:text-primary-500 transition-colors duration-200 rounded-lg hover:bg-primary-50 group">
-              <ShoppingCart className="w-5 h-5 group-hover:scale-110 transition-transform duration-200" />
+            {/* Cart - Responsive design */}
+            <Link href={`/${lang}/cart`} className="relative p-2 sm:p-3 text-primary-600 hover:text-primary-500 transition-colors duration-200 rounded-lg hover:bg-primary-50 group">
+              <ShoppingCart className="w-4 h-4 sm:w-5 sm:h-5 group-hover:scale-110 transition-transform duration-200" />
               {cartItemCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-cta-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-montserrat font-bold shadow-sm">
+                <span className="absolute -top-1 -right-1 bg-cta-500 text-white text-xs rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center font-montserrat font-bold shadow-sm text-[10px] sm:text-xs">
                   {cartItemCount > 99 ? '99+' : cartItemCount}
                 </span>
               )}
             </Link>
 
-            {/* User Menu or Sign In */}
+            {/* User Menu or Sign In - Responsive design */}
             {isAuthenticated && user ? (
               <div className="relative">
                 <button
                   onClick={toggleUserMenu}
-                  className="flex items-center gap-2 p-2 text-gray-600 hover:text-[var(--color-primary-700)] transition-colors rounded-lg hover:bg-[var(--color-primary-50)]"
+                  className="flex items-center gap-1 sm:gap-2 p-1 sm:p-2 text-gray-600 hover:text-[var(--color-primary-700)] transition-colors rounded-lg hover:bg-[var(--color-primary-50)]"
                 >
-                  <div className="w-8 h-8 bg-primary-500 rounded-full flex items-center justify-center">
-                    <span className="text-white text-sm font-bold">
+                  <div className="w-6 h-6 sm:w-8 sm:h-8 bg-primary-500 rounded-full flex items-center justify-center">
+                    <span className="text-white text-xs sm:text-sm font-bold">
                       {user.firstName?.charAt(0) || 'U'}
                       {user.lastName?.charAt(0) || ''}
                     </span>
                   </div>
-                  <span className="hidden sm:block text-sm font-medium">
+                  <span className="hidden md:block text-sm font-medium">
                     {user.firstName || 'User'}
                   </span>
-                  <ChevronDown className="w-4 h-4" />
+                  <ChevronDown className="w-3 h-3 sm:w-4 sm:h-4" />
                 </button>
 
                 {/* User Dropdown */}
@@ -267,18 +267,18 @@ export default function UnifiedNavbar() {
                 )}
               </div>
             ) : (
-              <Link href={`/${lang}/login`} className="inline-flex items-center gap-2 px-3 py-2 text-sm text-gray-600 hover:text-[var(--color-primary-700)] rounded-lg hover:bg-[var(--color-primary-50)] transition-colors">
+              <Link href={`/${lang}/login`} className="inline-flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-2 text-xs sm:text-sm text-gray-600 hover:text-[var(--color-primary-700)] rounded-lg hover:bg-[var(--color-primary-50)] transition-colors">
                 <User className="w-4 h-4" />
-                <span>{translate('signIn')}</span>
+                <span className="hidden sm:block">{translate('signIn')}</span>
               </Link>
             )}
 
             {/* Mobile menu button */}
             <button
               onClick={toggleMobileMenu}
-              className="md:hidden p-2 text-gray-600 hover:text-[var(--color-primary-700)] transition-colors rounded hover:bg-[var(--color-primary-50)]"
+              className="lg:hidden p-2 text-gray-600 hover:text-[var(--color-primary-700)] transition-colors rounded hover:bg-[var(--color-primary-50)]"
             >
-              {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              {isMobileMenuOpen ? <X className="w-5 h-5 sm:w-6 sm:h-6" /> : <Menu className="w-5 h-5 sm:w-6 sm:h-6" />}
             </button>
           </div>
         </div>
@@ -286,8 +286,8 @@ export default function UnifiedNavbar() {
 
       {/* Mobile Navigation */}
       {isMobileMenuOpen && (
-        <div className="md:hidden">
-          <div className="px-4 pt-2 pb-3 space-y-3 bg-white border-t border-gray-100">
+        <div className="lg:hidden">
+          <div className="px-3 sm:px-4 pt-2 pb-3 space-y-3 bg-white border-t border-gray-100">
             {/* Mobile Search */}
             <div className="py-2">
               <div className="relative">

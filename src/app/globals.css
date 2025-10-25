@@ -372,6 +372,62 @@ input[type='search']:hover,
   }
 }
 
+/* Enhanced responsive design for better mobile experience */
+@media (max-width: 640px) {
+  /* Smaller text sizes for mobile */
+  h1 {
+    font-size: 2rem;
+    line-height: 1.1;
+  }
+  
+  h2 {
+    font-size: 1.75rem;
+    line-height: 1.2;
+  }
+  
+  h3 {
+    font-size: 1.5rem;
+    line-height: 1.3;
+  }
+  
+  /* Better button sizing for touch */
+  .btn-primary {
+    padding: 0.875rem 1.25rem;
+    font-size: 0.875rem;
+    min-height: 44px; /* iOS touch target minimum */
+  }
+  
+  /* Improved spacing for mobile */
+  .container {
+    @apply px-3;
+  }
+  
+  /* Better form input sizing for mobile */
+  .input-field {
+    padding: 0.75rem 1rem;
+    font-size: 1rem; /* Prevents zoom on iOS */
+    min-height: 44px;
+  }
+}
+
+/* Tablet responsive design */
+@media (min-width: 641px) and (max-width: 1024px) {
+  h1 {
+    font-size: 3rem;
+    line-height: 1.1;
+  }
+  
+  h2 {
+    font-size: 2.25rem;
+    line-height: 1.2;
+  }
+  
+  .btn-primary {
+    padding: 0.875rem 2rem;
+    font-size: 0.875rem;
+  }
+}
+
 /* Performance optimizations */
 img {
   image-rendering: -webkit-optimize-contrast;
@@ -520,4 +576,39 @@ button[class*="hover:to-"] {
 button[class*="bg-gradient-to-r"]:hover {
   background-image: var(--tw-gradient-stops) !important;
   background-color: transparent !important;
+}
+
+/* Reviews Slider Responsive Styles */
+.reviews-slider .flex-shrink-0 {
+  width: 100%;
+}
+
+@media (min-width: 640px) {
+  .reviews-slider .flex-shrink-0 {
+    width: calc(50% - 0.5rem);
+  }
+}
+
+@media (min-width: 1024px) {
+  .reviews-slider .flex-shrink-0 {
+    width: calc(33.333% - 0.75rem);
+  }
+}
+
+/* Enhanced responsive design for reviews slider */
+@media (max-width: 640px) {
+  .reviews-slider {
+    padding: 0 1rem;
+  }
+  
+  .reviews-slider .flex-shrink-0 {
+    width: 100%;
+    margin-bottom: 1rem;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 1024px) {
+  .reviews-slider .flex-shrink-0 {
+    width: calc(50% - 0.75rem);
+  }
 }

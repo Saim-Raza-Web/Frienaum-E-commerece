@@ -29,11 +29,11 @@
 
 @layer components {
   .btn-primary {
-    @apply bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200;
+    @apply bg-primary-600 hover:bg-primary-700 text-white font-medium py-2 px-4 rounded-lg transition-colors duration-200 focus:outline-none;
   }
   
   .btn-secondary {
-    @apply bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg transition-colors duration-200;
+    @apply bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium py-2 px-4 rounded-lg transition-colors duration-200 focus:outline-none;
   }
   
   .card {
@@ -43,4 +43,163 @@
   .input-field {
     @apply w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent;
   }
+}
+
+/* Remove outline from all modal buttons */
+.modal button,
+[role="dialog"] button,
+.fixed button {
+  @apply focus:outline-none;
+}
+
+/* Specific styles for modal close buttons and action buttons */
+.modal button[class*="text-gray"],
+.modal button[class*="hover:text-gray"],
+[role="dialog"] button[class*="text-gray"],
+[role="dialog"] button[class*="hover:text-gray"] {
+  @apply focus:outline-none;
+}
+
+/* Additional comprehensive button outline removal for modals */
+.modal button:focus,
+.modal button:focus-visible,
+.fixed button:focus,
+.fixed button:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Ensure all buttons in modal containers have no outline */
+div[class*="fixed"][class*="inset-0"] button {
+  @apply focus:outline-none;
+}
+
+/* Global button outline removal for all modal contexts */
+.fixed.inset-0 button,
+.fixed.inset-0 button:focus,
+.fixed.inset-0 button:focus-visible,
+.fixed.inset-0 button:active {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Responsive design utilities */
+@layer utilities {
+  /* Mobile-first responsive text sizing */
+  .text-responsive-xs {
+    @apply text-xs sm:text-sm;
+  }
+  
+  .text-responsive-sm {
+    @apply text-sm sm:text-base;
+  }
+  
+  .text-responsive-base {
+    @apply text-base sm:text-lg;
+  }
+  
+  .text-responsive-lg {
+    @apply text-lg sm:text-xl;
+  }
+  
+  .text-responsive-xl {
+    @apply text-xl sm:text-2xl;
+  }
+  
+  .text-responsive-2xl {
+    @apply text-2xl sm:text-3xl;
+  }
+  
+  .text-responsive-3xl {
+    @apply text-3xl sm:text-4xl;
+  }
+  
+  /* Responsive spacing */
+  .space-responsive-y {
+    @apply space-y-2 sm:space-y-4;
+  }
+  
+  .space-responsive-x {
+    @apply space-x-2 sm:space-x-4;
+  }
+  
+  /* Responsive padding */
+  .p-responsive {
+    @apply p-3 sm:p-4 lg:p-6;
+  }
+  
+  .px-responsive {
+    @apply px-3 sm:px-4 lg:px-6;
+  }
+  
+  .py-responsive {
+    @apply py-3 sm:py-4 lg:py-6;
+  }
+  
+  /* Responsive margins */
+  .m-responsive {
+    @apply m-3 sm:m-4 lg:m-6;
+  }
+  
+  .mx-responsive {
+    @apply mx-3 sm:mx-4 lg:mx-6;
+  }
+  
+  .my-responsive {
+    @apply my-3 sm:my-4 lg:my-6;
+  }
+  
+  /* Responsive grid gaps */
+  .gap-responsive {
+    @apply gap-3 sm:gap-4 lg:gap-6;
+  }
+  
+  /* Touch-friendly button sizing for mobile */
+  .btn-touch {
+    @apply min-h-[44px] min-w-[44px];
+  }
+  
+  /* Responsive container */
+  .container-responsive {
+    @apply max-w-7xl mx-auto px-3 sm:px-4 lg:px-8;
+  }
+}
+
+/* Profile sidebar active state styling */
+.profile-sidebar-active {
+  background-color: var(--color-primary-100) !important;
+  color: var(--color-primary-800) !important;
+  border-right: 2px solid var(--color-primary-600) !important;
+  font-weight: 600 !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+.profile-sidebar-inactive {
+  color: #6b7280 !important;
+  background-color: transparent !important;
+}
+
+.profile-sidebar-inactive:hover {
+  background-color: #f3f4f6 !important;
+  color: #1f2937 !important;
+}
+
+/* Ensure the active state is visible */
+nav button.profile-sidebar-active,
+.merchant-sidebar button.profile-sidebar-active {
+  background-color: var(--color-primary-100) !important;
+  color: var(--color-primary-800) !important;
+  border-right: 2px solid var(--color-primary-600) !important;
+  font-weight: 600 !important;
+}
+
+/* Merchant sidebar specific styling */
+.merchant-sidebar button.profile-sidebar-inactive {
+  color: #6b7280 !important;
+  background-color: transparent !important;
+}
+
+.merchant-sidebar button.profile-sidebar-inactive:hover {
+  background-color: #f3f4f6 !important;
+  color: #1f2937 !important;
 }

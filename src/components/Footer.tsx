@@ -13,39 +13,39 @@ export default function Footer() {
   const lang = segments[1] || 'en';
   return (
     <footer className="bg-gradient-to-br from-primary-50 to-accent-50 text-primary-800">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-12 sm:py-16">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
           {/* Company Info */}
-          <div className="col-span-1 md:col-span-2">
-            <div className="flex items-center space-x-3 mb-6">
+          <div className="col-span-1 sm:col-span-2 lg:col-span-2">
+            <div className="flex items-center space-x-2 sm:space-x-3 mb-4 sm:mb-6">
               <img 
               src="/images/Logo.png" 
               alt="Feinraum Logo" 
-              className="h-10 w-auto"
+              className="h-8 w-auto sm:h-10"
               style={{ filter: 'invert(37%) sepia(53%) saturate(946%) hue-rotate(336deg) brightness(90%) contrast(100%)' }}
             />
-            <span className="text-2xl font-montserrat font-bold text-primary-800">Feinraum</span>
+            <span className="text-xl sm:text-2xl font-montserrat font-bold text-primary-800">Feinraum</span>
             </div>
-            <p className="text-primary-700 mb-6 max-w-md font-lora leading-relaxed">
+            <p className="text-sm sm:text-base text-primary-700 mb-4 sm:mb-6 max-w-md font-lora leading-relaxed">
               {translate('companyDescription')}
             </p>
-            <div className="flex space-x-6">
+            <div className="flex space-x-4 sm:space-x-6">
               <a href="#" className="text-primary-600 hover:text-primary-500 transition-colors duration-200 p-2 rounded-lg hover:bg-primary-100">
-                <Facebook className="w-6 h-6" />
+                <Facebook className="w-5 h-5 sm:w-6 sm:h-6" />
               </a>
               <a href="#" className="text-primary-600 hover:text-primary-500 transition-colors duration-200 p-2 rounded-lg hover:bg-primary-100">
-                <Twitter className="w-6 h-6" />
+                <Twitter className="w-5 h-5 sm:w-6 sm:h-6" />
               </a>
               <a href="#" className="text-primary-600 hover:text-primary-500 transition-colors duration-200 p-2 rounded-lg hover:bg-primary-100">
-                <Instagram className="w-6 h-6" />
+                <Instagram className="w-5 h-5 sm:w-6 sm:h-6" />
               </a>
             </div>
           </div>
 
           {/* Quick Links */}
           <div>
-            <h3 className="text-lg font-montserrat font-semibold mb-6 text-primary-800">{translate('quickLinks')}</h3>
-            <ul className="space-y-3">
+            <h3 className="text-base sm:text-lg font-montserrat font-semibold mb-4 sm:mb-6 text-primary-800">{translate('quickLinks')}</h3>
+            <ul className="space-y-2 sm:space-y-3">
               <li>
                 <Link href={`/${lang}/`} className="text-primary-600 hover:text-primary-800 hover:font-semibold font-lora transition-all duration-200">
                   {translate('home')}

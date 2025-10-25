@@ -38,6 +38,9 @@ function MerchantDashboard() {
 
   // State declarations
   const [activeTab, setActiveTab] = useState('overview');
+  
+  // Debug active tab state
+  console.log('Merchant - Current active tab:', activeTab);
   const [searchTerm, setSearchTerm] = useState('');
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -926,34 +929,35 @@ function MerchantDashboard() {
   return (
     <ProtectedRoute requiredRole="merchant">
       <div className="min-h-screen bg-gray-50">
-        {/* Header */}
+        {/* Header - Responsive design */}
         <div className="bg-white shadow-sm border-b">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-            <div className="flex items-center justify-between">
+          <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">{translate('merchant.dashboard')}</h1>
-                <p className="mt-2 text-gray-600">{translate('merchant.manageProducts')}</p>
+                <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900">{translate('merchant.dashboard')}</h1>
+                <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600">{translate('merchant.manageProducts')}</p>
                 {/* Debug info - remove in production */}
                 {process.env.NODE_ENV === 'development' && (
-                  <div className="mt-2 text-xs text-gray-500">
+                  <div className="mt-1 sm:mt-2 text-xs text-gray-500">
                     Auth Status: {user ? `Logged in as ${user.role}` : 'Not authenticated'} |
                     User ID: {user?.id || 'N/A'}
                   </div>
                 )}
               </div>
-              <div className="flex items-center space-x-3">
-                <button onClick={openAddModal} className="btn-primary flex items-center space-x-2">
-                  <Plus className="w-4 h-4" />
-                  <span>{translate('merchant.addProduct')}</span>
+              <div className="flex items-center space-x-2 sm:space-x-3">
+                <button onClick={openAddModal} className="btn-primary flex items-center space-x-1 sm:space-x-2 text-sm sm:text-base px-3 sm:px-4 py-2 sm:py-3">
+                  <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
+                  <span className="hidden sm:inline">{translate('merchant.addProduct')}</span>
+                  <span className="sm:hidden">Add</span>
                 </button>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
+          {/* Stats Grid - Responsive design */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
             {stats.map((stat, index) => {
               // Determine if the value is a currency amount (for proper formatting)
               const isCurrency = stat.label.includes('Sales') || stat.label.includes('totalSales');
@@ -998,21 +1002,27 @@ function MerchantDashboard() {
             })}
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            {/* Sidebar Navigation */}
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
+            {/* Sidebar Navigation - Responsive design */}
             <div className="lg:col-span-1">
-              <nav className="space-y-2">
+              <nav className="merchant-sidebar space-y-1 sm:space-y-2">
                 {tabs.map((tab) => (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`w-full flex items-center space-x-3 px-4 py-3 text-left rounded-lg transition-colors ${
+                    className={`w-full flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-3 text-left rounded-lg transition-colors focus:outline-none text-sm sm:text-base ${
                       activeTab === tab.id
-                        ? 'bg-turquoise-100 text-turquoise-700 border-r-2 border-turquoise-500'
-                        : 'text-gray-600 hover:bg-gray-100'
+                        ? 'profile-sidebar-active'
+                        : 'profile-sidebar-inactive'
                     }`}
+                    style={activeTab === tab.id ? {
+                      backgroundColor: 'var(--color-primary-100)',
+                      color: 'var(--color-primary-800)',
+                      borderRight: '2px solid var(--color-primary-600)',
+                      fontWeight: '600'
+                    } : {}}
                   >
-                    <tab.icon className="w-5 h-5" />
+                    <tab.icon className="w-4 h-4 sm:w-5 sm:h-5" />
                     <span className="font-medium">{tab.label}</span>
                   </button>
                 ))}
@@ -1077,11 +1087,11 @@ function MerchantDashboard() {
       
       {/* Order Modal */}
       {showOrderModal && selectedOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+        <div className="modal fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-2xl bg-white rounded-lg shadow-lg max-h-[85vh] flex flex-col">
             <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white rounded-t-lg">
               <h3 className="text-lg font-semibold text-gray-900">Order #{selectedOrder.id?.slice(-8)}</h3>
-              <button onClick={closeOrderModal} className="text-gray-500 hover:text-gray-700">✕</button>
+              <button onClick={closeOrderModal} className="text-gray-500 hover:text-gray-700 focus:outline-none">✕</button>
             </div>
             <div className="p-6 overflow-y-auto space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1134,7 +1144,7 @@ function MerchantDashboard() {
                 Edit Items
               </button>
               <button onClick={closeOrderModal} className="btn-secondary">Close</button>
-              <button onClick={saveOrderStatus} disabled={updatingOrderStatus} className="btn-primary">
+              <button onClick={saveOrderStatus} disabled={updatingOrderStatus} className="btn-primary focus:outline-none">
                 {updatingOrderStatus ? 'Saving...' : 'Save'}
               </button>
             </div>
@@ -1144,7 +1154,7 @@ function MerchantDashboard() {
 
       {/* Edit Order Items Modal */}
       {showEditOrderModal && editingOrder && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+        <div className="modal fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-4xl bg-white rounded-lg shadow-lg max-h-[85vh] flex flex-col">
             <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white rounded-t-lg">
               <h3 className="text-lg font-semibold text-gray-900">Edit Order Items - #{editingOrder.id?.slice(-8)}</h3>
@@ -1153,7 +1163,7 @@ function MerchantDashboard() {
                 setEditingOrder(null);
                 setEditingOrderItems([]);
                 setShowOrderModal(true);
-              }} className="text-gray-500 hover:text-gray-700">✕</button>
+              }} className="text-gray-500 hover:text-gray-700 focus:outline-none">✕</button>
             </div>
             <div className="p-6 overflow-y-auto">
               <div className="space-y-4">
@@ -1232,7 +1242,7 @@ function MerchantDashboard() {
               }} className="btn-secondary">
                 Cancel
               </button>
-              <button onClick={saveOrderItems} disabled={updatingOrderItems} className="btn-primary">
+              <button onClick={saveOrderItems} disabled={updatingOrderItems} className="btn-primary focus:outline-none">
                 {updatingOrderItems ? 'Saving...' : 'Save Changes'}
               </button>
             </div>
@@ -1242,11 +1252,11 @@ function MerchantDashboard() {
 
       {/* Customer Modal */}
       {showCustomerModal && customerDetail && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+        <div className="modal fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-3xl bg-white rounded-lg shadow-lg max-h-[85vh] flex flex-col">
             <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white rounded-t-lg">
               <h3 className="text-lg font-semibold text-gray-900">Customer {customerDetail.name || customerDetail.email}</h3>
-              <button onClick={closeCustomerModal} className="text-gray-500 hover:text-gray-700">✕</button>
+              <button onClick={closeCustomerModal} className="text-gray-500 hover:text-gray-700 focus:outline-none">✕</button>
             </div>
             <div className="p-6 overflow-y-auto space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -1297,10 +1307,10 @@ function MerchantDashboard() {
               </div>
             </div>
             <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between gap-3">
-              <button onClick={() => removeCustomerLink(selectedCustomerId)} className="text-red-600 hover:text-red-800">Remove from my customers</button>
+              <button onClick={() => removeCustomerLink(selectedCustomerId)} className="text-red-600 hover:text-red-800 focus:outline-none">Remove from my customers</button>
               <div className="flex items-center gap-2">
                 <button onClick={closeCustomerModal} className="btn-secondary">Close</button>
-                <button onClick={saveCustomerDetail} disabled={customerSaving} className="btn-primary">{customerSaving ? 'Saving...' : 'Save'}</button>
+                <button onClick={saveCustomerDetail} disabled={customerSaving} className="btn-primary focus:outline-none">{customerSaving ? 'Saving...' : 'Save'}</button>
               </div>
             </div>
           </div>
@@ -1915,11 +1925,11 @@ function MerchantDashboard() {
       </div>
       {/* View Product Modal */}
       {showViewModal && selectedProduct && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+        <div className="modal fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-2xl bg-white rounded-lg shadow-lg max-h-[85vh] flex flex-col">
             <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white rounded-t-lg">
               <h3 className="text-lg font-semibold text-gray-900">{translate('merchant.viewProduct')}</h3>
-              <button onClick={closeViewModal} className="text-gray-500 hover:text-gray-700">✕</button>
+              <button onClick={closeViewModal} className="text-gray-500 hover:text-gray-700 focus:outline-none">✕</button>
             </div>
             <div className="p-6 overflow-y-auto">
               <div className="space-y-4">
@@ -2011,7 +2021,7 @@ function MerchantDashboard() {
                   closeViewModal();
                   handleEditProduct(selectedProduct.id);
                 }}
-                className="btn-primary"
+                className="btn-primary focus:outline-none"
               >
                 {translate('merchant.edit')}
               </button>
@@ -2022,11 +2032,11 @@ function MerchantDashboard() {
 
       {/* Edit Product Modal */}
       {showEditModal && selectedProduct && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+        <div className="modal fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-3xl bg-white rounded-lg shadow-lg max-h-[85vh] flex flex-col">
             <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white rounded-t-lg">
               <h3 className="text-lg font-semibold text-gray-900">{translate('merchant.editProduct')}</h3>
-              <button onClick={closeEditModal} className="text-gray-500 hover:text-gray-700">✕</button>
+              <button onClick={closeEditModal} className="text-gray-500 hover:text-gray-700 focus:outline-none">✕</button>
             </div>
             <form onSubmit={updateProduct} className="p-6 space-y-5 overflow-y-auto">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -2113,7 +2123,7 @@ function MerchantDashboard() {
                     <button
                       type="button"
                       onClick={() => setShowNewCategoryModal(true)}
-                      className="px-3 py-2 bg-turquoise-600 text-white rounded-md hover:bg-turquoise-700 text-sm"
+                      className="btn-primary text-sm"
                       title="Add new category"
                     >
                       +
@@ -2164,7 +2174,7 @@ function MerchantDashboard() {
 
               <div className="flex items-center justify-end gap-3 pt-2">
                 <button type="button" onClick={closeEditModal} className="btn-secondary">{translate('Cancel')}</button>
-                <button type="submit" disabled={updating} className="btn-primary">
+                <button type="submit" disabled={updating} className="btn-primary focus:outline-none">
                   {updating ? translate('merchant.loading') : translate('merchant.updateProduct')}
                 </button>
               </div>
@@ -2175,11 +2185,11 @@ function MerchantDashboard() {
 
       {/* Add Product Modal */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+        <div className="modal fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-3xl bg-white rounded-lg shadow-lg max-h-[85vh] flex flex-col">
             <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white rounded-t-lg">
               <h3 className="text-lg font-semibold text-gray-900">{translate('merchant.addProduct')}</h3>
-              <button onClick={closeAddModal} className="text-gray-500 hover:text-gray-700">✕</button>
+              <button onClick={closeAddModal} className="text-gray-500 hover:text-gray-700 focus:outline-none">✕</button>
             </div>
             <form onSubmit={createProduct} className="p-6 space-y-5 overflow-y-auto">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -2237,7 +2247,7 @@ function MerchantDashboard() {
                     <button
                       type="button"
                       onClick={() => setShowNewCategoryModal(true)}
-                      className="px-3 py-2 bg-turquoise-600 text-white rounded-md hover:bg-turquoise-700 text-sm"
+                      className="btn-primary text-sm"
                       title="Add new category"
                     >
                       +
@@ -2276,7 +2286,7 @@ function MerchantDashboard() {
 
               <div className="flex items-center justify-end gap-3 pt-2">
                 <button type="button" onClick={closeAddModal} className="btn-secondary">{translate('Cancel')}</button>
-                <button type="submit" disabled={creating} className="btn-primary">
+                <button type="submit" disabled={creating} className="btn-primary focus:outline-none">
                   {creating ? translate('merchant.loading') : translate('merchant.addProduct')}
                 </button>
               </div>
@@ -2340,7 +2350,7 @@ function MerchantDashboard() {
                 <button
                   type="submit"
                   disabled={creatingCategory}
-                  className="px-4 py-2 bg-turquoise-600 text-white rounded-lg hover:bg-turquoise-700 disabled:opacity-50"
+                  className="btn-primary disabled:opacity-50 focus:outline-none"
                 >
                   {creatingCategory ? 'Creating...' : 'Create Category'}
                 </button>

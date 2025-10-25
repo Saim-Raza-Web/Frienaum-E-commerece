@@ -123,18 +123,18 @@ export default function CategoriesPage() {
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <h1 className="text-3xl font-montserrat font-bold text-primary-800">{translate('Categories')}</h1>
-          <p className="mt-2 text-gray-600">{translate('shopByCategoryDesc')}</p>
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-6 sm:py-8">
+          <h1 className="text-2xl sm:text-3xl font-montserrat font-bold text-primary-800">{translate('Categories')}</h1>
+          <p className="mt-1 sm:mt-2 text-gray-600 text-sm sm:text-base">{translate('shopByCategoryDesc')}</p>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-6 sm:py-8">
         {/* Search and Filters */}
-        <div className="mb-8">
-          <div className="flex flex-col lg:flex-row gap-6 items-start lg:items-center justify-between">
+        <div className="mb-6 sm:mb-8">
+          <div className="flex flex-col sm:flex-row lg:flex-row gap-4 sm:gap-6 items-start sm:items-center lg:items-center justify-between">
             {/* Search Bar */}
-            <div className="relative flex-1 max-w-lg">
+            <div className="relative flex-1 max-w-lg w-full">
               <div className="relative">
                 {/* <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" /> */}
                 <input
@@ -142,13 +142,13 @@ export default function CategoriesPage() {
                   placeholder={translate('searchCategories')}
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-16 pr-4 py-3 border border-primary-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-warm focus:border-transparent text-primary-800 placeholder-primary-500 shadow-sm hover:shadow-md transition-shadow duration-200"
+                  className="w-full pl-4 sm:pl-16 pr-4 py-2 sm:py-3 border border-primary-300 rounded-lg sm:rounded-xl focus:outline-none focus:ring-2 focus:ring-primary-warm focus:border-transparent text-primary-800 placeholder-primary-500 shadow-sm hover:shadow-md transition-shadow duration-200 text-sm sm:text-base"
                 />
               </div>
             </div>
 
             {/* View Mode Toggle */}
-            <div className="flex items-center space-x-1 bg-gray-100 rounded-lg p-1">
+            <div className="flex items-center space-x-1 bg-gray-100 rounded-lg p-1 self-start sm:self-auto">
               <button
                 onClick={() => setViewMode('grid')}
                 className={`p-2 rounded-md transition-all duration-200 ${
@@ -158,7 +158,7 @@ export default function CategoriesPage() {
                 }`}
                 title="Grid View"
               >
-                <Grid className="w-5 h-5" />
+                <Grid className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
               <button
                 onClick={() => setViewMode('list')}
@@ -169,7 +169,7 @@ export default function CategoriesPage() {
                 }`}
                 title="List View"
               >
-                <List className="w-5 h-5" />
+                <List className="w-4 h-4 sm:w-5 sm:h-5" />
               </button>
             </div>
           </div>
@@ -182,7 +182,7 @@ export default function CategoriesPage() {
             <span className="text-gray-600">{translate('loading')}</span>
           </div>
         ) : error ? (
-          <div className="text-center py-12">
+          <div className="col-span-2 sm:col-span-2 lg:col-span-3 xl:col-span-4 text-center py-12">
             <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <span className="text-red-600 text-2xl">⚠</span>
             </div>
@@ -198,7 +198,7 @@ export default function CategoriesPage() {
             </button>
           </div>
         ) : filteredCategories.length === 0 ? (
-          <div className="text-center py-12">
+          <div className="col-span-2 sm:col-span-2 lg:col-span-3 xl:col-span-4 text-center py-12">
             <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <Search className="w-8 h-8 text-gray-400" />
             </div>
@@ -210,7 +210,7 @@ export default function CategoriesPage() {
             </p>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-8">
+          <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6 md:gap-8">
             {filteredCategories.map((category, index) => (
               <div
                 key={category.id}
@@ -222,7 +222,7 @@ export default function CategoriesPage() {
               >
                 <div className="h-full flex flex-col bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden border border-gray-100">
                   {/* Category Image */}
-                  <div className="relative h-56 w-full overflow-hidden">
+                  <div className="relative h-40 sm:h-48 md:h-56 w-full overflow-hidden">
                     <img
                       src={getCategoryImage(category)}
                       alt={category.name}
@@ -237,13 +237,13 @@ export default function CategoriesPage() {
                   </div>
                   
                   {/* Card Content */}
-                  <div className="p-5 flex-1 flex flex-col">
-                    <h3 className="text-base font-montserrat font-semibold text-primary-800 mb-2 group-hover:text-primary-warm transition-colors">
+                  <div className="p-3 sm:p-4 md:p-5 flex-1 flex flex-col">
+                    <h3 className="text-sm sm:text-base font-montserrat font-semibold text-primary-800 mb-1 sm:mb-2 group-hover:text-primary-warm transition-colors">
                       {translate(category.name)}
                     </h3>
                     
                     {/* Description with fallback */}
-                    <div className="text-sm text-gray-600 mb-4 line-clamp-2 min-h-[2.5rem]">
+                    <div className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4 line-clamp-2 min-h-[2rem] sm:min-h-[2.5rem]">
                       {category.description ? (
                         translate(category.description)
                       ) : (
@@ -255,10 +255,10 @@ export default function CategoriesPage() {
                     
                     <div className="mt-auto pt-2 border-t border-gray-100">
                       <div className="flex items-center justify-between">
-                        <span className="text-sm font-medium text-gray-600">
+                        <span className="text-xs sm:text-sm font-medium text-gray-600">
                           {category.productCount} {translate('products')}
                         </span>
-                        <span className="text-sm font-medium text-primary-warm group-hover:text-primary-warm-hover transition-colors flex items-center">
+                        <span className="text-xs sm:text-sm font-medium text-primary-warm group-hover:text-primary-warm-hover transition-colors flex items-center">
                           {translate('explore')} <span className="ml-1 group-hover:translate-x-1 transition-transform">→</span>
                         </span>
                       </div>

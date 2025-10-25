@@ -27,7 +27,7 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
 
   return (
     <Link href={`/${lang}/product/${product.id}`} className="group h-full">
-      <div className="card overflow-hidden h-full flex flex-col bg-white rounded-xl shadow-sm hover:shadow-xl transition-all duration-300 border border-primary-100 hover:border-primary-200">
+      <div className="card overflow-hidden h-full flex flex-col bg-white rounded-lg sm:rounded-xl shadow-sm hover:shadow-lg sm:hover:shadow-xl transition-all duration-300 border border-primary-100 hover:border-primary-200">
         {/* Product Image - High quality with white background */}
         <div className="relative aspect-[4/3] overflow-hidden bg-white">
           <div className="w-full h-full">
@@ -63,25 +63,25 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
           )}
         </div>
 
-        {/* Product Info - Clean minimalist layout */}
-        <div className="p-4 flex-1 flex flex-col">
+        {/* Product Info - Responsive layout */}
+        <div className="p-2 sm:p-3 md:p-4 flex-1 flex flex-col">
           {/* Category */}
-          <p className="text-xs text-primary-500 font-montserrat font-medium mb-2 uppercase tracking-wide">
+          <p className="text-xs text-primary-500 font-montserrat font-medium mb-1 uppercase tracking-wide">
             {product.category}
           </p>
           
-          {/* Product Name - Clean typography with proper overflow handling */}
-          <h3 className="font-montserrat font-semibold text-primary-800 mb-2 group-hover:text-primary-600 transition-colors duration-200 flex-1 text-sm leading-tight" title={product.name}>
+          {/* Product Name - Responsive typography */}
+          <h3 className="font-montserrat font-semibold text-primary-800 mb-1 sm:mb-2 group-hover:text-primary-600 transition-colors duration-200 flex-1 text-xs sm:text-sm leading-tight" title={product.name}>
             <span className="line-clamp-2 block">{product.name}</span>
           </h3>
           
-          {/* Rating - Clean design */}
-          <div className="flex items-center mb-3">
+          {/* Rating - Responsive design */}
+          <div className="flex items-center mb-1 sm:mb-2">
             <div className="flex items-center">
               {[...Array(5)].map((_, i) => (
                 <Star
                   key={i}
-                  className={`w-4 h-4 ${
+                  className={`w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4 ${
                     i < Math.floor(product.rating)
                       ? 'text-accent-400 fill-current'
                       : 'text-primary-200'
@@ -89,38 +89,38 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
                 />
               ))}
             </div>
-            <span className="text-sm text-primary-500 font-lora ml-2">
+            <span className="text-xs text-primary-500 font-lora ml-1">
               ({product.reviewCount})
             </span>
           </div>
           
-          {/* Price - Clean typography */}
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center space-x-3">
-              <span className="text-xl font-montserrat font-bold text-primary-800">
+          {/* Price - Responsive typography */}
+          <div className="flex items-center justify-between mb-2 sm:mb-3">
+            <div className="flex items-center space-x-1 sm:space-x-2">
+              <span className="text-sm sm:text-lg md:text-xl font-montserrat font-bold text-primary-800">
                 ${product.price.toFixed(2)}
               </span>
               {product.originalPrice && (
-                <span className="text-sm text-primary-400 line-through font-lora">
+                <span className="text-xs text-primary-400 line-through font-lora">
                   ${product.originalPrice.toFixed(2)}
                 </span>
               )}
             </div>
           </div>
           
-          {/* Add to Cart Button - CTA styling */}
+          {/* Add to Cart Button - Responsive CTA styling */}
           <div className="mt-auto">
             <button
               onClick={handleAddToCart}
               disabled={!product.inStock}
-              className={`w-full flex items-center justify-center space-x-2 py-2.5 px-4 rounded-lg font-montserrat font-semibold transition-all duration-200 focus:outline-none ${
+              className={`w-full flex items-center justify-center space-x-1 py-1.5 sm:py-2 px-2 sm:px-3 rounded-lg font-montserrat font-semibold transition-all duration-200 focus:outline-none text-xs ${
                 product.inStock
                   ? 'btn-primary'
                   : 'bg-primary-200 text-primary-400 cursor-not-allowed'
               }`}
             >
-              <ShoppingCart className="w-4 h-4" />
-              <span className="text-sm">{product.inStock ? translate('addToCart') : translate('outOfStock')}</span>
+              <ShoppingCart className="w-3 h-3" />
+              <span className="text-xs">{product.inStock ? translate('addToCart') : translate('outOfStock')}</span>
             </button>
           </div>
         </div>

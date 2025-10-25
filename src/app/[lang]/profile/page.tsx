@@ -28,6 +28,9 @@ function ProfileContent() {
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
   
+  // Debug active tab state
+  console.log('Current active tab:', activeTab);
+  
   // Security state
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [passwordForm, setPasswordForm] = useState({
@@ -379,11 +382,17 @@ function ProfileContent() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 text-left rounded-lg transition-colors ${
+                  className={`w-full flex items-center space-x-3 px-4 py-3 text-left rounded-lg transition-colors focus:outline-none ${
                     activeTab === tab.id
-                      ? 'bg-turquoise-100 text-turquoise-700 border-r-2 border-turquoise-500'
-                      : 'text-gray-600 hover:bg-gray-100'
+                      ? 'profile-sidebar-active'
+                      : 'profile-sidebar-inactive'
                   }`}
+                  style={activeTab === tab.id ? {
+                    backgroundColor: 'var(--color-primary-100)',
+                    color: 'var(--color-primary-800)',
+                    borderRight: '2px solid var(--color-primary-600)',
+                    fontWeight: '600'
+                  } : {}}
                 >
                   <tab.icon className="w-5 h-5" />
                   <span className="font-medium">{tab.label}</span>
