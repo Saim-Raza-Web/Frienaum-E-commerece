@@ -76,7 +76,7 @@ export default function ContactPage() {
     {
       icon: Mail,
       title: translate('emailUs'),
-      details: ['support@feinraumshop.ch', 'business@feinraumshop.ch'],
+      details: ['support@feinraumshop.ch'],
       color: 'text-primary-warm'
     },
     {
@@ -214,9 +214,9 @@ export default function ContactPage() {
                   <div>
                     <h3 className="font-semibold text-gray-900 mb-1">{info.title}</h3>
                     {info.clickable && info.mapUrl ? (
-                      <a 
-                        href={info.mapUrl} 
-                        target="_blank" 
+                      <a
+                        href={info.mapUrl}
+                        target="_blank"
                         rel="noopener noreferrer"
                         className="block hover:bg-gray-50 p-2 rounded-lg transition-colors"
                       >
@@ -226,6 +226,12 @@ export default function ContactPage() {
                           </p>
                         ))}
                       </a>
+                    ) : info.icon === Mail ? (
+                      info.details.map((detail, detailIndex) => (
+                        <a key={detailIndex} href={`mailto:${detail}`} className="block text-gray-600 text-sm hover:text-primary-600 transition-colors">
+                          {detail}
+                        </a>
+                      ))
                     ) : (
                       info.details.map((detail, detailIndex) => (
                         <p key={detailIndex} className="text-gray-600 text-sm">
