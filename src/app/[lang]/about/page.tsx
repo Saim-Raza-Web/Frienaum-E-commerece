@@ -132,7 +132,8 @@ export default function AboutPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-6 lg:gap-8">
+          {/* Features and team grid breakpoints: 1col on mobile, 2col md, 3col/4col lg */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6 lg:gap-8">
             {features.map((feature, index) => (
               <div key={index} className="bg-white rounded-lg p-3 sm:p-4 md:p-5 lg:p-6 text-center shadow-md hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
                 <div className="w-10 h-10 sm:w-12 sm:h-12 md:w-14 md:h-14 lg:w-16 lg:h-16 bg-gradient-to-r from-primary-warm to-primary-warm-hover rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-3 md:mb-4 shadow-lg">

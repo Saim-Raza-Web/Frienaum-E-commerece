@@ -20,11 +20,11 @@ export default function Footer() {
             <div className="flex items-center space-x-2 sm:space-x-3 mb-4 sm:mb-6">
               <img 
               src="/images/Logo.png" 
-              alt="Feinraum Logo" 
+              alt="Feinraumshop Logo" 
               className="h-8 w-auto sm:h-10"
               style={{ filter: 'invert(37%) sepia(53%) saturate(946%) hue-rotate(336deg) brightness(90%) contrast(100%)' }}
             />
-            <span className="text-xl sm:text-2xl font-montserrat font-bold text-primary-800">Feinraum</span>
+            <span className="text-xl sm:text-2xl font-montserrat font-bold text-primary-800">Feinraumshop</span>
             </div>
             <p className="text-sm sm:text-base text-primary-700 mb-4 sm:mb-6 max-w-md font-lora leading-relaxed">
               {translate('companyDescription')}

@@ -123,6 +123,25 @@ export default function ProductsPage() {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  useEffect(() => {
+    // Prevent body horizontal scroll when sidebar is open on mobile
+    if (isMobileSidebarOpen) {
+      document.body.style.overflowX = 'hidden';
+      document.body.style.position = 'fixed'; // Prevents body scroll jump
+      document.body.style.width = '100vw';
+    } else {
+      document.body.style.overflowX = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+    }
+    // Clean up in case route changes
+    return () => {
+      document.body.style.overflowX = '';
+      document.body.style.position = '';
+      document.body.style.width = '';
+    };
+  }, [isMobileSidebarOpen]);
+
   const handleAddToCart = (product: Product) => {
     addToCart(product);
   };
@@ -157,9 +176,7 @@ export default function ProductsPage() {
               />
             )}
             {/* Sidebar content */}
-            <div className={`bg-white rounded-lg shadow-md p-4 sm:p-6 lg:sticky lg:top-20 contain-layout contain-paint contain-content contain-strict transform transition-transform duration-300 ease-in-out ${
-              isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
-            } fixed lg:relative top-0 left-0 h-full lg:h-auto w-80 lg:w-auto z-50 lg:z-auto overflow-y-auto`}>
+            <div className={`bg-white rounded-lg shadow-md p-4 sm:p-6 lg:sticky lg:top-20 contain-layout contain-paint contain-content contain-strict transform transition-transform duration-300 ease-in-out ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'} fixed lg:relative top-0 left-0 h-full lg:h-auto w-80 lg:w-auto z-50 lg:z-auto overflow-y-auto overflow-x-hidden`} style={{maxWidth: '20rem', minWidth: '16rem', boxSizing: 'border-box', overscrollBehaviorX: 'none', overflowX: 'hidden'}}>
               {/* Close button for mobile */}
               <div className="flex justify-between items-center mb-3 sm:mb-4 lg:hidden">
                 <h3 className="text-sm sm:text-base font-montserrat font-semibold text-primary-800 flex items-center">
@@ -190,13 +207,7 @@ export default function ProductsPage() {
                     type="text"
                     placeholder={translate('searchPlaceholder')}
                     value={searchQuery}
-                    onChange={(e) => {
-                      setSearchQuery(e.target.value);
-                      // Close mobile sidebar when search is used
-                      if (window.innerWidth < 1024) {
-                        setIsMobileSidebarOpen(false);
-                      }
-                    }}
+                    onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full h-8 sm:h-10 px-3 sm:px-4 border border-gray-300 rounded-lg focus:outline-none focus:ring-inset focus:ring-1 focus:ring-turquoise-500 focus:border-turquoise-600 transition-all duration-150 text-sm text-gray-900"
                     style={{
                       boxSizing: 'border-box',
@@ -306,7 +317,8 @@ export default function ProductsPage() {
 
             {!loading && !error && (
               <>
-                <div className="grid gap-4 sm:gap-6 grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:grid-cols-4">
+                {/* Responsive product grid: 1col xs, 2col sm/md, 3col lg/xl */}
+                <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3">
                   {filteredProducts.map((product, idx) => (
                     <div key={product.id}>
                       <ProductCard

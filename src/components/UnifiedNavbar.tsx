@@ -115,7 +115,7 @@ export default function UnifiedNavbar() {
                 className="h-8 w-auto sm:h-10 transition-transform duration-200 group-hover:scale-105" 
                 style={{ filter: 'invert(37%) sepia(53%) saturate(946%) hue-rotate(336deg) brightness(90%) contrast(100%)' }}
               />
-              <span className="font-montserrat font-bold text-lg sm:text-xl text-primary-800 group-hover:text-primary-600 transition-colors">Feinraum</span>
+              <span className="font-montserrat font-bold text-lg sm:text-xl text-primary-800 group-hover:text-primary-600 transition-colors">Feinraumshop</span>
             </Link>
           </div>
 

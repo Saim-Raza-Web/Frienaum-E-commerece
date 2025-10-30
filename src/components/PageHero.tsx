@@ -18,7 +18,7 @@ export default function PageHero({ title, subtitle }: PageHeroProps) {
       <div className="relative text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <div className="inline-block bg-white/10 backdrop-blur-md rounded-xl px-4 py-2 ring-1 ring-white/20">
-            <span className="text-xs tracking-wider uppercase">Feinraum</span>
+            <span className="text-xs tracking-wider uppercase">Feinraumshop</span>
           </div>
           <h1 className="mt-3 text-4xl md:text-5xl font-extrabold drop-shadow-sm">{title}</h1>
           {subtitle && (

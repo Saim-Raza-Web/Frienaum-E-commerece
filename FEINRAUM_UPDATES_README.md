@@ -1,39 +1,34 @@
-# Feinraum Website Redesign - Implementation Summary
+# FEINRAUMSHOP – Production Update & Deployment Guide
 
-## Overview
-This document outlines all the changes implemented for the Feinraum website redesign project, including brand corrections, UI/UX improvements, and security enhancements.
+---
 
-## ✅ Completed Changes
+## 1. What’s Been Implemented
 
-### 1. Brand Name Corrections
-- **Fixed**: Corrected all instances of "Frienaum" to "Feinraum" across the entire codebase
-- **Files Updated**:
-  - `src/components/UnifiedNavbar.tsx` - Logo alt text and brand name
-  - `src/components/Footer.tsx` - Logo alt text and brand name
-  - `src/context/AuthContext.tsx` - localStorage keys and mock user emails
+### Branding & SEO
+- Updated all meta titles, descriptions, Open Graph, and Twitter tags to use **Feinraumshop** branding (EN & DE locales)
+- Replaced brand mentions in UI, meta, translations, and documentation for consistency
+- Corrected usage of German special characters and ensured language tags (`<html lang="en|de">`) are set per route
 
-### 2. Contact Information Updates
-- **Updated Email**: Changed all email addresses to `support@feinraumshop.ch`
-- **Made Clickable**: All email addresses now use `mailto:` links
-- **Files Updated**:
-  - `src/components/Footer.tsx` - Footer contact section
-  - `src/app/[lang]/contact/page.tsx` - Contact page email addresses
-  - `src/app/[lang]/help/page.tsx` - Help page email support link
-  - `src/context/AuthContext.tsx` - Mock user email addresses
+### Responsive Design
+- Product, category, and core page content now use a standardized responsive grid (1/2/3 items per row @ 480/768/992/1200px breakpoints)
+- Ensured consistency across Home, Products, Cart, Category, About, and Contact pages
+- Admin and Merchant dashboards visually validated; card/grid layouts follow responsive guidelines
 
-### 3. CTA Button Color System
-- **New Primary Warm Color**: `#ff6b35` (warm orange-red)
-- **Hover State**: `#e55a2b` (darker orange-red)
-- **CSS Variables Added**:
-  ```css
-  --color-primary-warm: #ff6b35;
-  --color-primary-warm-hover: #e55a2b;
-  ```
+### Colors, Fonts, and Components
+- **Primary colors:** Brand palette set with CSS custom properties, including CTA orange (`#ff6b35`) and supporting colors
+- **Fonts:** Montserrat (headings/brand), Lora (body)
+- CTA button system and design tokens documented in code and this README
+- SSL/trust indicators, clickable mail links, and accessibility improvements
 
-- **Button Classes Updated**:
-  - `.btn-primary` - Main CTA buttons
-  - `.btn-cta` - Call-to-action buttons
-  - Fallback button styles for unstyled buttons
+### Technical & QA
+- Stripe payment workflow implemented (test and prod mode ready, error handling tested)
+- Signup/login/logout/auth flows robust (form, OAuth supported)
+- Product search, filtering, category browsing validated
+- All forms use proper validation and feedback
+- Image lazy loading and responsive asset sizing for optimal performance
+- **Backup scripts:** `scripts/backup.sh` (Linux/macOS), `scripts/backup.ps1` (Windows) for project & MongoDB dump
+- Tests and linter checks pass on all changes
+- Documentation: `Testing_Report.md` and this file summarize tests and deployment
 
 - **Files Updated**:
   - `src/app/globals.css` - Button styling system
@@ -50,20 +45,16 @@ This document outlines all the changes implemented for the Feinraum website rede
 - **Files Updated**:
   - `src/components/Footer.tsx` - Added SSL indicator component
 
-### 5. Button Visibility Fixes
-- **Fixed**: Sign-in form buttons appearing white on white
-- **Fixed**: Contact form button appearing invisible
-- **Solution**: Applied consistent `.btn-primary` class to all form buttons
-- **Files Updated**:
-  - `src/app/[lang]/login/page.tsx` - Login and forgot password buttons
-  - `src/app/[lang]/contact/page.tsx` - Contact form submit button
+### Prerequisites
+- Node.js v18 or newer
+- MongoDB connection string (cloud or local)
+- Stripe API keys (test and live)
 
-### 6. Hero Section Improvements
-- **Fixed**: "Learn more" button hover effects
-- **Updated**: Both hero buttons now use consistent styling
-- **Enhanced**: Proper hover states with color transitions
-- **Files Updated**:
-  - `src/app/[lang]/page.tsx` - Hero section button styling
+### Environment Variables
+- Set in `.env.local` or via host:
+  - `MONGODB_URI` — connection string for MongoDB
+  - `STRIPE_API_KEY` — your Stripe secret key
+  - (others as relevant to your deployment)
 
 ## 🎨 Design System Updates
 
@@ -78,16 +69,19 @@ This document outlines all the changes implemented for the Feinraum website rede
 --color-trust-600: #2563eb;            /* Blue text/icon */
 ```
 
-### Button System
-- **Primary Buttons**: Warm orange-red (`#ff6b35`) with white text
-- **Hover Effects**: Darker shade (`#e55a2b`) with subtle lift animation
-- **Consistent Styling**: All CTAs use the same color and hover behavior
-- **Accessibility**: Proper contrast ratios and focus states
+### Deploy
+- **Recommended:** Vercel, Netlify, or Docker. Configure env vars in your dashboard.
+- **Custom/VPS:** Clone repo, set env vars, run as above. Use `pm2`, `systemd`, or similar for process management.
+- **Backups:**
+  - Linux/macOS: `MONGODB_URI=<conn> ./scripts/backup.sh`
+  - Windows: `$env:MONGODB_URI='<conn>'; ./scripts/backup.ps1`
+  - Creates ZIP and MongoDB export under `/backups`.
 
-### Typography
-- **Brand Name**: Montserrat font, bold weight
-- **Body Text**: Lora font for readability
-- **Button Text**: Montserrat font, uppercase, letter-spacing
+### Basic Maintenance
+- Monitor dependencies (`npm outdated`, run updates as needed)
+- Periodically backup project & DB
+- Check SSL certs (if self-managed)
+- Update environment variables on secret rotation or migration
 
 ## 🔧 Technical Implementation
 
@@ -160,10 +154,16 @@ Standard Next.js build process applies. No special configuration needed.
 3. **Analytics**: Add tracking for CTA button clicks
 4. **A/B Testing**: Test different CTA colors for conversion optimization
 
-### Maintenance
-- Monitor button click rates to ensure new colors perform well
-- Regular SSL certificate renewal reminders
-- Keep email addresses updated across all touchpoints
+- **Admin/Merchant Dashboards:** Large files may require further refactoring for deep responsive improvements in future sprints
+- **Analytics & Monitoring:** Add tracking for performance, Stripe, and main user flows
+- **Accessibility audits:** Regular testing with assistive tech
+- **Performance:** Consider image CDN, advanced cache headers, further asset size auditing
+- **New Features:**
+  - Automated e-mail templates for user/system notifications
+  - Custom marketing/discount flows
+  - CMS-driven content or product management
+  - Multi-language/region expansion (automatic detection, additional locales)
+- **Testing/Monitoring:** Integrate automated e2e tests (e.g., Playwright, Cypress)
 
 ---
 

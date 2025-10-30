@@ -14,7 +14,7 @@ export default async function LocaleLayout({
 }: LocaleLayoutProps) {
   const { lang } = await params;
   const locale: Locale = isValidLocale(lang) ? lang : 'en';
-  
+
   return (
     <Providers locale={locale}>
       <div className="flex flex-col min-h-screen" suppressHydrationWarning={true}>
