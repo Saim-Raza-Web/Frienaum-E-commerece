@@ -5,11 +5,12 @@ import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { isValidLocale, type Locale } from '@/i18n/config';
-import { X, Loader2, CheckCircle, CreditCard, Truck } from 'lucide-react';
+import { X, Loader2, CheckCircle, CreditCard, Truck, ChevronDown } from 'lucide-react';
 import { Address } from '@/types';
 import StripePaymentForm from './StripePaymentForm';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
+import { sortedCountries } from '@/data/countries';
 
 type CheckoutStep = 'cart' | 'shipping' | 'payment' | 'success';
 
@@ -627,20 +628,25 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Country
+                      Country *
                     </label>
-                    <select
-                      value={shippingAddress.country}
-                      onChange={(e) => handleAddressChange('country', e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      disabled={isLoading}
-                    >
-                      <option value="United States">United States</option>
-                      <option value="Canada">Canada</option>
-                      <option value="United Kingdom">United Kingdom</option>
-                      <option value="Germany">Germany</option>
-                      <option value="France">France</option>
-                    </select>
+                    <div className="relative">
+                      <select
+                        value={shippingAddress.country}
+                        onChange={(e) => handleAddressChange('country', e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none pr-8"
+                        disabled={isLoading}
+                      >
+                        {sortedCountries.map((country) => (
+                          <option key={country.code} value={country.name}>
+                            {country.name}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="absolute inset-y-0 right-0 flex items-center pr-2 pointer-events-none">
+                        <ChevronDown className="h-4 w-4 text-gray-400" />
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>

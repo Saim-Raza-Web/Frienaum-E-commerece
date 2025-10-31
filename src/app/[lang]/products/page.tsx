@@ -20,6 +20,7 @@ export default function ProductsPage() {
   const { translate } = useTranslation();
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [priceRange, setPriceRange] = useState<string | null>(null);
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
@@ -94,22 +95,53 @@ export default function ProductsPage() {
     }
   }, [searchParams]);
 
+  // Reset price range when category changes
   useEffect(() => {
-    let filtered = products;
+    setPriceRange(null);
+  }, [selectedCategory]);
 
+  // Filter products based on selected filters
+  useEffect(() => {
+    let filtered = [...products];
+
+    // Apply category filter
     if (selectedCategory !== 'all') {
-      filtered = filtered.filter(product => product.category.toLowerCase() === selectedCategory.toLowerCase());
-    }
-
-    if (searchQuery) {
-      filtered = filtered.filter(product =>
-        product.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        product.description.toLowerCase().includes(searchQuery.toLowerCase())
+      filtered = filtered.filter(product => 
+        product.category.toLowerCase() === selectedCategory.toLowerCase()
       );
     }
 
+    // Apply search query filter
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filtered = filtered.filter(product =>
+        product.name.toLowerCase().includes(query) ||
+        product.description.toLowerCase().includes(query)
+      );
+    }
+
+    // Apply price range filter
+    if (priceRange) {
+      switch (priceRange) {
+        case 'under50':
+          filtered = filtered.filter(product => product.price < 50);
+          break;
+        case '50to100':
+          filtered = filtered.filter(product => product.price >= 50 && product.price <= 100);
+          break;
+        case '100to200':
+          filtered = filtered.filter(product => product.price > 100 && product.price <= 200);
+          break;
+        case 'over200':
+          filtered = filtered.filter(product => product.price > 200);
+          break;
+        default:
+          break;
+      }
+    }
+
     setFilteredProducts(filtered);
-  }, [selectedCategory, searchQuery, products]);
+  }, [selectedCategory, searchQuery, priceRange, products]);
 
   // Close mobile sidebar when screen size changes to desktop
   useEffect(() => {
@@ -225,10 +257,10 @@ export default function ProductsPage() {
                 <div className="space-y-1 sm:space-y-2">
                   <button
                     onClick={() => handleCategoryChange('all')}
-                    className={`w-full text-left px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg transition-colors text-xs sm:text-sm ${
+                    className={`w-full text-left px-3 py-2 rounded-lg transition-all duration-200 border text-sm ${
                       selectedCategory === 'all'
-                        ? 'bg-turquoise-100 text-turquoise-700'
-                        : 'text-gray-600 hover:bg-gray-100'
+                        ? 'bg-blue-50 border-blue-300 text-blue-700 font-medium'
+                        : 'text-gray-600 hover:bg-gray-50 border-transparent'
                     }`}
                   >
                     {translate('allCategories')} ({products.length})
@@ -239,10 +271,10 @@ export default function ProductsPage() {
                       <button
                         key={category.id}
                         onClick={() => handleCategoryChange(category.name)}
-                        className={`w-full text-left px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg transition-colors text-xs sm:text-sm ${
+                        className={`w-full text-left px-3 py-2 rounded-lg transition-all duration-200 border text-sm ${
                           selectedCategory === category.name
-                            ? 'bg-turquoise-100 text-turquoise-700'
-                            : 'text-gray-600 hover:bg-gray-100'
+                            ? 'bg-blue-50 border-blue-300 text-blue-700 font-medium'
+                            : 'text-gray-600 hover:bg-gray-50 border-transparent'
                         }`}
                       >
                         {translate(category.name)} ({categoryProducts.length})
@@ -258,16 +290,44 @@ export default function ProductsPage() {
                   {translate('priceRange')}
                 </label>
                 <div className="space-y-2">
-                  <button className="w-full text-left px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors">
+                  <button 
+                    onClick={() => setPriceRange(priceRange === 'under50' ? null : 'under50')}
+                    className={`w-full text-left px-3 py-2 rounded-lg transition-all duration-200 border ${
+                      priceRange === 'under50' 
+                        ? 'bg-blue-50 border-blue-300 text-blue-700 font-medium' 
+                        : 'text-gray-600 hover:bg-gray-50 border-transparent'
+                    }`}
+                  >
                     {translate('under50')}
                   </button>
-                  <button className="w-full text-left px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors">
+                  <button 
+                    onClick={() => setPriceRange(priceRange === '50to100' ? null : '50to100')}
+                    className={`w-full text-left px-3 py-2 rounded-lg transition-all duration-200 border ${
+                      priceRange === '50to100' 
+                        ? 'bg-blue-50 border-blue-300 text-blue-700 font-medium' 
+                        : 'text-gray-600 hover:bg-gray-50 border-transparent'
+                    }`}
+                  >
                     {translate('50to100')}
                   </button>
-                  <button className="w-full text-left px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors">
+                  <button 
+                    onClick={() => setPriceRange(priceRange === '100to200' ? null : '100to200')}
+                    className={`w-full text-left px-3 py-2 rounded-lg transition-all duration-200 border ${
+                      priceRange === '100to200' 
+                        ? 'bg-blue-50 border-blue-300 text-blue-700 font-medium' 
+                        : 'text-gray-600 hover:bg-gray-50 border-transparent'
+                    }`}
+                  >
                     {translate('100to200')}
                   </button>
-                  <button className="w-full text-left px-3 py-2 rounded-lg text-gray-600 hover:bg-gray-100 transition-colors">
+                  <button 
+                    onClick={() => setPriceRange(priceRange === 'over200' ? null : 'over200')}
+                    className={`w-full text-left px-3 py-2 rounded-lg transition-all duration-200 border ${
+                      priceRange === 'over200' 
+                        ? 'bg-blue-50 border-blue-300 text-blue-700 font-medium' 
+                        : 'text-gray-600 hover:bg-gray-50 border-transparent'
+                    }`}
+                  >
                     {translate('over200')}
                   </button>
                 </div>
