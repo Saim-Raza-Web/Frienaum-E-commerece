@@ -22,6 +22,7 @@ interface RatingDisplayProps {
 
 export default function RatingDisplay({ productId, className = '' }: RatingDisplayProps) {
   const { translate: t } = useTranslation();
+  const currentLang = typeof window !== 'undefined' ? (window.location.pathname.match(/^\/(\w{2})\b/)?.[1] || 'de') : 'de';
   const [ratings, setRatings] = useState<Rating[]>([]);
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -34,7 +35,7 @@ export default function RatingDisplay({ productId, className = '' }: RatingDispl
 
   const fetchRatings = async () => {
     try {
-      const response = await fetch(`/api/products/${productId}/ratings?page=${currentPage}&limit=5`);
+      const response = await fetch(`/api/products/${productId}/ratings?page=${currentPage}&limit=5&lang=${currentLang}`);
       if (response.ok) {
         const data = await response.json();
         if (currentPage === 1) {

@@ -13,7 +13,7 @@ export default async function LocaleLayout({
   params,
 }: LocaleLayoutProps) {
   const { lang } = await params;
-  const locale: Locale = isValidLocale(lang) ? lang : 'en';
+  const locale: Locale = isValidLocale(lang) ? lang : 'de';
 
   return (
     <Providers locale={locale}>

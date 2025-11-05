@@ -540,7 +540,25 @@ export default function LoginPage() {
                 <div className="w-full border-t border-gray-300" />
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">New to our platform?</span>
+                <span className="px-2 bg-white text-gray-500">{translate('newToPlatform')}</span>
+              </div>
+              <div className="flex items-center justify-center gap-4 mt-3">
+                <button
+                  type="button"
+                  className="text-primary-600 hover:text-primary-800 underline"
+                  onClick={() => setIsLogin(false)}
+                >
+                  {translate('createAccount')}
+                </button>
+                { !isLogin && (
+                  <button
+                    type="button"
+                    className="text-gray-600 hover:text-gray-800 underline"
+                    onClick={() => setIsLogin(true)}
+                  >
+                    {translate('backToLogin')}
+                  </button>
+                )}
               </div>
             </div>
 

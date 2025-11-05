@@ -330,6 +330,7 @@ model Rating {
   id        String   @id @default(auto()) @map("_id") @db.ObjectId
   rating    Int      // 1-5 stars
   review    String?  // Optional review text
+  language  String   @default("de") // Review language code, e.g., 'de' or 'en'
   productId String   @db.ObjectId
   customerId String  @db.ObjectId
   orderItemId String @db.ObjectId // Link to specific order item for verification

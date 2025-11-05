@@ -16,7 +16,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
-    const { productId, orderItemId, rating, review } = await request.json();
+    const { productId, orderItemId, rating, review, language } = await request.json();
 
     if (!productId || !orderItemId || !rating) {
       return NextResponse.json(
@@ -76,6 +76,7 @@ export async function POST(request: NextRequest) {
       data: {
         rating,
         review,
+        language: (language === 'en' || language === 'de') ? language : 'de',
         productId,
         customerId: payload.id,
         orderItemId

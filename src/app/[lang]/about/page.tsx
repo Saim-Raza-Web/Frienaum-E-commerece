@@ -10,7 +10,7 @@ export default function AboutPage() {
   const { translate } = useTranslation();
   const pathname = usePathname() || '';
   const segments = pathname.split('/');
-  const lang = segments[1] || 'en';
+  const lang = segments[1] || 'de';
   
   const features = [
     {
@@ -37,28 +37,10 @@ export default function AboutPage() {
 
   const team = [
     {
-      name: 'Sarah Johnson',
-      role: translate('ceoFounder'),
+      name: 'Sandro Hauser',
+      role: translate('founderProductDevMarketing'),
       image: '/api/placeholder/150/150',
-      bio: translate('sarahBio')
-    },
-    {
-      name: 'Michael Chen',
-      role: translate('cto'),
-      image: '/api/placeholder/150/150',
-      bio: translate('michaelBio')
-    },
-    {
-      name: 'Emily Rodriguez',
-      role: translate('headOfDesign'),
-      image: '/api/placeholder/150/150',
-      bio: translate('emilyBio')
-    },
-    {
-      name: 'David Kim',
-      role: translate('headOfOperations'),
-      image: '/api/placeholder/150/150',
-      bio: translate('davidBio')
+      bio: translate('sandroBio')
     }
   ];
 

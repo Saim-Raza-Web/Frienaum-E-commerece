@@ -160,7 +160,7 @@ function HomePage({ params }: HomePageProps) {
           console.error('Categories fetch error:', err);
           return []; // Return empty array for categories if fetch fails
         }),
-        fetch('/api/top-reviews?rating=5&limit=8').then(res => {
+        fetch(`/api/top-reviews?rating=5&limit=8&lang=${lang}`).then(res => {
           if (!res.ok) {
             console.error('Top reviews API response not ok:', res.status, res.statusText);
             throw new Error(`Failed to fetch reviews: ${res.status} ${res.statusText}`);
@@ -347,8 +347,8 @@ function HomePage({ params }: HomePageProps) {
               <div className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4 md:mb-6 group-hover:bg-orange-200 transition-colors duration-300">
                 <Clock className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 text-orange-600" />
               </div>
-              <h3 className="text-sm sm:text-lg md:text-xl font-montserrat font-semibold mb-1 sm:mb-2 md:mb-3 text-primary-800">{translate('support247')}</h3>
-              <p className="text-xs sm:text-sm md:text-base text-primary-600 font-lora leading-relaxed px-1">{translate('support247Desc')}</p>
+              <h3 className="text-sm sm:text-lg md:text-xl font-montserrat font-semibold mb-1 sm:mb-2 md:mb-3 text-primary-800">{translate('supportHoursTitle')}</h3>
+              <p className="text-xs sm:text-sm md:text-base text-primary-600 font-lora leading-relaxed px-1">{translate('supportHoursDesc')}</p>
             </div>
           </div>
         </div>
@@ -539,10 +539,10 @@ function HomePage({ params }: HomePageProps) {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-8 sm:mb-12 lg:mb-16">
             <h2 className="text-3xl sm:text-4xl font-montserrat font-bold text-gray-800 mb-4 sm:mb-6">
-              What Our Customers Say
+              {translate('whatCustomersSayTitle')}
             </h2>
             <p className="text-base sm:text-lg text-gray-600 font-lora max-w-2xl mx-auto leading-relaxed">
-              Discover why thousands of customers trust us for their home and lifestyle needs
+              {translate('whatCustomersSaySubtitle')}
             </p>
           </div>
           

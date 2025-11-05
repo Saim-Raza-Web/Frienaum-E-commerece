@@ -18,6 +18,7 @@ export default function RatingForm({ productId, orderItemId, onRatingSubmitted, 
   const [review, setReview] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState('');
+  const [language, setLanguage] = useState<'de' | 'en'>('de');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,6 +42,7 @@ export default function RatingForm({ productId, orderItemId, onRatingSubmitted, 
           orderItemId,
           rating,
           review: review.trim() || undefined,
+          language,
         }),
       });
 
@@ -109,6 +111,21 @@ export default function RatingForm({ productId, orderItemId, onRatingSubmitted, 
               {rating > 0 && `${rating} ${t('rating.outOf5')}`}
             </span>
           </div>
+        </div>
+
+        {/* Language */}
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">
+            {t('rating.selectLanguage')}
+          </label>
+          <select
+            value={language}
+            onChange={(e) => setLanguage((e.target.value as 'de' | 'en'))}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-turquoise-500 focus:border-transparent"
+          >
+            <option value="de">Deutsch</option>
+            <option value="en">English</option>
+          </select>
         </div>
 
         {/* Review Text */}

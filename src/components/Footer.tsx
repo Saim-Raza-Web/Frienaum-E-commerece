@@ -88,6 +88,11 @@ export default function Footer() {
                   {translate('faqTitle')}
                 </Link>
               </li>
+              <li>
+                <Link href={`/${lang}/impressum`} className="text-primary-600 hover:text-primary-800 hover:font-semibold font-lora transition-all duration-200">
+                  {translate('imprint')}
+                </Link>
+              </li>
             </ul>
           </div>
         </div>

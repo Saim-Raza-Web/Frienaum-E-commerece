@@ -45,6 +45,17 @@
   }
 }
 
+/* Prevent horizontal scrolling globally */
+html, body {
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* Prevent nested containers from causing overflow */
+* {
+  box-sizing: border-box;
+}
+
 /* Remove outline from all modal buttons */
 .modal button,
 [role="dialog"] button,

@@ -11,6 +11,7 @@ export async function GET(
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
     const limit = parseInt(searchParams.get('limit') || '10');
+    const lang = (searchParams.get('lang') || 'de').toLowerCase();
     const offset = (page - 1) * limit;
 
     if (!productId) {
@@ -22,7 +23,7 @@ export async function GET(
 
     // Get ratings for the product
     const ratingsData = await prisma.rating.findMany({
-      where: { productId },
+      where: { productId, language: lang },
       include: {
         customer: {
           select: {
@@ -38,7 +39,7 @@ export async function GET(
 
     // Get total count for pagination
     const totalCount = await prisma.rating.count({
-      where: { productId }
+      where: { productId, language: lang }
     });
 
     // Get product info with current rating stats

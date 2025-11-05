@@ -3,9 +3,13 @@ import { prisma } from '@/lib/prisma';
 
 export async function GET(req: NextRequest) {
   try {
+    if (!prisma) {
+      return NextResponse.json({ reviews: [], count: 0 });
+    }
     const { searchParams } = new URL(req.url);
     const limit = parseInt(searchParams.get('limit') || '8');
     const rating = parseInt(searchParams.get('rating') || '5');
+    const lang = (searchParams.get('lang') || 'de').toLowerCase();
 
     // Validate parameters
     if (limit < 1 || limit > 10) {
@@ -22,40 +26,16 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Fetch ratings with the specified rating, including customer information
-    const ratings = await prisma.rating.findMany({
-      where: {
-        rating: rating,
-        review: {
-          not: null // Only include ratings that have review text
-        }
-      },
-      include: {
-        customer: {
-          select: {
-            name: true,
-            id: true
-          }
-        },
-        product: {
-          select: {
-            title_en: true,
-            title_de: true,
-            imageUrl: true
-          }
-        }
-      },
-      orderBy: {
-        createdAt: 'desc'
-      },
-      take: limit
-    });
-
-    // If no ratings with review text found, try to get any ratings with the specified rating
-    if (ratings.length === 0) {
-      const anyRatings = await prisma.rating.findMany({
+    // Fetch ratings with language filter; if that fails (e.g., field missing), fallback without language filter
+    let ratings: any[] = [];
+    try {
+      ratings = await prisma.rating.findMany({
         where: {
-          rating: rating
+          rating: rating,
+          language: lang,
+          review: {
+            not: null // Only include ratings that have review text
+          }
         },
         include: {
           customer: {
@@ -77,9 +57,56 @@ export async function GET(req: NextRequest) {
         },
         take: limit
       });
-      
-      // Use any ratings found, even without review text
-      ratings.push(...anyRatings);
+    } catch (e) {
+      // Fallback without language constraint
+      ratings = await prisma.rating.findMany({
+        where: {
+          rating: rating,
+          review: {
+            not: null
+          }
+        },
+        include: {
+          customer: {
+            select: { name: true, id: true }
+          },
+          product: {
+            select: { title_en: true, title_de: true, imageUrl: true }
+          }
+        },
+        orderBy: { createdAt: 'desc' },
+        take: limit
+      });
+    }
+
+    // If no ratings with review text found, try to get any ratings with the specified rating
+    if (ratings.length === 0) {
+      try {
+        const anyRatings = await prisma.rating.findMany({
+          where: {
+            rating: rating,
+            language: lang
+          },
+          include: {
+            customer: { select: { name: true, id: true } },
+            product: { select: { title_en: true, title_de: true, imageUrl: true } }
+          },
+          orderBy: { createdAt: 'desc' },
+          take: limit
+        });
+        ratings.push(...anyRatings);
+      } catch (e) {
+        const anyRatingsNoLang = await prisma.rating.findMany({
+          where: { rating: rating },
+          include: {
+            customer: { select: { name: true, id: true } },
+            product: { select: { title_en: true, title_de: true, imageUrl: true } }
+          },
+          orderBy: { createdAt: 'desc' },
+          take: limit
+        });
+        ratings.push(...anyRatingsNoLang);
+      }
     }
 
     // Transform the data to match the expected format
@@ -89,7 +116,7 @@ export async function GET(req: NextRequest) {
       reviewText: rating.review || `Great product! I gave it ${rating.rating} stars.`,
       rating: rating.rating,
       customerPhoto: null, // No customer photo field in current schema
-      productName: rating.product.title_en,
+      productName: lang === 'de' ? rating.product.title_de : rating.product.title_en,
       createdAt: rating.createdAt
     }));
 
@@ -100,9 +127,7 @@ export async function GET(req: NextRequest) {
 
   } catch (error) {
     console.error('Error fetching top reviews:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch reviews' },
-      { status: 500 }
-    );
+    // Return empty results instead of 500 to avoid breaking the homepage
+    return NextResponse.json({ reviews: [], count: 0 });
   }
 }

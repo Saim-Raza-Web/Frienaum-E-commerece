@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useTranslation } from '@/i18n/TranslationProvider';
 import { Star, ChevronLeft, ChevronRight } from 'lucide-react';
 
 interface Review {
@@ -85,10 +86,12 @@ const ReviewsSlider: React.FC<ReviewsSliderProps> = ({
     ));
   };
 
+  const { translate: t } = useTranslation();
+
   if (!reviews || reviews.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-600 font-lora text-lg">No reviews available yet.</p>
+        <p className="text-gray-600 font-lora text-lg">{t('rating.noReviewsYet')}</p>
       </div>
     );
   }
@@ -160,7 +163,7 @@ const ReviewsSlider: React.FC<ReviewsSliderProps> = ({
                     <p className="font-montserrat font-semibold text-gray-800 mb-1">
                       {review.customerName}
                     </p>
-                    <p className="text-sm text-gray-500">Verified Customer</p>
+                    <p className="text-sm text-gray-500">{t('rating.verifiedCustomer')}</p>
                   </div>
                 </div>
               </div>
