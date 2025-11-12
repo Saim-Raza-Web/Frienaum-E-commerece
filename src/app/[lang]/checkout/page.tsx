@@ -11,7 +11,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import StripePaymentForm from '@/components/StripePaymentForm';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
-import { useTranslation } from '@/context/TranslationContext';
+import { useTranslation } from '@/i18n/TranslationProvider';
 
 const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
 
@@ -26,7 +26,7 @@ type CheckoutStep = 'shipping' | 'payment' | 'success';
 export default function CheckoutPage() {
   const { isAuthenticated, user } = useAuth();
   const { cartItems, cartTotal } = useCart();
-  const { currentLang, translate } = useTranslation();
+  const { currentLocale, translate } = useTranslation();
 
   const [formData, setFormData] = useState<Address>({
     firstName: '',
@@ -345,29 +345,29 @@ export default function CheckoutPage() {
                 {cartItems.map((item) => (
                   <div key={item.product.id} className="flex justify-between text-sm">
                     <span className="text-gray-600">{item.product.name} × {item.quantity}</span>
-                    <span className="text-gray-900">{formatPrice(item.product.price * item.quantity, currentLang)}</span>
+                    <span className="text-gray-900">{formatPrice(item.product.price * item.quantity, currentLocale)}</span>
                   </div>
                 ))}
               </div>
               <div className="space-y-3 border-t border-gray-200 pt-4">
                 <div className="flex justify-between text-gray-600">
                   <span>Subtotal</span>
-                  <span>{formatPrice(cartTotal, currentLang)}</span>
+                  <span>{formatPrice(cartTotal, currentLocale)}</span>
                 </div>
                 <div className="flex justify-between text-gray-600">
                   <span>{translate('cart.tax')}</span>
-                  <span>{formatPrice(calculateTax(), currentLang)}</span>
+                  <span>{formatPrice(calculateTax(), currentLocale)}</span>
                 </div>
                 <div className="flex justify-between text-gray-600">
                   <span>Shipping</span>
                   <span className={calculateShipping() === 0 ? 'text-green-600' : ''}>
-                    {calculateShipping() === 0 ? 'Free' : formatPrice(calculateShipping(), currentLang)}
+                    {calculateShipping() === 0 ? 'Free' : formatPrice(calculateShipping(), currentLocale)}
                   </span>
                 </div>
                 <div className="border-t border-gray-200 pt-3">
                   <div className="flex justify-between text-lg font-bold text-gray-900">
                     <span>Total</span>
-                    <span className="text-lg font-bold text-gray-900">{formatPrice(total, currentLang)}</span>
+                    <span className="text-lg font-bold text-gray-900">{formatPrice(total, currentLocale)}</span>
                   </div>
                 </div>
               </div>

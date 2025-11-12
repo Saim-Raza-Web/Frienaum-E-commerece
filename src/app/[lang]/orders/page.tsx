@@ -17,6 +17,7 @@ interface Order {
     id: string;
     merchantId: string;
     subtotal: number;
+    shipping?: number;
     status: string;
     items: Array<{
       id: string;
