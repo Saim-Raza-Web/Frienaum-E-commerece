@@ -48,11 +48,20 @@ export default function CartPage() {
   };
 
   const calculateTax = () => {
-    return calculateSubtotal() * 0.08; // 8% tax
+    const subtotal = calculateSubtotal();
+    const shipping = calculateShipping();
+    return (subtotal + shipping) * 0.081;
+  };
+
+  const SHIPPING_FLAT_FEE = 8.5;
+  const SHIPPING_FREE_THRESHOLD = 50;
+
+  const formatPrice = (amount: number, lang: string) => {
+    return `${amount.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF`;
   };
 
   const calculateShipping = () => {
-    return calculateSubtotal() > 50 ? 0 : 5.99; // Free shipping over $50
+    return calculateSubtotal() >= SHIPPING_FREE_THRESHOLD ? 0 : SHIPPING_FLAT_FEE;
   };
 
   const calculateTotal = () => {
@@ -151,13 +160,8 @@ export default function CartPage() {
                           </p>
                           <div className="flex items-center space-x-2">
                             <span className="text-base sm:text-lg font-bold text-gray-900">
-                              ${item.product.price.toFixed(2)}
+                              {formatPrice(item.product.price, currentLang)}
                             </span>
-                            {item.product.originalPrice && (
-                              <span className="text-sm text-gray-500 line-through">
-                                ${item.product.originalPrice.toFixed(2)}
-                              </span>
-                            )}
                           </div>
                         </div>
                         
@@ -184,7 +188,7 @@ export default function CartPage() {
                           {/* Item Total - Mobile optimized */}
                           <div className="text-left sm:text-right">
                             <div className="text-base sm:text-lg font-bold text-gray-900">
-                              ${(item.product.price * item.quantity).toFixed(2)}
+                              {formatPrice(item.product.price * item.quantity, currentLang)}
                             </div>
                             <button
                               onClick={() => handleRemoveItem(item.product.id)}
@@ -210,16 +214,18 @@ export default function CartPage() {
                 <div className="space-y-3 mb-6">
                   <div className="flex justify-between text-gray-600 text-sm sm:text-base">
                     <span>{translate('cart.subtotal')}</span>
-                    <span className="font-medium">${calculateSubtotal().toFixed(2)}</span>
+                    <span className="font-medium">
+                      {formatPrice(calculateSubtotal(), currentLang)}
+                    </span>
                   </div>
                   <div className="flex justify-between text-gray-600 text-sm sm:text-base">
                     <span>{translate('cart.tax')}</span>
-                    <span className="font-medium">${calculateTax().toFixed(2)}</span>
+                    <span className="font-medium">{formatPrice(calculateTax(), currentLang)}</span>
                   </div>
                   <div className="flex justify-between text-gray-600 text-sm sm:text-base">
                     <span>{translate('cart.shipping')}</span>
                     <span className={`font-medium ${calculateShipping() === 0 ? 'text-green-600' : ''}`}>
-                      {calculateShipping() === 0 ? translate('cart.free') : `$${calculateShipping().toFixed(2)}`}
+                      {calculateShipping() === 0 ? translate('cart.free') : formatPrice(calculateShipping(), currentLang)}
                     </span>
                   </div>
 

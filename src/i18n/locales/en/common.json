@@ -36,7 +36,7 @@
   "shopNow": "Shop Now",
   "learnMore": "Learn More",
   "freeShipping": "Free Shipping",
-  "freeShippingDesc": "Free shipping on orders over $50",
+  "freeShippingDesc": "Free shipping from 50 CHF (Standard shipping: 8.50 CHF)",
   "securePayment": "Secure Payment",
   "securePaymentDesc": "100% secure payment processing",
   "support247": "24/7 Support",
@@ -455,11 +455,11 @@
     "remove": "Remove",
     "orderSummary": "Order Summary",
     "subtotal": "Subtotal",
-    "tax": "Tax (8%)",
+    "tax": "Incl. VAT 8.1%",
     "shipping": "Shipping",
     "free": "Free",
-    "freeShippingMessage": "Free shipping on orders over $50!",
-    "total": "Total",
+    "freeShippingMessage": "Free shipping from 50 CHF! (Standard shipping: 8.50 CHF)",
+    "total": "Total Amount",
     "proceedToCheckout": "Proceed to Checkout"
   },
   "categories": {

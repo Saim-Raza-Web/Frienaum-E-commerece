@@ -46,7 +46,7 @@ export async function POST(req: NextRequest) {
       console.error('Failed to parse JSON body:', err);
       return {} as any;
     });
-    const { cart, shippingAddress, currency = 'USD', paymentMethod, returnUrl } = body;
+    const { cart, shippingAddress, currency = 'CHF', paymentMethod, returnUrl } = body;
 
     if (!cart || !Array.isArray(cart) || cart.length === 0) {
       console.error('Cart is empty or invalid:', cart);
@@ -61,6 +61,11 @@ export async function POST(req: NextRequest) {
     if (!paymentMethod || !['stripe', 'paypal'].includes(paymentMethod)) {
       console.error('Invalid payment method:', paymentMethod);
       return NextResponse.json({ error: 'Invalid payment method' }, { status: 400 });
+    }
+
+    if (currency !== 'CHF') {
+      console.error('Invalid or unsupported currency:', currency);
+      return NextResponse.json({ error: 'Only CHF supported.' }, { status: 400 });
     }
 
     let split;

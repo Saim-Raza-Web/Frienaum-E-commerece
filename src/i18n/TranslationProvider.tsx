@@ -1,6 +1,7 @@
 'use client'; // Marking this file as a client component
 
 import React, { createContext, useContext, ReactNode, useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 
 interface TranslationContextType {
   translate: (key: string, params?: Record<string, any>) => string;
@@ -16,8 +17,18 @@ interface TranslationProviderProps {
 }
 
 export const TranslationProvider = ({ children, initialLocale }: TranslationProviderProps) => {
-  const [currentLocale, setCurrentLocale] = useState<string>(initialLocale);
+  const pathname = usePathname();
+  // Get locale from URL pathname, fallback to initialLocale
+  const urlLocale = pathname?.split('/')[1] || initialLocale;
+  const [currentLocale, setCurrentLocale] = useState<string>(urlLocale || initialLocale);
   const [translations, setTranslations] = useState<any>({});
+
+  // Update locale when URL changes
+  useEffect(() => {
+    if (urlLocale && urlLocale !== currentLocale) {
+      setCurrentLocale(urlLocale);
+    }
+  }, [urlLocale, currentLocale]);
 
   // Load translations when locale changes
   useEffect(() => {

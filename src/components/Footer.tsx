@@ -30,15 +30,27 @@ export default function Footer() {
               {translate('companyDescription')}
             </p>
             <div className="flex space-x-4 sm:space-x-6">
-              <a href="#" className="text-primary-600 hover:text-primary-500 transition-colors duration-200 p-2 rounded-lg hover:bg-primary-100">
+              {/* Facebook - Update with actual URL when available */}
+              <a 
+                href="https://www.facebook.com/feinraumshop" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-primary-600 hover:text-primary-500 transition-colors duration-200 p-2 rounded-lg hover:bg-primary-100"
+                aria-label="Facebook"
+              >
                 <Facebook className="w-5 h-5 sm:w-6 sm:h-6" />
               </a>
-              <a href="#" className="text-primary-600 hover:text-primary-500 transition-colors duration-200 p-2 rounded-lg hover:bg-primary-100">
-                <Twitter className="w-5 h-5 sm:w-6 sm:h-6" />
-              </a>
-              <a href="#" className="text-primary-600 hover:text-primary-500 transition-colors duration-200 p-2 rounded-lg hover:bg-primary-100">
+              {/* Instagram - Update with actual URL when available */}
+              <a 
+                href="https://www.instagram.com/feinraumshop" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-primary-600 hover:text-primary-500 transition-colors duration-200 p-2 rounded-lg hover:bg-primary-100"
+                aria-label="Instagram"
+              >
                 <Instagram className="w-5 h-5 sm:w-6 sm:h-6" />
               </a>
+              {/* Twitter - Hidden as it's not actively used */}
             </div>
           </div>
 

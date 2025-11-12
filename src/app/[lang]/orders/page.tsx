@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
 import { useTranslation } from '@/i18n/TranslationProvider';
 import { useAuth } from '@/context/AuthContext';
 import { Package, Clock, CheckCircle, XCircle, Eye, Star } from 'lucide-react';
@@ -35,9 +36,15 @@ interface Order {
 export default function OrdersPage() {
   const { user, isAuthenticated } = useAuth();
   const { translate } = useTranslation();
+  const pathname = usePathname();
+  const currentLang = pathname?.split('/')[1] || 'en';
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+
+  const formatPrice = (amount: number, lang: string) => {
+    return `${amount.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF`;
+  };
   const [ratingTarget, setRatingTarget] = useState<{ productId: string; orderItemId: string } | null>(null);
 
   useEffect(() => {
@@ -186,6 +193,10 @@ export default function OrdersPage() {
                             {translate('ordersPage.subtotal')}: ${subOrder.subtotal.toFixed(2)}
                           </span>
                         </div>
+                        <div className="flex justify-between text-gray-600 text-sm">
+                          <span>{translate('cart.tax')}</span>
+                          <span>{formatPrice(((subOrder.subtotal + (subOrder.shipping ?? 0)) * 0.081), currentLang)}</span>
+                        </div>
 
                         <div className="space-y-2">
                           {subOrder.items.map((item) => (
@@ -193,20 +204,20 @@ export default function OrdersPage() {
                       {item.product.imageUrl && (
                                 <img
                                   src={item.product.imageUrl}
-                          alt={(typeof window !== 'undefined' && window.location.pathname.split('/')[1] === 'de' && item.product.title_de) ? item.product.title_de : item.product.title_en}
+                          alt={currentLang === 'de' && item.product.title_de ? item.product.title_de : item.product.title_en}
                                   className="w-12 h-12 object-cover rounded"
                                 />
                               )}
                               <div className="flex-1">
                                 <h5 className="text-sm font-medium text-gray-900">
-                          {(typeof window !== 'undefined' && window.location.pathname.split('/')[1] === 'de' && item.product.title_de) ? item.product.title_de : item.product.title_en}
+                          {currentLang === 'de' && item.product.title_de ? item.product.title_de : item.product.title_en}
                                 </h5>
                                 <p className="text-sm text-gray-600">
-                                  {translate('ordersPage.quantity')}: {item.quantity} × ${item.price.toFixed(2)}
+                                  {translate('ordersPage.quantity')}: {item.quantity} × {formatPrice(item.price, currentLang)}
                                 </p>
                               </div>
                               <div className="text-sm font-medium text-gray-900">
-                                ${(item.quantity * item.price).toFixed(2)}
+                                {formatPrice(item.quantity * item.price, currentLang)}
                               </div>
                               {order.status === 'DELIVERED' && (
                                 item.hasRated ? (

@@ -36,7 +36,7 @@
   "shopNow": "Jetzt einkaufen",
   "learnMore": "Erfahren Sie mehr",
   "freeShipping": "Kostenloser Versand",
-  "freeShippingDesc": "Kostenloser Versand ab 50€ Bestellwert",
+  "freeShippingDesc": "Kostenloser Versand ab 50 CHF (Standardversand: 8.50 CHF)",
   "securePayment": "Sichere Zahlung",
   "securePaymentDesc": "100% sichere Zahlungsabwicklung",
   "support247": "24/7 Support",
@@ -505,11 +505,11 @@
     "remove": "Entfernen",
     "orderSummary": "Bestellübersicht",
     "subtotal": "Zwischensumme",
-    "tax": "Steuer (8%)",
+    "tax": "inkl. MwSt. 8.1%",
     "shipping": "Versand",
     "free": "Kostenlos",
-    "freeShippingMessage": "Kostenloser Versand ab 50 $!",
-    "total": "Gesamt",
+    "freeShippingMessage": "Kostenloser Versand ab 50 CHF! (Standardversand: 8.50 CHF)",
+    "total": "Gesamtbetrag",
     "proceedToCheckout": "Zur Kasse gehen"
   },
   "categories": {

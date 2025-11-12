@@ -536,40 +536,39 @@ export default function LoginPage() {
 
           <div className="mt-6">
             <div className="relative">
-              <div className="absolute inset-0 flex items-center">
+              <div className="absolute inset-0 flex items-center pointer-events-none">
                 <div className="w-full border-t border-gray-300" />
               </div>
               <div className="relative flex justify-center text-sm">
                 <span className="px-2 bg-white text-gray-500">{translate('newToPlatform')}</span>
               </div>
-              <div className="flex items-center justify-center gap-4 mt-3">
-                <button
-                  type="button"
-                  className="text-primary-600 hover:text-primary-800 underline"
-                  onClick={() => setIsLogin(false)}
-                >
-                  {translate('createAccount')}
-                </button>
-                { !isLogin && (
+              <div className="flex items-center justify-center gap-4 mt-3 relative z-10">
+                {isLogin ? (
                   <button
                     type="button"
-                    className="text-gray-600 hover:text-gray-800 underline"
-                    onClick={() => setIsLogin(true)}
+                    className="text-primary-600 hover:text-primary-800 underline cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded px-2 py-1 relative z-20"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      toggleMode();
+                    }}
+                  >
+                    {translate('createAccount')}
+                  </button>
+                ) : (
+                  <button
+                    type="button"
+                    className="text-gray-600 hover:text-gray-800 underline cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded px-2 py-1 relative z-20"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      toggleMode();
+                    }}
                   >
                     {translate('backToLogin')}
                   </button>
                 )}
               </div>
-            </div>
-
-            <div className="mt-6">
-              <button
-                type="button"
-                onClick={toggleMode}
-                className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50"
-              >
-                {isLogin ? translate('create a new account') : translate('Sign in to your account')}
-              </button>
             </div>
           </div>
         </div>

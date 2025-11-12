@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useSearchParams, usePathname } from 'next/navigation';
 import ProductCard from '@/components/ProductCard';
 import { useCart } from '@/context/CartContext';
 import { Product } from '@/types';
@@ -16,6 +16,7 @@ interface Category {
 
 export default function ProductsPage() {
   const searchParams = useSearchParams();
+  const pathname = usePathname();
   const { addToCart } = useCart();
   const { translate } = useTranslation();
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -27,6 +28,9 @@ export default function ProductsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
+
+  // Get current language from URL
+  const currentLang = pathname?.split('/')[1] || 'en';
 
   // Fetch products and categories from API
   useEffect(() => {
@@ -52,11 +56,11 @@ export default function ProductsPage() {
           categoriesResponse.json()
         ]);
 
-        // Transform API data to match Product interface
+        // Transform API data to match Product interface with correct language
         const transformedProducts: Product[] = productsData.map((product: any) => ({
           id: product.id.toString(),
-          name: product.title_en,
-          description: product.desc_en,
+          name: currentLang === 'de' ? (product.title_de || product.title_en) : product.title_en,
+          description: currentLang === 'de' ? (product.desc_de || product.desc_en) : product.desc_en,
           price: product.price,
           originalPrice: product.price,
           images: [product.imageUrl || '/images/placeholder.jpg'],
@@ -78,7 +82,7 @@ export default function ProductsPage() {
     };
 
     fetchData();
-  }, []);
+  }, [currentLang]);
 
   useEffect(() => {
     const categoryParam = searchParams?.get('category');

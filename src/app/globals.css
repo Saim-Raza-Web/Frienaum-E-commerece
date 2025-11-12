@@ -499,11 +499,41 @@ input[type="search"],
     @apply px-3;
   }
   
-  /* Better form input sizing for mobile */
-  .input-field {
+  /* Better form input sizing for mobile - prevents zoom on iOS, ensures readability on Android */
+  .input-field,
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="tel"],
+  input[type="number"],
+  input[type="search"],
+  textarea,
+  select {
     padding: 0.75rem 1rem;
-    font-size: 1rem; /* Prevents zoom on iOS */
+    font-size: 16px !important; /* Prevents zoom on iOS, ensures readability on Android */
     min-height: 44px;
+    -webkit-appearance: none; /* Remove iOS default styling */
+    appearance: none;
+  }
+  
+  /* Ensure navigation is always visible and accessible on mobile */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background-color: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+  }
+  
+  /* Mobile-friendly touch targets */
+  button,
+  a,
+  [role="button"] {
+    min-height: 44px;
+    min-width: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 }
 

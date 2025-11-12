@@ -112,7 +112,20 @@ function ProfileContent() {
     role: user?.role || 'customer'
   });
 
-  const [tempData, setTempData] = useState(profileData);
+  const [tempData, setTempData] = useState({
+    firstName: user?.firstName || '',
+    lastName: user?.lastName || '',
+    email: user?.email || '',
+    phone: user?.phone || '', // should default to '' if not present
+    address: {
+      street: '123 Main Street',
+      city: 'San Francisco',
+      state: 'CA',
+      zipCode: '94105',
+      country: 'United States'
+    },
+    role: user?.role || 'customer'
+  });
 
   // Update profile data when user data changes
   useEffect(() => {
@@ -204,19 +217,35 @@ function ProfileContent() {
       alert('Passwords do not match');
       return;
     }
-    if (passwordForm.newPassword.length < 8) {
-      alert('Password must be at least 8 characters long');
+    if (passwordForm.newPassword.length < 6) {
+      alert('Password must be at least 6 characters long');
       return;
     }
     
     try {
-      // Here you would make an API call to change the password
-      console.log('Changing password...', { currentPassword: passwordForm.currentPassword, newPassword: passwordForm.newPassword });
+      const response = await fetch('/api/auth/change-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          currentPassword: passwordForm.currentPassword,
+          newPassword: passwordForm.newPassword,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to change password');
+      }
+
       alert('Password changed successfully');
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
       setShowPasswordForm(false);
-    } catch (error) {
-      alert('Failed to change password');
+    } catch (error: any) {
+      alert(error.message || 'Failed to change password');
     }
   };
 

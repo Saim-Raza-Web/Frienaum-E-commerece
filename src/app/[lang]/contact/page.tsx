@@ -206,39 +206,14 @@ export default function ContactPage() {
             </div>
 
             <div className="space-y-6">
-              {contactInfo.map((info, index) => (
-                <div key={index} className="flex items-start space-x-4">
-                  <div className={`w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 ${info.color}`}>
-                    <info.icon className="w-6 h-6" />
-                  </div>
-                  <div>
-                    <h3 className="font-semibold text-gray-900 mb-1">{info.title}</h3>
-                    {info.clickable && info.mapUrl ? (
-                      <a
-                        href={info.mapUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="block hover:bg-gray-50 p-2 rounded-lg transition-colors"
-                      >
-                        {info.details.map((detail, detailIndex) => (
-                          <p key={detailIndex} className="text-gray-600 text-sm hover:text-primary-600 transition-colors">
-                            {detail}
-                          </p>
-                        ))}
-                      </a>
-                    ) : info.icon === Mail ? (
-                      info.details.map((detail, detailIndex) => (
-                        <a key={detailIndex} href={`mailto:${detail}`} className="block text-gray-600 text-sm hover:text-primary-600 transition-colors">
-                          {detail}
-                        </a>
-                      ))
-                    ) : (
-                      info.details.map((detail, detailIndex) => (
-                        <p key={detailIndex} className="text-gray-600 text-sm">
-                          {detail}
-                        </p>
-                      ))
-                    )}
+              {contactInfo.map((info, idx) => (
+                <div key={idx} className="flex items-start space-x-4 bg-turquoise-50 border border-turquoise-300 rounded-lg shadow px-4 py-5 mb-3">
+                  <div className="pt-1">{info.icon && <info.icon className={`w-6 h-6 ${info.color || 'text-primary-600'}`} />}</div>
+                  <div className="flex-1 min-w-0">
+                    <div className="text-base font-bold text-primary-800 mb-0.5">{info.title}</div>
+                    {Array.isArray(info.details) && info.details.map((d, i) => (
+                      <div key={i} className="text-sm text-primary-800 leading-tight">{d}</div>
+                    ))}
                   </div>
                 </div>
               ))}

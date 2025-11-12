@@ -122,10 +122,15 @@ export default function UnifiedNavbar() {
           {/* Desktop Navigation - Clean minimalist design */}
           <div className="hidden lg:block flex-1">
             <div className="ml-8 flex items-center gap-6">
-              <Link href={`/${lang}/`} className="font-lora text-primary-700 hover:text-primary-500 transition-colors duration-200">
+              <Link href={`/${lang}/`} className="font-lora text-primary-700 hover:text-primary-600 focus:text-primary-800 focus:outline-none rounded-sm transition-colors duration-200">
                 {translate('home')}
               </Link>
-              <NavLink href="/products" className="font-lora">{translate('navigation.products')}</NavLink>
+              <NavLink
+                href="/products"
+                className="font-lora text-primary-700 hover:text-primary-600 focus:text-primary-800 focus:outline-none rounded-sm transition-colors duration-200"
+              >
+                {translate('navigation.products')}
+              </NavLink>
               <NavLink href="/categories" className="font-lora">{translate('navigation.categories')}</NavLink>
               <NavLink href="/about" className="font-lora">{translate('about')}</NavLink>
               <NavLink href="/contact" className="font-lora">{translate('contact')}</NavLink>
@@ -210,7 +215,9 @@ export default function UnifiedNavbar() {
                       <p className="text-sm font-medium text-gray-900">
                         {user.firstName && user.lastName ? `${user.firstName} ${user.lastName}` : user.firstName || 'User'}
                       </p>
-                      <p className="text-xs text-gray-500">{user.email}</p>
+                      <p className="text-xs text-gray-500 max-w-[160px] truncate whitespace-nowrap overflow-hidden" title={user.email}>
+                        {user.email}
+                      </p>
                       <p className="text-xs text-primary-600 font-medium capitalize">{user.role}</p>
                     </div>
                     

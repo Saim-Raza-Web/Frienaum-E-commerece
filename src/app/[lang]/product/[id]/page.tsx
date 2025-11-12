@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'next/navigation';
+import { useParams, usePathname } from 'next/navigation';
 
 import { Product } from '@/types';
 import { useCart } from '@/context/CartContext';
@@ -20,6 +20,10 @@ export default function ProductDetailPage() {
   const [quantity, setQuantity] = useState(1);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Get current language from URL
+  const pathname = usePathname();
+  const currentLang = pathname?.split('/')[1] || 'en';
+
   useEffect(() => {
     const fetchProduct = async () => {
       setIsLoading(true);
@@ -30,14 +34,11 @@ export default function ProductDetailPage() {
         }
         const data = await response.json();
 
-        // Get current language from URL params
-        const currentLang = window.location.pathname.split('/')[1] || 'en';
-
         // Transform API data to match Product interface with correct language and real ratings
         const transformedProduct: Product = {
           id: data.id.toString(),
-          name: currentLang === 'de' ? data.title_de : data.title_en,
-          description: currentLang === 'de' ? data.desc_de : data.desc_en,
+          name: currentLang === 'de' ? (data.title_de || data.title_en) : data.title_en,
+          description: currentLang === 'de' ? (data.desc_de || data.desc_en) : data.desc_en,
           price: data.price,
           originalPrice: data.price,
           images: [data.imageUrl || '/images/placeholder.jpg'],
@@ -60,7 +61,7 @@ export default function ProductDetailPage() {
     if (productId) {
       fetchProduct();
     }
-  }, [productId]);
+  }, [productId, currentLang]);
 
   const handleAddToCart = () => {
     if (product) {
@@ -199,18 +200,8 @@ export default function ProductDetailPage() {
             {/* Price */}
             <div className="flex items-center space-x-3">
               <span className="text-3xl font-bold text-gray-900">
-                ${product.price.toFixed(2)}
+                {`${product.price.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF`}
               </span>
-              {product.originalPrice && (
-                <span className="text-xl text-gray-500 line-through">
-                  ${product.originalPrice.toFixed(2)}
-                </span>
-              )}
-              {product.originalPrice && (
-                <span className="bg-red-100 text-red-600 px-2 py-1 rounded-full text-sm font-medium">
-                  {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% {t('productDetail.off')}
-                </span>
-              )}
             </div>
 
             {/* Description */}

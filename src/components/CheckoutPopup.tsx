@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
+import { useTranslation } from '@/i18n/TranslationProvider';
 import { isValidLocale, type Locale } from '@/i18n/config';
 import { X, Loader2, CheckCircle, CreditCard, Truck, ChevronDown } from 'lucide-react';
 import { Address } from '@/types';
@@ -19,6 +20,8 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
   const pathname = usePathname();
   const { user, isAuthenticated } = useAuth();
   const { cartItems, clearCart, cartTotal } = useCart();
+  const { translate } = useTranslation();
+  const currentLang = pathname?.split('/')[1] || 'en';
   const [currentStep, setCurrentStep] = useState<CheckoutStep>('cart');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
@@ -49,9 +52,23 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
   const [addressErrors, setAddressErrors] = useState<Partial<Address>>({});
 
   // Calculate tax and shipping
-  const calculateTax = () => cartTotal * 0.08; // 8% tax
-  const calculateShipping = () => cartTotal > 50 ? 0 : 5.99; // Free shipping over $50
-  const calculateTotal = () => cartTotal + calculateTax() + calculateShipping();
+  const SHIPPING_FLAT_FEE = 8.5;
+  const SHIPPING_FREE_THRESHOLD = 50;
+
+  const formatPrice = (amount: number, lang: string) => {
+    return `${amount.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF`;
+  };
+
+  const calculateShipping = () => {
+    return cartTotal >= SHIPPING_FREE_THRESHOLD ? 0 : SHIPPING_FLAT_FEE;
+  };
+
+  const calculateTax = () => {
+    const shipping = calculateShipping();
+    return (cartTotal + shipping) * 0.081; // 8.1% VAT on subtotal + shipping
+  };
+
+  const calculateTotal = () => cartTotal + calculateShipping() + calculateTax();
 
   // Address validation
   const validateAddress = (): boolean => {
@@ -124,7 +141,7 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
           shippingAddress: minimalAddress,
           paymentMethod: 'stripe',
           amount: calculateTotal(),
-          currency: 'USD',
+          currency: 'CHF',
         }),
       });
 
@@ -224,7 +241,7 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
             quantity: item.quantity,
           })),
           shippingAddress,
-          currency: 'USD',
+          currency: 'CHF',
           paymentMethod: 'stripe',
           // Include the total amount for verification
           amount: calculateTotal(),
@@ -327,7 +344,7 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
             quantity: item.quantity,
           })),
           shippingAddress,
-          currency: 'USD',
+          currency: 'CHF',
           paymentMethod: 'stripe',
           // Include the total amount for verification
           amount: calculateTotal(),
@@ -390,8 +407,8 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
         <div className="p-6">
           <div className="flex justify-between items-center mb-6">
             <h2 className="text-2xl font-bold">
-              {currentStep === 'cart' && 'Review Your Order'}
-              {currentStep === 'shipping' && 'Shipping Address'}
+              {currentStep === 'cart' && translate('cart.orderSummary')}
+              {currentStep === 'shipping' && translate('cart.shipping')}
               {currentStep === 'payment' && 'Select Payment Method'}
               {currentStep === 'success' && 'Order Placed!'}
             </h2>
@@ -417,10 +434,12 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
                   <div key={item.product.id} className="flex justify-between items-center border-b pb-2">
                     <div>
                       <h4 className="font-medium">{item.product.name || 'Unnamed Product'}</h4>
-                      <p className="text-sm text-gray-600">Qty: {item.quantity}</p>
+                      <p className="text-sm text-gray-600">{translate('ordersPage.quantity')}: {item.quantity}</p>
                     </div>
                     <div className="font-medium">
-                      ${(item.product.price * item.quantity).toFixed(2)}
+                      <span className="font-medium">
+                        {formatPrice(item.product.price * item.quantity, currentLang)}
+                      </span>
                     </div>
                   </div>
                 ))}
@@ -429,20 +448,20 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
               <div className="border-t pt-4">
                 <div className="space-y-2 mb-4">
                   <div className="flex justify-between">
-                    <span>Subtotal:</span>
-                    <span>${cartTotal.toFixed(2)}</span>
+                    <span>{translate('cart.subtotal')}:</span>
+                    <span>{formatPrice(cartTotal, currentLang)}</span>
                   </div>
                   <div className="flex justify-between text-sm text-gray-600">
-                    <span>Tax (8%):</span>
-                    <span>${calculateTax().toFixed(2)}</span>
+                    <span>{translate('cart.tax')}:</span>
+                    <span>{formatPrice(calculateTax(), currentLang)}</span>
                   </div>
                   <div className="flex justify-between text-sm text-gray-600">
-                    <span>Shipping:</span>
-                    <span>{calculateShipping() === 0 ? 'Free' : `$${calculateShipping().toFixed(2)}`}</span>
+                    <span>{translate('cart.shipping')}:</span>
+                    <span>{calculateShipping() === 0 ? translate('cart.free') : formatPrice(calculateShipping(), currentLang)}</span>
                   </div>
                   <div className="flex justify-between font-bold text-lg pt-2 border-t border-gray-200 mt-2">
-                    <span>Total:</span>
-                    <span>${calculateTotal().toLocaleString('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 })}</span>
+                    <span>{translate('cart.total')}:</span>
+                    <span>{formatPrice(calculateTotal(), currentLang)}</span>
                   </div>
                 </div>
                 <button

@@ -98,13 +98,8 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
           <div className="flex items-center justify-between mb-2 sm:mb-3">
             <div className="flex items-center space-x-1 sm:space-x-2">
               <span className="text-sm sm:text-lg md:text-xl font-montserrat font-bold text-primary-800">
-                ${product.price.toFixed(2)}
+                {`${product.price.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF`}
               </span>
-              {product.originalPrice && (
-                <span className="text-xs text-primary-400 line-through font-lora">
-                  ${product.originalPrice.toFixed(2)}
-                </span>
-              )}
             </div>
           </div>
           

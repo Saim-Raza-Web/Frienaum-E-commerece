@@ -11,6 +11,7 @@ import { loadStripe } from '@stripe/stripe-js';
 import StripePaymentForm from '@/components/StripePaymentForm';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
+import { useTranslation } from '@/context/TranslationContext';
 
 const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
 
@@ -25,6 +26,7 @@ type CheckoutStep = 'shipping' | 'payment' | 'success';
 export default function CheckoutPage() {
   const { isAuthenticated, user } = useAuth();
   const { cartItems, cartTotal } = useCart();
+  const { currentLang, translate } = useTranslation();
 
   const [formData, setFormData] = useState<Address>({
     firstName: '',
@@ -47,9 +49,22 @@ export default function CheckoutPage() {
     cartData: any;
   } | null>(null);
 
-  const calculateTax = () => cartTotal * 0.08; // 8%
-  const calculateShipping = () => (cartTotal > 50 ? 0 : 5.99);
-  const total = cartTotal + calculateTax() + calculateShipping();
+  const SHIPPING_FLAT_FEE = 8.5;
+  const SHIPPING_FREE_THRESHOLD = 50;
+  const CURRENCY = 'CHF';
+
+  const formatPrice = (amount: number, lang: string) => {
+    return `${amount.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF`;
+  };
+
+  const calculateTax = () => {
+    const shipping = calculateShipping();
+    return (cartTotal + shipping) * 0.081;
+  };
+  const calculateShipping = () => {
+    return cartTotal >= SHIPPING_FREE_THRESHOLD ? 0 : SHIPPING_FLAT_FEE;
+  };
+  const total = cartTotal + calculateShipping() + calculateTax();
 
   const handleInputChange = (field: keyof Address, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -98,7 +113,7 @@ export default function CheckoutPage() {
         body: JSON.stringify({
           cart: cartItems.map((item) => ({ productId: item.product.id, quantity: item.quantity })),
           shippingAddress: formData,
-          currency: 'USD',
+          currency: CURRENCY,
           paymentMethod: 'stripe',
           amount: total,
         }),
@@ -330,29 +345,29 @@ export default function CheckoutPage() {
                 {cartItems.map((item) => (
                   <div key={item.product.id} className="flex justify-between text-sm">
                     <span className="text-gray-600">{item.product.name} × {item.quantity}</span>
-                    <span className="text-gray-900">${(item.product.price * item.quantity).toFixed(2)}</span>
+                    <span className="text-gray-900">{formatPrice(item.product.price * item.quantity, currentLang)}</span>
                   </div>
                 ))}
               </div>
               <div className="space-y-3 border-t border-gray-200 pt-4">
                 <div className="flex justify-between text-gray-600">
                   <span>Subtotal</span>
-                  <span>${cartTotal.toFixed(2)}</span>
+                  <span>{formatPrice(cartTotal, currentLang)}</span>
                 </div>
                 <div className="flex justify-between text-gray-600">
-                  <span>Tax (8%)</span>
-                  <span>${calculateTax().toFixed(2)}</span>
+                  <span>{translate('cart.tax')}</span>
+                  <span>{formatPrice(calculateTax(), currentLang)}</span>
                 </div>
                 <div className="flex justify-between text-gray-600">
                   <span>Shipping</span>
                   <span className={calculateShipping() === 0 ? 'text-green-600' : ''}>
-                    {calculateShipping() === 0 ? 'Free' : `$${calculateShipping().toFixed(2)}`}
+                    {calculateShipping() === 0 ? 'Free' : formatPrice(calculateShipping(), currentLang)}
                   </span>
                 </div>
                 <div className="border-t border-gray-200 pt-3">
                   <div className="flex justify-between text-lg font-bold text-gray-900">
                     <span>Total</span>
-                    <span>${total.toFixed(2)}</span>
+                    <span className="text-lg font-bold text-gray-900">{formatPrice(total, currentLang)}</span>
                   </div>
                 </div>
               </div>

@@ -63,7 +63,7 @@ export async function splitCart(cart: CartItemInput[]) {
   });
 
   const grandTotal = Math.round((subOrders.reduce((s, so) => s + so.subtotal, 0)) * 100) / 100;
-  const currency = 'USD';
+  const currency = 'CHF';
 
   return { currency, grandTotal, subOrders };
 }
