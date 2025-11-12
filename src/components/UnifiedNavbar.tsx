@@ -138,7 +138,7 @@ export default function UnifiedNavbar() {
           </div>
 
           {/* Right side - Search, Cart, User/Language */}
-          <div className="flex items-center gap-2 sm:gap-3 lg:gap-4">
+          <div className="flex items-center gap-1 sm:gap-1.5 lg:gap-2">
             {/* Search Bar - Responsive design */}
             <div className="hidden sm:block">
               <div className="relative">
@@ -161,8 +161,8 @@ export default function UnifiedNavbar() {
                 className="flex items-center text-primary-600 hover:text-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-300 rounded-lg px-2 sm:px-3 py-2 transition-colors duration-200"
               >
                 <Globe className="h-4 w-4 mr-1 sm:mr-2" />
-                <span className="text-xs sm:text-sm font-lora font-medium">{lang.toUpperCase()}</span>
-                <ChevronDown className="ml-1 h-3 w-3" />
+                <span className="text-xs sm:text-sm font-lora font-medium min-w-[2.5ch] max-w-[2.5ch] text-center block overflow-hidden">{lang.toUpperCase()}</span>
+                <ChevronDown className="ml-0.5 h-3 w-3" />
               </button>
               <div 
                 className={`absolute right-0 mt-2 w-44 bg-white rounded-lg shadow-xl py-2 border border-primary-100 ${isLanguageOpen ? 'block' : 'hidden'} z-[100]`}

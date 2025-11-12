@@ -328,28 +328,35 @@ function HomePage({ params }: HomePageProps) {
       {/* Features Section - Responsive design */}
       <section className="py-12 sm:py-16 md:py-20 bg-white">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
-          <div className="grid grid-cols-3 sm:grid-cols-3 lg:grid-cols-3 gap-4 sm:gap-6 md:gap-8">
-            <div className="text-center group bg-turquoise-50 border border-turquoise-200 rounded-xl shadow-md flex flex-col items-center justify-center px-5 py-8">
-              <div className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4 md:mb-6 group-hover:bg-orange-200 transition-colors duration-300">
-                <Truck className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 text-orange-600" />
+          <div className="flex gap-4 sm:grid sm:grid-cols-2 md:grid-cols-3 sm:gap-4 md:gap-6 overflow-x-auto sm:overflow-x-visible pb-3 hide-scrollbar">
+            {[{
+              icon: <Truck className="w-7 h-7 sm:w-9 sm:h-9 md:w-12 md:h-12 text-orange-600" />,
+              title: translate('freeShipping'),
+              desc: translate('freeShippingDesc'),
+            }, {
+              icon: <Shield className="w-7 h-7 sm:w-9 sm:h-9 md:w-12 md:h-12 text-orange-600" />,
+              title: translate('securePayment'),
+              desc: translate('securePaymentDesc'),
+            }, {
+              icon: <Clock className="w-7 h-7 sm:w-9 sm:h-9 md:w-12 md:h-12 text-orange-600" />,
+              title: translate('supportHoursTitle'),
+              desc: translate('supportHoursDesc'),
+            }].map((card, idx) => (
+              <div
+                key={idx}
+                className="min-w-[80vw] max-w-[90vw] sm:min-w-0 sm:max-w-full text-center group bg-turquoise-50 border border-turquoise-200 rounded-xl shadow-md flex flex-col items-center justify-center aspect-square max-h-[380px] w-full mx-auto px-4 py-6 min-h-[200px] sm:min-h-[180px] md:min-h-[210px] overflow-hidden"
+              >
+                <div className="flex items-center justify-center bg-orange-100 rounded-full mb-3 sm:mb-4 md:mb-5 p-3 sm:p-4 md:p-5">
+                  {card.icon}
+                </div>
+                <h3 className="text-base sm:text-lg md:text-xl font-montserrat font-semibold mb-2 text-primary-800">
+                  {card.title}
+                </h3>
+                <p className="text-xs sm:text-sm md:text-base text-primary-700 font-lora leading-relaxed px-1">
+                  {card.desc}
+                </p>
               </div>
-              <h3 className="text-lg sm:text-xl md:text-2xl font-montserrat font-semibold mb-2 text-primary-800">{translate('freeShipping')}</h3>
-              <p className="text-base sm:text-lg md:text-xl text-primary-700 font-lora leading-relaxed px-1">{translate('freeShippingDesc')}</p>
-            </div>
-            <div className="text-center group bg-turquoise-50 border border-turquoise-200 rounded-xl shadow-md flex flex-col items-center justify-center px-5 py-8">
-              <div className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4 md:mb-6 group-hover:bg-orange-200 transition-colors duration-300">
-                <Shield className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 text-orange-600" />
-              </div>
-              <h3 className="text-lg sm:text-xl md:text-2xl font-montserrat font-semibold mb-2 text-primary-800">{translate('securePayment')}</h3>
-              <p className="text-base sm:text-lg md:text-xl text-primary-700 font-lora leading-relaxed px-1">{translate('securePaymentDesc')}</p>
-            </div>
-            <div className="text-center group bg-turquoise-50 border border-turquoise-200 rounded-xl shadow-md flex flex-col items-center justify-center px-5 py-8">
-              <div className="w-12 h-12 sm:w-16 sm:h-16 md:w-20 md:h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4 md:mb-6 group-hover:bg-orange-200 transition-colors duration-300">
-                <Clock className="w-6 h-6 sm:w-8 sm:h-8 md:w-10 md:h-10 text-orange-600" />
-              </div>
-              <h3 className="text-lg sm:text-xl md:text-2xl font-montserrat font-semibold mb-2 text-primary-800">{translate('supportHoursTitle')}</h3>
-              <p className="text-base sm:text-lg md:text-xl text-primary-700 font-lora leading-relaxed px-1">{translate('supportHoursDesc')}</p>
-            </div>
+            ))}
           </div>
         </div>
       </section>
@@ -474,6 +481,13 @@ function HomePage({ params }: HomePageProps) {
         .category-swiper-button-next:after {
           font-size: 16px;
           font-weight: bold;
+        }
+        .hide-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+          display: none;
         }
       `}</style>
 
@@ -618,6 +632,14 @@ function HomePage({ params }: HomePageProps) {
         /* Fix any potential gradient overflow */
         [class*="bg-gradient"] {
           max-width: 100%;
+        }
+        /* Hide scrollbars for mobile horizontal card scroll */
+        .hide-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+          display: none;
         }
       `}</style>
 
