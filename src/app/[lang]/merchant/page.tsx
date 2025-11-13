@@ -258,9 +258,9 @@ function MerchantDashboard() {
           setStats(prevStats => [
             {
               ...prevStats[0],
-              value: new Intl.NumberFormat('en-US', {
+              value: new Intl.NumberFormat('de-CH', {
                 style: 'currency',
-                currency: 'USD'
+                currency: 'CHF'
               }).format(Number(data.totalSales) || 0)
             },
             {
@@ -972,9 +972,9 @@ function MerchantDashboard() {
               // Determine if the value is a currency amount (for proper formatting)
               const isCurrency = stat.label.includes('Sales') || stat.label.includes('totalSales');
               const displayValue = isCurrency && !isNaN(Number(stat.value.replace(/[^0-9.-]+/g, '')))
-                ? new Intl.NumberFormat('en-US', {
+                ? new Intl.NumberFormat('de-CH', {
                     style: 'currency',
-                    currency: 'USD',
+                    currency: 'CHF',
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2
                   }).format(Number(stat.value.replace(/[^0-9.-]+/g, '')))
@@ -1015,12 +1015,12 @@ function MerchantDashboard() {
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
             {/* Sidebar Navigation - Responsive design */}
             <div className="lg:col-span-1">
-              <nav className="merchant-sidebar space-y-1 sm:space-y-2">
+              <nav className="merchant-sidebar space-y-1 sm:space-y-2 bg-white/95 border border-gray-200 rounded-lg p-2 sm:p-3 shadow-sm text-gray-700">
                 {tabs.map((tab) => (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`w-full flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-3 text-left rounded-lg transition-colors focus:outline-none text-sm sm:text-base ${
+                    className={`w-full flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-3 text-left rounded-lg transition-colors focus:outline-none text-sm sm:text-base text-gray-700 ${
                       activeTab === tab.id
                         ? 'profile-sidebar-active'
                         : 'profile-sidebar-inactive'
