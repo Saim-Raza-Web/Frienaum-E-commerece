@@ -233,17 +233,19 @@ export default function ProductDetailPage() {
             <div className="space-y-4">
               <div className="flex items-center space-x-4">
                 <label className="text-sm font-medium text-gray-700">{t('productDetail.quantity')}</label>
-                <div className="flex items-center border border-gray-300 rounded-lg">
+                <div className="flex items-center border border-gray-300 rounded-lg bg-white">
                   <button
                     onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                    className="px-3 py-2 hover:bg-gray-100 transition-colors"
+                    className="px-3 py-2 text-primary-900 bg-white hover:bg-gray-100 transition-colors border-none outline-none"
+                    type="button"
                   >
                     -
                   </button>
-                  <span className="px-4 py-2 border-x border-gray-300">{quantity}</span>
+                  <span className="px-4 py-2 border-x border-gray-300 text-primary-900 font-semibold bg-white select-none" style={{ minWidth: '2.5rem', textAlign: 'center' }}>{quantity}</span>
                   <button
                     onClick={() => setQuantity(quantity + 1)}
-                    className="px-3 py-2 hover:bg-gray-100 transition-colors"
+                    className="px-3 py-2 text-primary-900 bg-white hover:bg-gray-100 transition-colors border-none outline-none"
+                    type="button"
                   >
                     +
                   </button>

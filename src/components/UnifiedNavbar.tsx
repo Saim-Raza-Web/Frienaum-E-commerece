@@ -103,9 +103,9 @@ export default function UnifiedNavbar() {
   ];
 
   return (
-    <nav className="bg-white/95 backdrop-blur-sm border-b border-primary-100 sticky top-0 z-40 shadow-sm" suppressHydrationWarning={true}>
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
-        <div className="flex justify-between items-center py-3 sm:py-4 lg:py-6">
+    <nav className="bg-white/95 backdrop-blur-sm border-b border-primary-100 sticky top-0 z-40 shadow-sm w-full overflow-x-hidden" suppressHydrationWarning={true}>
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 w-full overflow-x-hidden">
+        <div className="flex justify-between items-center py-3 sm:py-4 lg:py-6 w-full max-w-full overflow-x-hidden">
           {/* Logo */}
           <div className="flex-shrink-0">
             <Link href={`/${lang}/`} className="flex items-center gap-2 sm:gap-3 group">
@@ -281,7 +281,8 @@ export default function UnifiedNavbar() {
             {/* Mobile menu button */}
             <button
               onClick={toggleMobileMenu}
-              className="lg:hidden p-2 text-gray-600 hover:text-[var(--color-primary-700)] transition-colors rounded hover:bg-[var(--color-primary-50)]"
+              className="lg:hidden p-2 text-gray-600 hover:text-[var(--color-primary-700)] transition-colors rounded hover:bg-[var(--color-primary-50)] flex-shrink-0 ml-2"
+              style={{ marginRight: 0 }}
             >
               {isMobileMenuOpen ? <X className="w-5 h-5 sm:w-6 sm:h-6" /> : <Menu className="w-5 h-5 sm:w-6 sm:h-6" />}
             </button>
@@ -292,7 +293,7 @@ export default function UnifiedNavbar() {
       {/* Mobile Navigation */}
       {isMobileMenuOpen && (
         <div className="lg:hidden">
-          <div className="px-3 sm:px-4 pt-2 pb-3 space-y-3 bg-white border-t border-gray-100">
+          <div className="px-3 sm:px-4 pt-2 pb-3 space-y-3 bg-white border-t border-gray-100 w-full max-w-full overflow-x-hidden">
             {/* Mobile Search */}
             <div className="py-2">
               <div className="relative">
