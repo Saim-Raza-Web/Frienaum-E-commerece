@@ -1776,7 +1776,7 @@ function SettingsForm() {
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">{translate('admin.settings.storeName')}</label>
             <input
-              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent"
+              className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-400"
               value={form.storeName}
               onChange={(e)=>setForm({ ...form, storeName: e.target.value })}
               placeholder="Fienraum"
@@ -1786,7 +1786,7 @@ function SettingsForm() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">{translate('admin.settings.currency')}</label>
               <select
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent"
+                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent bg-white text-gray-900"
                 value={form.currency}
                 onChange={(e)=>setForm({ ...form, currency: e.target.value })}
               >
@@ -1799,7 +1799,7 @@ function SettingsForm() {
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">{translate('admin.settings.defaultLanguage')}</label>
               <select
-                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent"
+                className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent bg-white text-gray-900"
                 value={form.defaultLanguage}
                 onChange={(e)=>setForm({ ...form, defaultLanguage: e.target.value })}
               >

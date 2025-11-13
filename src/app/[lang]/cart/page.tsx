@@ -170,7 +170,7 @@ export default function CartPage() {
                           <div className="flex items-center space-x-2">
                             <button
                               onClick={() => handleUpdateQuantity(item.product.id, item.quantity - 1)}
-                              className="w-8 h-8 sm:w-8 sm:h-8 border border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-50 transition-colors text-sm sm:text-base"
+                              className="w-8 h-8 sm:w-8 sm:h-8 border border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-100 transition-colors text-sm sm:text-base bg-white text-gray-900"
                             >
                               -
                             </button>
@@ -179,7 +179,7 @@ export default function CartPage() {
                             </span>
                             <button
                               onClick={() => handleUpdateQuantity(item.product.id, item.quantity + 1)}
-                              className="w-8 h-8 sm:w-8 sm:h-8 border border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-50 transition-colors text-sm sm:text-base"
+                              className="w-8 h-8 sm:w-8 sm:h-8 border border-gray-300 rounded-lg flex items-center justify-center hover:bg-gray-100 transition-colors text-sm sm:text-base bg-white text-gray-900"
                             >
                               +
                             </button>
@@ -238,7 +238,7 @@ export default function CartPage() {
                   <div className="border-t border-gray-200 pt-3">
                     <div className="flex justify-between text-lg sm:text-xl font-bold text-gray-900">
                       <span>{translate('cart.total')}</span>
-                      <span className="text-xl sm:text-2xl">${calculateTotal().toFixed(2)}</span>
+                      <span className="text-xl sm:text-2xl">{formatPrice(calculateTotal(), currentLang)}</span>
                     </div>
                   </div>
                 </div>
