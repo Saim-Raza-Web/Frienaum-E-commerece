@@ -1334,15 +1334,14 @@ function MerchantDashboard() {
                     <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
                       <h2 className="text-xl font-semibold text-gray-900">{translate('merchant.orderManagement')}</h2>
                       <div className="flex items-center space-x-3">
-                        <div className="relative">
-                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                        <div>
                           <input
-                            type="text"
-                            placeholder={translate('merchant.searchOrders')}
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-turquoise-500 focus:border-transparent"
-                          />
+                             type="text"
+                             placeholder={translate('merchant.searchOrders')}
+                             value={searchTerm}
+                             onChange={(e) => setSearchTerm(e.target.value)}
+                             className="px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-turquoise-500 focus:border-transparent"
+                           />
                         </div>
                         <button className="btn-secondary flex items-center space-x-2">
                           <Filter className="w-4 h-4" />
