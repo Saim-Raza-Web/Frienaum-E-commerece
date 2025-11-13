@@ -138,7 +138,7 @@ export default function UnifiedNavbar() {
           </div>
 
           {/* Right side - Search, Cart, User/Language */}
-          <div className="flex items-center gap-1 sm:gap-1.5 lg:gap-2">
+          <div className="flex items-center gap-0.5 xs:gap-1 sm:gap-1.5 lg:gap-2">
             {/* Search Bar - Responsive design */}
             <div className="hidden sm:block">
               <div className="relative">
@@ -158,11 +158,12 @@ export default function UnifiedNavbar() {
               <button 
                 onClick={() => setIsLanguageOpen(!isLanguageOpen)}
                 onBlur={() => setTimeout(() => setIsLanguageOpen(false), 200)}
-                className="flex items-center text-primary-600 hover:text-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-300 rounded-lg px-2 sm:px-3 py-2 transition-colors duration-200"
+                className="flex items-center text-primary-600 hover:text-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-300 rounded-lg px-1.5 xs:px-2 sm:px-3 py-1.5 xs:py-2 transition-colors duration-200"
               >
-                <Globe className="h-4 w-4 mr-1 sm:mr-2" />
-                <span className="text-xs sm:text-sm font-lora font-medium min-w-[2.5ch] max-w-[2.5ch] text-center block overflow-hidden">{lang.toUpperCase()}</span>
-                <ChevronDown className="ml-0.5 h-3 w-3" />
+                <Globe className="h-4 w-4 mr-1 xs:mr-1.5 sm:mr-2" />
+                <span className="hidden sm:block text-sm font-lora font-medium min-w-[2.5ch] max-w-[2.5ch] text-center overflow-hidden">{lang.toUpperCase()}</span>
+                <span className="sr-only sm:hidden">{lang.toUpperCase()}</span>
+                <ChevronDown className="ml-0.5 h-3 w-3 hidden sm:block" />
               </button>
               <div 
                 className={`absolute right-0 mt-2 w-44 bg-white rounded-lg shadow-xl py-2 border border-primary-100 ${isLanguageOpen ? 'block' : 'hidden'} z-[100]`}
@@ -194,7 +195,7 @@ export default function UnifiedNavbar() {
               <div className="relative">
                 <button
                   onClick={toggleUserMenu}
-                  className="flex items-center gap-1 sm:gap-2 p-1 sm:p-2 text-gray-600 hover:text-[var(--color-primary-700)] transition-colors rounded-lg hover:bg-[var(--color-primary-50)]"
+                  className="flex items-center gap-0.5 xs:gap-1.5 sm:gap-2 p-1 sm:p-2 text-gray-600 hover:text-[var(--color-primary-700)] transition-colors rounded-lg hover:bg-[var(--color-primary-50)]"
                 >
                   <div className="w-6 h-6 sm:w-8 sm:h-8 bg-primary-500 rounded-full flex items-center justify-center">
                     <span className="text-white text-xs sm:text-sm font-bold">
