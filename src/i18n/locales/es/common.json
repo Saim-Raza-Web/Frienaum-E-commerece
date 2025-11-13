@@ -163,5 +163,9 @@
   "enable": "Habilitar",
   "enabled": "Habilitado",
   "disable": "Deshabilitar",
-  "disabled": "Deshabilitado"
+  "disabled": "Deshabilitado",
+  "under50": "Menos de 50 CHF",
+  "50to100": "50 CHF - 100 CHF",
+  "100to200": "100 CHF - 200 CHF",
+  "over200": "Más de 200 CHF"
 }

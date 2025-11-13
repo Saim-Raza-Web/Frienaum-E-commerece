@@ -163,5 +163,9 @@
   "enable": "Activer",
   "enabled": "Activé",
   "disable": "Désactiver",
-  "disabled": "Désactivé"
+  "disabled": "Désactivé",
+  "under50": "Moins de 50 CHF",
+  "50to100": "50 CHF - 100 CHF",
+  "100to200": "100 CHF - 200 CHF",
+  "over200": "Plus de 200 CHF"
 }

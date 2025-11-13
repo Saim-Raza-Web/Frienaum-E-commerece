@@ -21,6 +21,16 @@ function MerchantDashboard() {
   const { translate } = useTranslation();
   const { user } = useAuth();
 
+  const formatCurrency = (amount: number | string | null | undefined) => {
+    const value = typeof amount === 'string' ? parseFloat(amount) : amount ?? 0;
+    const safeValue = Number.isFinite(value) ? (value as number) : 0;
+    try {
+      return new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF' }).format(safeValue);
+    } catch {
+      return `${safeValue.toFixed(2)} CHF`;
+    }
+  };
+
   // Debug logging
   useEffect(() => {
     console.log('MerchantDashboard - User authentication state:', {
@@ -1069,7 +1079,7 @@ function MerchantDashboard() {
                                 <p className="text-xs text-gray-500">{new Date(order.createdAt).toLocaleDateString()}</p>
                               </div>
                               <div className="text-right">
-                                <p className="font-semibold text-gray-900">${order.grandTotal}</p>
+                                <p className="font-semibold text-gray-900">{formatCurrency(order.grandTotal)}</p>
                                 <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                                   getMerchantOrderStatusColor(order.status)
                                 }`}>
@@ -1107,7 +1117,7 @@ function MerchantDashboard() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Total</label>
-                  <p className="mt-1 text-sm text-gray-900 bg-gray-50 p-2 rounded">${selectedOrder.grandTotal ?? selectedOrder.totalAmount}</p>
+                  <p className="mt-1 text-sm text-gray-900 bg-gray-50 p-2 rounded">{formatCurrency(selectedOrder.grandTotal ?? selectedOrder.totalAmount)}</p>
                 </div>
               </div>
               <div>
@@ -1126,7 +1136,7 @@ function MerchantDashboard() {
                         <tr key={it.id}>
                           <td className="px-4 py-2 text-sm text-gray-900">{it.product?.title_en || it.product?.name || it.nameSnapshot || 'Item'}</td>
                           <td className="px-4 py-2 text-sm text-gray-900">{it.quantity}</td>
-                          <td className="px-4 py-2 text-sm text-gray-900">${it.price}</td>
+                          <td className="px-4 py-2 text-sm text-gray-900">{formatCurrency(it.price)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -1293,7 +1303,7 @@ function MerchantDashboard() {
                         <tr key={o.id}>
                           <td className="px-4 py-2 text-sm text-gray-900">#{o.id.slice(-8)}</td>
                           <td className="px-4 py-2 text-sm text-gray-900">{new Date(o.createdAt).toLocaleDateString()}</td>
-                          <td className="px-4 py-2 text-sm text-gray-900">${o.total}</td>
+                          <td className="px-4 py-2 text-sm text-gray-900">{formatCurrency(o.total)}</td>
                         </tr>
                       ))}
                       {customerOrders.length === 0 && (
@@ -1390,7 +1400,7 @@ function MerchantDashboard() {
                                   Customer ID: {order.customerId}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                  ${order.grandTotal}
+                                  {formatCurrency(order.grandTotal)}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
@@ -1492,7 +1502,7 @@ function MerchantDashboard() {
                                 <td className="px-6 py-4 whitespace-nowrap">
                                   <div className="text-sm font-medium text-gray-900">{product.title_en}</div>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${product.price}</td>
+                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatCurrency(product.price)}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.stock}</td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
@@ -1644,7 +1654,7 @@ function MerchantDashboard() {
                                   {customer.totalOrders || 0}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                  ${customer.totalSpent || 0}
+                                  {formatCurrency(customer.totalSpent)}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                   {customer.lastOrderDate ? new Date(customer.lastOrderDate).toLocaleDateString() : 'Never'}
@@ -1732,10 +1742,10 @@ function MerchantDashboard() {
                             <div>
                               <p className="text-sm font-medium text-gray-500">Total Revenue</p>
                               <p className="text-2xl font-semibold text-gray-900">
-                                ${analytics.revenue?.total?.toFixed(2) || '0.00'}
+                                {formatCurrency(analytics.revenue?.total ?? 0)}
                               </p>
                               <p className="text-sm text-gray-600">
-                                This month: ${analytics.revenue?.monthly?.toFixed(2) || '0.00'}
+                                This month: {formatCurrency(analytics.revenue?.monthly ?? 0)}
                               </p>
                             </div>
                             <div className="p-3 rounded-full bg-green-100">
@@ -1857,7 +1867,7 @@ function MerchantDashboard() {
                                       </div>
                                     </div>
                                     <div className="text-right">
-                                      <p className="font-semibold text-gray-900">${customer.totalSpent?.toFixed(2) || '0.00'}</p>
+                                      <p className="font-semibold text-gray-900">{formatCurrency(customer.totalSpent)}</p>
                                       <p className="text-sm text-gray-500">{customer.totalOrders} orders</p>
                                     </div>
                                   </div>
@@ -1887,12 +1897,12 @@ function MerchantDashboard() {
                                       </div>
                                       <div>
                                         <p className="font-medium text-gray-900">{product.title}</p>
-                                        <p className="text-sm text-gray-500">${product.price?.toFixed(2) || '0.00'}</p>
+                                        <p className="text-sm text-gray-500">{formatCurrency(product.price)}</p>
                                       </div>
                                     </div>
                                     <div className="text-right">
                                       <p className="font-semibold text-gray-900">{product.totalSold || 0} sold</p>
-                                      <p className="text-sm text-gray-500">${product.revenue?.toFixed(2) || '0.00'}</p>
+                                      <p className="text-sm text-gray-500">{formatCurrency(product.revenue)}</p>
                                     </div>
                                   </div>
                                 ))}
@@ -1952,7 +1962,7 @@ function MerchantDashboard() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700">{translate('Price')}</label>
-                    <p className="mt-1 text-sm text-gray-900 bg-gray-50 p-2 rounded">${selectedProduct.price}</p>
+                    <p className="mt-1 text-sm text-gray-900 bg-gray-50 p-2 rounded">{formatCurrency(selectedProduct.price)}</p>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-gray-700">{translate('Stock')}</label>

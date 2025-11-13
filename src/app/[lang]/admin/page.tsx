@@ -414,12 +414,13 @@ function AdminDashboard() {
     { id: 4, type: 'success', message: 'admin.alerts.securityUpdate', ts: Date.now() - 24 * 60 * 60 * 1000 }
   ];
 
-  // Format currency amounts in USD
-  const formatUSD = (amount: number) => {
+  // Format currency amounts in CHF
+  const formatCurrency = (amount: number) => {
+    const value = Number.isFinite(amount) ? amount : 0;
     try {
-      return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(amount || 0);
+      return new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF' }).format(value);
     } catch {
-      return `$${(amount || 0).toFixed(2)}`;
+      return `${value.toFixed(2)} CHF`;
     }
   };
 
@@ -641,7 +642,7 @@ function AdminDashboard() {
               icon: ShoppingBag
             }, {
               label: translate('admin.revenue'),
-              value: statsLoading ? '...' : formatUSD(stats.revenue),
+              value: statsLoading ? '...' : formatCurrency(stats.revenue),
               icon: TrendingUp
             }, {
               label: translate('admin.activeProducts'),
@@ -762,7 +763,7 @@ function AdminDashboard() {
                           </div>
                           <div className="bg-gray-50 rounded-lg p-4">
                             <p className="text-sm text-gray-500">Revenue</p>
-                            <p className="text-xl font-semibold">{formatUSD(Number(viewing.data.stats.revenue || 0))}</p>
+                            <p className="text-xl font-semibold">{formatCurrency(Number(viewing.data.stats.revenue || 0))}</p>
                           </div>
                         </div>
 
@@ -775,7 +776,7 @@ function AdminDashboard() {
                                   {p.imageUrl && <img src={p.imageUrl} alt={p.slug} className="w-12 h-12 object-cover rounded" />}
                                   <div className="flex-1">
                                     <p className="font-medium text-sm">{p.title_en}</p>
-                                    <p className="text-xs text-gray-500">{formatUSD(p.price)} • Stock: {p.stock}</p>
+                                    <p className="text-xs text-gray-500">{formatCurrency(p.price)} • Stock: {p.stock}</p>
                                   </div>
                                 </div>
                               ))}
@@ -792,7 +793,7 @@ function AdminDashboard() {
                               {viewing.data.latestOrders.map((o: any) => (
                                 <div key={o.id} className="p-3 border rounded-lg flex items-center justify-between">
                                   <div className="text-sm text-primary-700">{o.status}</div>
-                                  <div className="text-sm font-medium">{formatUSD(o.totalAmount)}</div>
+                                  <div className="text-sm font-medium">{formatCurrency(o.totalAmount)}</div>
                                   <div className="text-xs text-gray-500">{new Date(o.createdAt).toLocaleString()}</div>
                                 </div>
                               ))}
@@ -994,7 +995,7 @@ function AdminDashboard() {
                                 </span>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {formatUSD(order.grandTotal)}
+                                {formatCurrency(order.grandTotal)}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
                                 <div>
@@ -1142,7 +1143,7 @@ function AdminDashboard() {
                               <div className="space-y-2">
                                 <div className="flex items-center justify-between">
                                   <span className="text-sm text-gray-600">Price:</span>
-                                  <span className="font-montserrat font-semibold text-sm text-primary-warm">{formatUSD(p.price)}</span>
+                                  <span className="font-montserrat font-semibold text-sm text-primary-warm">{formatCurrency(p.price)}</span>
                                 </div>
                                 <div className="flex items-center justify-between">
                                   <span className="text-sm text-gray-600">Stock:</span>
@@ -1236,7 +1237,7 @@ function AdminDashboard() {
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Price (USD)</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">Price (CHF)</label>
                             <input
                               type="number"
                               step="0.01"
@@ -1362,7 +1363,7 @@ function AdminDashboard() {
                     </div>
                     <div className="p-4 border rounded-lg">
                       <p className="text-sm text-gray-600">{translate('admin.analyticsSection.revenue')}</p>
-                      <p className="text-2xl font-bold text-gray-900">{formatUSD(stats.revenue)}</p>
+                      <p className="text-2xl font-bold text-gray-900">{formatCurrency(stats.revenue)}</p>
                     </div>
                     <div className="p-4 border rounded-lg">
                       <p className="text-sm text-gray-600">{translate('admin.analyticsSection.activeMerchants')}</p>
@@ -1377,7 +1378,7 @@ function AdminDashboard() {
                           {p.imageUrl && <img src={p.imageUrl} alt={p.slug} className="w-10 h-10 object-cover rounded" />}
                           <div className="flex-1 min-w-0">
                             <div className="text-sm font-medium text-gray-900 truncate" title={p.title_en}>{p.title_en}</div>
-                            <div className="text-xs text-gray-500 truncate">{formatUSD(p.price)} • {p.stock} in stock</div>
+                            <div className="text-xs text-gray-500 truncate">{formatCurrency(p.price)} • {p.stock} in stock</div>
                           </div>
                         </div>
                       ))}
@@ -1623,7 +1624,7 @@ function AdminDashboard() {
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Total Amount</label>
-                  <p className="mt-1 text-sm text-gray-900">{formatUSD(selectedOrder.grandTotal)}</p>
+                  <p className="mt-1 text-sm text-gray-900">{formatCurrency(selectedOrder.grandTotal)}</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700">Order Date</label>
@@ -1695,8 +1696,8 @@ function AdminDashboard() {
                             </div>
                           </td>
                           <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{item.quantity}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatUSD(item.price)}</td>
-                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatUSD(item.price * item.quantity)}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatCurrency(item.price)}</td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatCurrency(item.price * item.quantity)}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -1719,7 +1720,7 @@ function SettingsForm() {
   const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
   const [error, setError] = React.useState('');
-  const [form, setForm] = React.useState({ storeName: 'Fienraum', currency: 'USD', defaultLanguage: 'en' });
+  const [form, setForm] = React.useState({ storeName: 'Fienraum', currency: 'CHF', defaultLanguage: 'en' });
 
   React.useEffect(() => {
     const load = async () => {
@@ -1729,7 +1730,7 @@ function SettingsForm() {
         const data = await res.json();
         setForm({
           storeName: data.storeName || 'Fienraum',
-          currency: data.currency || 'USD',
+          currency: data.currency || 'CHF',
           defaultLanguage: data.defaultLanguage || 'en'
         });
       } catch (e: any) {
@@ -1789,6 +1790,7 @@ function SettingsForm() {
                 value={form.currency}
                 onChange={(e)=>setForm({ ...form, currency: e.target.value })}
               >
+                <option value="CHF">CHF</option>
                 <option value="EUR">EUR</option>
                 <option value="USD">USD</option>
                 <option value="GBP">GBP</option>
