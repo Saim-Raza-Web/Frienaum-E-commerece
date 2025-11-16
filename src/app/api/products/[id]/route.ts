@@ -25,10 +25,17 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     return NextResponse.json({ message: 'Not found' }, { status: 404 });
   }
   
-  // Transform to include category name
+  // Get ratings for this product
+  const ratings = await prisma.rating.findMany({ where: { productId } });
+  const ratingCount = ratings.length;
+  const averageRating = ratingCount ? ratings.reduce((sum, r) => sum + (r.rating || 0), 0) / ratingCount : 0;
+
+  // Transform to include category name, averageRating, ratingCount
   const transformedProduct = {
     ...product,
-    category: product.category?.name || 'General'
+    category: product.category?.name || 'General',
+    averageRating,
+    ratingCount,
   };
   
   return NextResponse.json(transformedProduct);

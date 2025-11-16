@@ -57,19 +57,35 @@ export async function GET(request: NextRequest) {
         customerId: userId,
         orderItemId: { in: allOrderItemIds },
       },
-      select: { orderItemId: true },
+      select: { 
+        orderItemId: true,
+        rating: true,
+        review: true,
+        language: true,
+        createdAt: true
+      },
     });
 
+    const ratingMap = new Map(existingRatings.map(r => [r.orderItemId, r]));
     const ratedSet = new Set(existingRatings.map(r => r.orderItemId));
 
     const augmented = orders.map(o => ({
       ...o,
       subOrders: o.subOrders.map(so => ({
         ...so,
-        items: so.items.map(i => ({
-          ...i,
-          hasRated: ratedSet.has(i.id),
-        })),
+        items: so.items.map(i => {
+          const ratingData = ratingMap.get(i.id);
+          return {
+            ...i,
+            hasRated: ratedSet.has(i.id),
+            rating: ratingData ? {
+              value: ratingData.rating,
+              review: ratingData.review,
+              language: ratingData.language,
+              createdAt: ratingData.createdAt
+            } : null
+          };
+        }),
       })),
     }));
 

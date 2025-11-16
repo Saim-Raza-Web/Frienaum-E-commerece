@@ -28,7 +28,10 @@ export default function ProductDetailPage() {
     const fetchProduct = async () => {
       setIsLoading(true);
       try {
-        const response = await fetch(`/api/products/${productId}`);
+        // Add cache-busting to ensure fresh data
+        const response = await fetch(`/api/products/${productId}?t=${Date.now()}`, {
+          cache: 'no-store',
+        });
         if (!response.ok) {
           throw new Error('Product not found');
         }
@@ -61,6 +64,28 @@ export default function ProductDetailPage() {
     if (productId) {
       fetchProduct();
     }
+
+    // Refresh product data when page becomes visible (user navigates back)
+    const handleVisibilityChange = () => {
+      if (!document.hidden && productId) {
+        fetchProduct();
+      }
+    };
+
+    // Listen for custom event when rating is deleted/added
+    const handleRatingChange = () => {
+      if (productId) {
+        fetchProduct();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('ratingChanged', handleRatingChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('ratingChanged', handleRatingChange);
+    };
   }, [productId, currentLang]);
 
   const handleAddToCart = () => {
@@ -187,14 +212,16 @@ export default function ProductDetailPage() {
                   <Star
                     key={i}
                     className={`w-5 h-5 ${
-                      i < Math.floor(product.rating)
+                      product.rating && product.reviewCount > 0 && i < Math.floor(product.rating)
                         ? 'text-yellow-400 fill-current'
                         : 'text-gray-300'
                     }`}
                   />
                 ))}
               </div>
-              <span className="text-gray-600">({product.reviewCount} {t('productDetail.reviews')})</span>
+              <span className="text-gray-600">
+                {product.reviewCount > 0 ? `(${product.reviewCount} ${t('productDetail.reviews')})` : t('rating.noReviewsYet')}
+              </span>
             </div>
 
             {/* Price */}

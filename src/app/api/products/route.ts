@@ -97,6 +97,8 @@ export async function GET(request: NextRequest) {
       .map((p: any) => ({
         ...p,
         category: p.category?.name || 'General',
+        averageRating: p.averageRating ?? 0,
+        ratingCount: p.ratingCount ?? 0,
         merchant: {
           id: p.merchant.user.id,
           name: p.merchant.user.name,
@@ -132,7 +134,27 @@ export async function GET(request: NextRequest) {
       });
     }
 
-    return NextResponse.json(validProducts);
+    const productIds = validProducts.map((p: any) => p.id);
+    // Fetch ratings for all products in one query
+    const ratings = await prisma.rating.findMany({
+      where: { productId: { in: productIds } },
+      select: { productId: true, rating: true }
+    });
+    const grouped = Object.fromEntries(productIds.map(pId => [pId, []]));
+    ratings.forEach(r => { grouped[r.productId] = grouped[r.productId] || []; grouped[r.productId].push(r.rating); });
+
+    const validProductsWithFreshRatings = validProducts.map((p: any) => {
+      const ratingsArr = grouped[p.id] || [];
+      const ratingCount = ratingsArr.length;
+      const averageRating = ratingCount ? ratingsArr.reduce((sum: number, r: number) => sum + (r || 0), 0) / ratingCount : 0;
+      return {
+        ...p,
+        averageRating,
+        ratingCount
+      };
+    });
+
+    return NextResponse.json(validProductsWithFreshRatings);
   } catch (error) {
     console.error('Error fetching products:', error);
     
@@ -161,10 +183,12 @@ export async function GET(request: NextRequest) {
         orderBy: { createdAt: 'desc' }
       });
 
-      // Return products without merchant info for now
+      // Return products without merchant info for now, but ADD DUMMY 0 rating fields for fallback-compat
       return NextResponse.json(fallbackProducts.map(p => ({
         ...p,
         category: p.category?.name || 'General',
+        averageRating: 0,
+        ratingCount: 0,
         merchant: null
       })));
     } catch (fallbackError) {

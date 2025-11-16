@@ -38,9 +38,9 @@ export default function ProductsPage() {
       setLoading(true);
       setError('');
       try {
-        // Fetch products and categories in parallel
+        // Fetch products and categories in parallel with cache-busting
         const [productsResponse, categoriesResponse] = await Promise.all([
-          fetch('/api/products'),
+          fetch(`/api/products?t=${Date.now()}`, { cache: 'no-store' }),
           fetch('/api/categories')
         ]);
 
@@ -82,6 +82,17 @@ export default function ProductsPage() {
     };
 
     fetchData();
+
+    // Listen for custom event when rating is deleted/added
+    const handleRatingChange = () => {
+      fetchData();
+    };
+
+    window.addEventListener('ratingChanged', handleRatingChange);
+
+    return () => {
+      window.removeEventListener('ratingChanged', handleRatingChange);
+    };
   }, [currentLang]);
 
   useEffect(() => {

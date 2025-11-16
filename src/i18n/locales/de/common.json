@@ -21,6 +21,7 @@
   "home": "Startseite",
   "about": "Über uns",
   "contact": "Kontakt",
+  "contactUs": "Kontaktieren Sie uns",
   "quickLinks": "Schnelllinks",
   "customerService": "Kundenservice",
   "helpCenter": "Hilfe-Center",
@@ -592,6 +593,11 @@
     "subtotal": "Zwischensumme",
     "quantity": "Menge",
     "rated": "Bewertet",
-    "rateProduct": "Produkt bewerten"
-  }
+    "rateProduct": "Produkt bewerten",
+    "delete": "Löschen",
+    "deleteRating": "Bewertung löschen",
+    "confirmDeleteRating": "Möchten Sie diese Bewertung wirklich löschen?",
+    "deleteError": "Fehler beim Löschen der Bewertung"
+  },
+  "admin.analytics": "Analytik"
 }

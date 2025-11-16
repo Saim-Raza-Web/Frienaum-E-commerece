@@ -78,7 +78,7 @@ const CategoryCard = ({ category, index, lang, router }: {
       tabIndex={0}
       onKeyDown={(e) => { if (e.key === 'Enter') router.push(`/${lang}/products?category=${encodeURIComponent(category.name)}`); }}
     >
-      <div className="relative h-48 w-full overflow-hidden rounded-lg shadow-md hover:shadow-lg transition-shadow">
+      <div className="relative h-48 w-full overflow-hidden rounded-lg shadow-md hover:shadow-lg transition-shadow aspect-[4/3]">
         <img
           src={imageSrc}
           alt={category.name}
@@ -146,7 +146,7 @@ function HomePage({ params }: HomePageProps) {
       
       // Fetch products, categories, and reviews in parallel with error handling for each
       const [productsResponse, categoriesResponse, reviewsResponse] = await Promise.all([
-        fetch('/api/products').then(res => {
+        fetch(`/api/products?t=${Date.now()}`, { cache: 'no-store' }).then(res => {
           if (!res.ok) throw new Error('Failed to fetch products');
           return res.json();
         }).catch(err => {
@@ -209,6 +209,17 @@ function HomePage({ params }: HomePageProps) {
   // Fetch data on component mount
   useEffect(() => {
     fetchFeaturedProducts();
+
+    // Listen for custom event when rating is deleted/added
+    const handleRatingChange = () => {
+      fetchFeaturedProducts();
+    };
+
+    window.addEventListener('ratingChanged', handleRatingChange);
+
+    return () => {
+      window.removeEventListener('ratingChanged', handleRatingChange);
+    };
   }, [lang]);
 
   // Typing animation effect
@@ -383,15 +394,20 @@ function HomePage({ params }: HomePageProps) {
           {/* Categories Slider */}
           <div className="px-6 sm:px-8 md:px-12 lg:px-16 overflow-hidden">
             <Swiper
-              spaceBetween={12}
-              slidesPerView={'auto'}
+              spaceBetween={16}
+              slidesPerView={2.5}
               navigation={{
                 nextEl: '.category-swiper-button-next',
                 prevEl: '.category-swiper-button-prev',
               }}
               modules={[Navigation]}
               breakpoints={{
+                320: {
+                  slidesPerView: 1.5,
+                  spaceBetween: 12,
+                },
                 480: {
+                  slidesPerView: 2,
                   spaceBetween: 16,
                 },
                 640: {
@@ -399,21 +415,21 @@ function HomePage({ params }: HomePageProps) {
                   spaceBetween: 16,
                 },
                 768: {
-                  slidesPerView: 3.5,
+                  slidesPerView: 3,
                   spaceBetween: 20,
                 },
                 1024: {
-                  slidesPerView: 5,
+                  slidesPerView: 4,
                   spaceBetween: 24,
                 },
               }}
-              className="!py-4 !overflow-visible"
+              className="!py-4"
               noSwiping={true}
               noSwipingClass="swiper-wrapper"
               preventInteractionOnTransition={true}
             >
               {categories.map((category, index) => (
-                <SwiperSlide key={category.id} className="!w-auto">
+                <SwiperSlide key={category.id}>
                   <CategoryCard 
                     category={category} 
                     index={index} 

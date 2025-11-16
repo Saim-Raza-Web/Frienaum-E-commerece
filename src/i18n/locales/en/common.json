@@ -21,6 +21,7 @@
   "home": "Home",
   "about": "About",
   "contact": "Contact",
+  "contactUs": "Contact Us",
   "quickLinks": "Quick Links",
   "customerService": "Customer Service",
   "helpCenter": "Help Center",
@@ -542,7 +543,11 @@
     "subtotal": "Subtotal",
     "quantity": "Quantity",
     "rated": "Rated",
-    "rateProduct": "Rate Product"
+    "rateProduct": "Rate Product",
+    "delete": "Delete",
+    "deleteRating": "Delete Rating",
+    "confirmDeleteRating": "Are you sure you want to delete this rating?",
+    "deleteError": "Failed to delete rating"
   }
   ,
   "status": {

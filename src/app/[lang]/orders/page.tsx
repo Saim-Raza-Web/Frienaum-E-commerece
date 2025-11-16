@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTranslation } from '@/i18n/TranslationProvider';
 import { useAuth } from '@/context/AuthContext';
-import { Package, Clock, CheckCircle, XCircle, Eye, Star } from 'lucide-react';
+import { Package, Clock, CheckCircle, XCircle, Eye, Star, Trash2 } from 'lucide-react';
 import RatingForm from '@/components/RatingForm';
 
 interface Order {
@@ -24,7 +24,13 @@ interface Order {
       productId: string;
       quantity: number;
       price: number;
-        hasRated?: boolean;
+      hasRated?: boolean;
+      rating?: {
+        value: number;
+        review?: string | null;
+        language: string;
+        createdAt: string;
+      } | null;
       product: {
         title_en: string;
         title_de?: string;
@@ -58,8 +64,10 @@ export default function OrdersPage() {
   const fetchOrders = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/orders', {
+      // Add cache-busting parameter to ensure fresh data
+      const response = await fetch(`/api/orders?t=${Date.now()}`, {
         credentials: 'include',
+        cache: 'no-store',
       });
 
       if (!response.ok) {
@@ -78,7 +86,42 @@ export default function OrdersPage() {
 
   const handleRatingSubmitted = async () => {
     setRatingTarget(null);
-    await fetchOrders();
+    // Add a small delay to ensure the database has been updated
+    setTimeout(async () => {
+      await fetchOrders();
+      // Trigger custom event to refresh product pages
+      window.dispatchEvent(new Event('ratingChanged'));
+    }, 500);
+  };
+
+  const handleDeleteRating = async (orderItemId: string) => {
+    if (!confirm(translate('ordersPage.confirmDeleteRating') || 'Are you sure you want to delete this rating?')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/ratings?orderItemId=${orderItemId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        throw new Error(errorData.error || `Failed to delete rating: ${response.status}`);
+      }
+
+      // Wait a bit longer to ensure database transaction is committed
+      // Then refresh from server with cache-busting
+      setTimeout(async () => {
+        await fetchOrders();
+        // Trigger custom event to refresh product pages
+        window.dispatchEvent(new Event('ratingChanged'));
+      }, 500);
+    } catch (err) {
+      console.error('Error deleting rating:', err);
+      const errorMessage = err instanceof Error ? err.message : (translate('ordersPage.deleteError') || 'Failed to delete rating');
+      alert(errorMessage);
+    }
   };
 
   const handleStartShopping = () => {
@@ -230,13 +273,37 @@ export default function OrdersPage() {
                                 {formatPrice(item.quantity * item.price, currentLang)}
                               </div>
                               {order.status === 'DELIVERED' && (
-                                item.hasRated ? (
-                                  <span className="inline-flex items-center text-green-600 text-xs sm:text-sm">
-                                    <Star className="w-4 h-4 mr-1 fill-current" /> {translate('ordersPage.rated')}
-                                  </span>
+                                item.rating && item.rating.value && item.rating.value > 0 ? (
+                                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
+                                    <div className="flex items-center space-x-1">
+                                      {[...Array(5)].map((_, i) => (
+                                        <Star
+                                          key={i}
+                                          className={`w-3 h-3 sm:w-4 sm:h-4 ${
+                                            i < item.rating!.value
+                                              ? 'text-yellow-400 fill-current'
+                                              : 'text-gray-300'
+                                          }`}
+                                        />
+                                      ))}
+                                    </div>
+                                    {item.rating.review && (
+                                      <p className="text-xs text-gray-600 max-w-xs truncate">
+                                        {item.rating.review}
+                                      </p>
+                                    )}
+                                    <button
+                                      onClick={() => handleDeleteRating(item.id)}
+                                      className="px-2 py-1 text-xs bg-red-600 hover:bg-red-700 text-white rounded flex items-center space-x-1"
+                                      title={translate('ordersPage.deleteRating') || 'Delete Rating'}
+                                    >
+                                      <Trash2 className="w-3 h-3" />
+                                      <span>{translate('ordersPage.delete') || 'Delete'}</span>
+                                    </button>
+                                  </div>
                                 ) : (
                                   <button
-                                    className="px-3 py-1 text-xs sm:text-sm bg-turquoise-500 hover:bg-turquoise-600 text-white rounded"
+                                    className="px-3 py-1 text-xs sm:text-sm bg-blue-600 hover:bg-blue-700 text-white rounded"
                                     onClick={() => setRatingTarget({ productId: item.productId, orderItemId: item.id })}
                                   >
                                     {translate('ordersPage.rateProduct')}

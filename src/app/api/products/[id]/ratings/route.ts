@@ -60,12 +60,19 @@ export async function GET(
       );
     }
 
+    // Get all ratings for the product for this language (don't use cached count!)
+    const allRatings = await prisma.rating.findMany({ where: { productId, language: lang } });
+    const ratingCount = allRatings.length;
+    const averageRating = ratingCount
+      ? allRatings.reduce((sum, r) => sum + (r.rating || 0), 0) / ratingCount
+      : 0;
+
     return NextResponse.json({
       product: {
         id: productData.id,
         title: productData.title_en,
-        averageRating: productData.averageRating,
-        ratingCount: productData.ratingCount
+        averageRating,
+        ratingCount
       },
       ratings: ratingsData.map((rating: any) => ({
         id: rating.id,

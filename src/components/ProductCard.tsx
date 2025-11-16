@@ -82,7 +82,7 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
                 <Star
                   key={i}
                   className={`w-2.5 h-2.5 sm:w-3 sm:h-3 md:w-4 md:h-4 ${
-                    i < Math.floor(product.rating)
+                    product.rating && product.reviewCount > 0 && i < Math.floor(product.rating)
                       ? 'text-accent-400 fill-current'
                       : 'text-primary-200'
                   }`}
@@ -90,7 +90,7 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
               ))}
             </div>
             <span className="text-xs text-primary-500 font-lora ml-1">
-              ({product.reviewCount})
+              {product.reviewCount > 0 ? `(${product.reviewCount})` : '-'}
             </span>
           </div>
           

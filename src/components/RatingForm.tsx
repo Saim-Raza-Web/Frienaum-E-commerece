@@ -13,52 +13,50 @@ interface RatingFormProps {
 
 export default function RatingForm({ productId, orderItemId, onRatingSubmitted, onClose }: RatingFormProps) {
   const { translate: t } = useTranslation();
+  const currentLang = typeof window !== 'undefined'
+    ? (window.location.pathname.match(/^\/(\w{2})\b/)?.[1] || 'en')
+    : 'en';
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [review, setReview] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [message, setMessage] = useState('');
-  const [language, setLanguage] = useState<'de' | 'en'>('de');
+  const [language, setLanguage] = useState<'de' | 'en'>(currentLang === 'de' ? 'de' : 'en');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (rating === 0) {
       setMessage(t('rating.pleaseSelectRating'));
       return;
     }
-
+    if (review.length > 500) {
+      setMessage(t('rating.reviewTooLong') || 'Review is too long.');
+      return;
+    }
     setIsSubmitting(true);
     setMessage('');
-
     try {
       const response = await fetch('/api/ratings', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          productId,
-          orderItemId,
-          rating,
-          review: review.trim() || undefined,
-          language,
-        }),
+        credentials: 'include', // Include cookies for authentication
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId, orderItemId, rating, review: review.trim() || undefined, language })
       });
-
+      
       if (response.ok) {
         setMessage(t('rating.ratingSubmitted'));
         setRating(0);
         setReview('');
         onRatingSubmitted?.();
-        setTimeout(() => {
-          onClose?.();
-        }, 2000);
+        setTimeout(() => { onClose?.(); }, 2000);
       } else {
-        const error = await response.json();
-        setMessage(error.error || t('rating.submitError'));
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }));
+        const errorMessage = errorData.error || `Failed to submit rating: ${response.status}`;
+        console.error('Rating submission error:', errorMessage);
+        setMessage(errorMessage);
       }
-    } catch (error) {
+    } catch (err) {
+      console.error('Error submitting rating:', err);
       setMessage(t('rating.submitError'));
     } finally {
       setIsSubmitting(false);
@@ -73,12 +71,12 @@ export default function RatingForm({ productId, orderItemId, onRatingSubmitted, 
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600"
+            aria-label={t('rating.close') || 'Close'}
           >
             ✕
           </button>
         )}
       </div>
-
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Star Rating */}
         <div>
@@ -96,6 +94,7 @@ export default function RatingForm({ productId, orderItemId, onRatingSubmitted, 
                   onMouseEnter={() => setHoverRating(starValue)}
                   onMouseLeave={() => setHoverRating(0)}
                   className="focus:outline-none"
+                  aria-label={`${starValue} ${t('rating.outOf5')}`}
                 >
                   <Star
                     className={`w-8 h-8 ${
@@ -112,22 +111,22 @@ export default function RatingForm({ productId, orderItemId, onRatingSubmitted, 
             </span>
           </div>
         </div>
-
-        {/* Language */}
+        {/* Language selector: disabled if only one language is supported */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             {t('rating.selectLanguage')}
           </label>
           <select
             value={language}
-            onChange={(e) => setLanguage((e.target.value as 'de' | 'en'))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-turquoise-500 focus:border-transparent"
+            onChange={e => setLanguage(e.target.value as 'de' | 'en')}
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            disabled={['de','en'].length === 1}
+            aria-label={t('rating.selectLanguage')}
           >
             <option value="de">Deutsch</option>
             <option value="en">English</option>
           </select>
         </div>
-
         {/* Review Text */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -135,17 +134,17 @@ export default function RatingForm({ productId, orderItemId, onRatingSubmitted, 
           </label>
           <textarea
             value={review}
-            onChange={(e) => setReview(e.target.value)}
+            onChange={e => setReview(e.target.value)}
             placeholder={t('rating.reviewPlaceholder')}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-turquoise-500 focus:border-transparent"
+            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             rows={4}
             maxLength={500}
+            aria-label={t('rating.writeReview')}
           />
           <div className="text-right text-sm text-gray-500 mt-1">
             {review.length}/500
           </div>
         </div>
-
         {/* Submit Button */}
         <button
           type="submit"
@@ -153,12 +152,11 @@ export default function RatingForm({ productId, orderItemId, onRatingSubmitted, 
           className={`w-full py-2 px-4 rounded-md font-medium transition-colors ${
             isSubmitting || rating === 0
               ? 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              : 'bg-turquoise-500 hover:bg-turquoise-600 text-white'
+              : 'bg-blue-600 hover:bg-blue-700 text-white'
           }`}
         >
           {isSubmitting ? t('rating.submitting') : t('rating.submitRating')}
         </button>
-
         {/* Message */}
         {message && (
           <div className={`text-sm text-center ${
