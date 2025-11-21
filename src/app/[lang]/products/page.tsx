@@ -30,7 +30,7 @@ export default function ProductsPage() {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
 
   // Get current language from URL
-  const currentLang = pathname?.split('/')[1] || 'en';
+  const currentLang = pathname?.split('/')[1] || 'de';
 
   // Fetch products and categories from API
   useEffect(() => {

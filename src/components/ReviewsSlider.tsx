@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslation } from '@/i18n/TranslationProvider';
 import { Star, ChevronLeft, ChevronRight } from 'lucide-react';
+import SmartImage from '@/components/SmartImage';
 
 interface Review {
   id: string;
@@ -128,23 +129,21 @@ const ReviewsSlider: React.FC<ReviewsSliderProps> = ({
                 <div className="bg-white rounded-xl p-6 shadow-lg hover:shadow-xl transition-shadow duration-300 h-full border border-gray-100">
                   {/* Customer Photo */}
                   <div className="flex justify-center mb-4">
-                    <div className="w-16 h-16 rounded-full overflow-hidden bg-gradient-to-br from-orange-100 to-red-100 flex items-center justify-center">
+                    <div className="w-16 h-16 rounded-full overflow-hidden bg-gradient-to-br from-orange-100 to-red-100 flex items-center justify-center relative">
                       {review.customerPhoto ? (
-                        <img
+                        <SmartImage
                           src={review.customerPhoto}
                           alt={review.customerName}
-                          className="w-full h-full object-cover"
-                          loading="lazy"
-                          onError={(e) => {
-                            const target = e.target as HTMLImageElement;
-                            target.style.display = 'none';
-                            target.nextElementSibling?.classList.remove('hidden');
-                          }}
+                          fill
+                          sizes="64px"
+                          className="object-cover"
+                          fallbackSrc="/images/placeholder.jpg"
                         />
-                      ) : null}
-                      <div className={`w-full h-full flex items-center justify-center text-orange-600 font-montserrat font-semibold text-lg ${review.customerPhoto ? 'hidden' : ''}`}>
-                        {review.customerName.charAt(0).toUpperCase()}
-                      </div>
+                      ) : (
+                        <span className="w-full h-full flex items-center justify-center text-orange-600 font-montserrat font-semibold text-lg">
+                          {review.customerName.charAt(0).toUpperCase()}
+                        </span>
+                      )}
                     </div>
                   </div>
 

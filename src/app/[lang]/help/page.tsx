@@ -10,7 +10,7 @@ export default function HelpCenterPage() {
   const { translate } = useTranslation();
   const pathname = usePathname() || '';
   const segments = pathname.split('/');
-  const lang = segments[1] || 'en';
+  const lang = segments[1] || 'de';
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-white to-primary-50">

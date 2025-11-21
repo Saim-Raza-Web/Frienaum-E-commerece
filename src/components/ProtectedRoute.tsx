@@ -43,7 +43,7 @@ export default function ProtectedRoute({
       } catch {}
       // Don't redirect if we're already on the home page
       const pathSegments = pathname?.split('/').filter(Boolean) || [];
-      const currentLang = pathSegments[0] || 'en';
+      const currentLang = pathSegments[0] || 'de';
       const isHomePage = pathSegments.length === 1 && (pathname === `/${currentLang}` || pathname === `/${currentLang}/`);
 
       if (!isHomePage) {
@@ -107,7 +107,7 @@ export default function ProtectedRoute({
           <button
             onClick={() => {
               const pathSegments = pathname?.split('/').filter(Boolean) || [];
-              const currentLang = pathSegments[0] || 'en';
+              const currentLang = pathSegments[0] || 'de';
               router.push(`/${currentLang}`);
             }}
             className="mt-6 btn-primary"

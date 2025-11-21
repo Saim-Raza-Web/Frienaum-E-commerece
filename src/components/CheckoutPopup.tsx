@@ -21,7 +21,7 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
   const { user, isAuthenticated } = useAuth();
   const { cartItems, clearCart, cartTotal } = useCart();
   const { translate } = useTranslation();
-  const currentLang = pathname?.split('/')[1] || 'en';
+  const currentLang = pathname?.split('/')[1] || 'de';
   const [currentStep, setCurrentStep] = useState<CheckoutStep>('cart');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');

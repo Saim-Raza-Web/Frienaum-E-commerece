@@ -2,6 +2,7 @@ import { Locale, isValidLocale } from '@/i18n/config';
 import { Providers } from '@/components/Providers';
 import UnifiedNavbar from '@/components/UnifiedNavbar';
 import Footer from '@/components/Footer';
+import CookieBanner from '@/components/CookieBanner';
 
 interface LocaleLayoutProps {
   children: React.ReactNode;
@@ -18,6 +19,7 @@ export default async function LocaleLayout({
   return (
     <Providers locale={locale}>
       <div className="flex flex-col min-h-screen" suppressHydrationWarning={true}>
+        <CookieBanner />
         <UnifiedNavbar />
         <main className="flex-grow">
           {children}

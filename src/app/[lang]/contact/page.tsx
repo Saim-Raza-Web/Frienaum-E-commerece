@@ -176,6 +176,10 @@ export default function ContactPage() {
                 />
               </div>
               
+              <p className="text-xs text-gray-500 font-lora">
+                {translate('privacy.contactNote')}
+              </p>
+              
               <button
                 type="submit"
                 disabled={isSubmitting}

@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, ReactNode, useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
+import { isValidLocale } from './config';
 
 interface TranslationContextType {
   translate: (key: string, params?: Record<string, any>) => string;
@@ -16,35 +17,37 @@ interface TranslationProviderProps {
   initialLocale: string;
 }
 
+const DEFAULT_LOCALE = 'de';
+
 export const TranslationProvider = ({ children, initialLocale }: TranslationProviderProps) => {
   const pathname = usePathname();
-  // Get locale from URL pathname, fallback to initialLocale
-  const urlLocale = pathname?.split('/')[1] || initialLocale;
-  const [currentLocale, setCurrentLocale] = useState<string>(urlLocale || initialLocale);
-  const [translations, setTranslations] = useState<any>({});
+  const urlLocaleCandidate = pathname?.split('/')[1];
+  const normalizedUrlLocale = isValidLocale(urlLocaleCandidate || '') ? urlLocaleCandidate : undefined;
+  // Only allow 'de' or 'en', fallback always to 'de'
+  const startingLocale = normalizedUrlLocale || DEFAULT_LOCALE;
 
-  // Update locale when URL changes
+  const [currentLocale, setCurrentLocale] = useState<string>(startingLocale);
+  const [translations, setTranslations] = useState<Record<string, any>>({});
+
   useEffect(() => {
-    if (urlLocale && urlLocale !== currentLocale) {
-      setCurrentLocale(urlLocale);
+    if (normalizedUrlLocale && currentLocale !== normalizedUrlLocale) {
+      setCurrentLocale(normalizedUrlLocale);
     }
-  }, [urlLocale, currentLocale]);
+  }, [normalizedUrlLocale]);
 
   // Load translations when locale changes
   useEffect(() => {
+    let mounted = true;
     const loadTranslations = async () => {
       try {
-        console.log('Loading translations for locale:', currentLocale);
         const messages = await import(`@/i18n/locales/${currentLocale}/common.json`);
-        console.log('Translations loaded successfully:', Object.keys(messages.default).length, 'keys');
-        setTranslations(messages.default);
+        if (mounted) setTranslations(messages.default);
       } catch (error) {
         console.error(`Failed to load translations for locale: ${currentLocale}`, error);
-        // Fallback to English
-        if (currentLocale !== 'en') {
+        // Fallback to German
+        if (currentLocale !== DEFAULT_LOCALE && mounted) {
           try {
-            console.log('Trying fallback to English');
-            const fallbackMessages = await import('@/i18n/locales/en/common.json');
+            const fallbackMessages = await import(`@/i18n/locales/${DEFAULT_LOCALE}/common.json`);
             setTranslations(fallbackMessages.default);
           } catch (fallbackError) {
             console.error('Failed to load fallback translations', fallbackError);
@@ -52,8 +55,8 @@ export const TranslationProvider = ({ children, initialLocale }: TranslationProv
         }
       }
     };
-
     loadTranslations();
+    return () => { mounted = false; };
   }, [currentLocale]);
 
   const translate = (key: string, params?: Record<string, any>): string => {
@@ -86,11 +89,12 @@ export const TranslationProvider = ({ children, initialLocale }: TranslationProv
   };
 
   const setLocale = (locale: string) => {
+    if (!isValidLocale(locale)) return;
     setCurrentLocale(locale);
   };
 
   return (
-    <TranslationContext.Provider value={{ translate, currentLocale, setLocale }}>
+    <TranslationContext.Provider value={{ currentLocale, translate, setLocale }}>
       {children}
     </TranslationContext.Provider>
   );

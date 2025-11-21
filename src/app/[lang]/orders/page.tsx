@@ -6,6 +6,7 @@ import { useTranslation } from '@/i18n/TranslationProvider';
 import { useAuth } from '@/context/AuthContext';
 import { Package, Clock, CheckCircle, XCircle, Eye, Star, Trash2 } from 'lucide-react';
 import RatingForm from '@/components/RatingForm';
+import SmartImage from '@/components/SmartImage';
 
 interface Order {
   id: string;
@@ -44,7 +45,7 @@ export default function OrdersPage() {
   const { user, isAuthenticated } = useAuth();
   const { translate } = useTranslation();
   const pathname = usePathname();
-  const currentLang = pathname?.split('/')[1] || 'en';
+  const currentLang = pathname?.split('/')[1] || 'de';
   const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
@@ -254,13 +255,16 @@ export default function OrdersPage() {
                         <div className="space-y-2">
                           {subOrder.items.map((item) => (
                             <div key={item.id} className="flex flex-col sm:flex-row sm:items-center sm:space-x-3 gap-3">
-                              {item.product.imageUrl && (
-                                <img
+                              <div className="w-12 h-12 rounded overflow-hidden mx-auto sm:mx-0 relative">
+                                <SmartImage
                                   src={item.product.imageUrl}
                                   alt={currentLang === 'de' && item.product.title_de ? item.product.title_de : item.product.title_en}
-                                  className="w-12 h-12 object-cover rounded mx-auto sm:mx-0"
+                                  fill
+                                  sizes="48px"
+                                  className="object-cover"
+                                  fallbackSrc="/images/placeholder-product.png"
                                 />
-                              )}
+                              </div>
                               <div className="flex-1">
                                 <h5 className="text-sm sm:text-base font-medium text-gray-900">
                                   {currentLang === 'de' && item.product.title_de ? item.product.title_de : item.product.title_en}

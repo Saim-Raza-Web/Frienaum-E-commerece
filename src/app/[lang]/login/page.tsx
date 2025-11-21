@@ -401,6 +401,9 @@ export default function LoginPage() {
                 )}
               </button>
             </div>
+            <p className="text-xs text-gray-500 font-lora text-center">
+              {translate('privacy.authNote')}
+            </p>
           </form>
 
           {isForgotPassword && (

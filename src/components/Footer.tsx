@@ -4,13 +4,14 @@ import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Facebook, Twitter, Instagram, Mail, Phone, MapPin, Shield, Lock } from 'lucide-react';
+import SmartImage from '@/components/SmartImage';
 import { useTranslation } from '@/i18n/TranslationProvider';
 
 export default function Footer() {
   const { translate } = useTranslation();
   const pathname = usePathname() || '';
   const segments = pathname.split('/');
-  const lang = segments[1] || 'en';
+  const lang = segments[1] || 'de';
   return (
     <footer className="bg-primary-50 text-primary-800 overflow-hidden">
       <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-12 sm:py-16">
@@ -18,13 +19,17 @@ export default function Footer() {
           {/* Company Info */}
           <div className="col-span-1 sm:col-span-2 lg:col-span-2">
             <div className="flex items-center space-x-2 sm:space-x-3 mb-4 sm:mb-6">
-              <img 
-              src="/images/Logo.png" 
-              alt="Feinraumshop Logo" 
-              className="h-8 w-auto sm:h-10"
-              style={{ filter: 'invert(37%) sepia(53%) saturate(946%) hue-rotate(336deg) brightness(90%) contrast(100%)' }}
-            />
-            <span className="text-xl sm:text-2xl font-montserrat font-bold text-primary-800">Feinraumshop</span>
+              <div className="relative h-8 w-24 sm:h-10 sm:w-32">
+                <SmartImage
+                  src="/images/Logo.png"
+                  alt="Feinraumshop Logo"
+                  fill
+                  sizes="(max-width: 640px) 96px, 128px"
+                  className="object-contain"
+                  style={{ filter: 'invert(37%) sepia(53%) saturate(946%) hue-rotate(336deg) brightness(90%) contrast(100%)' }}
+                />
+              </div>
+              <span className="text-xl sm:text-2xl font-montserrat font-bold text-primary-800">Feinraumshop</span>
             </div>
             <p className="text-sm sm:text-base text-primary-700 mb-4 sm:mb-6 max-w-md font-lora leading-relaxed">
               {translate('companyDescription')}

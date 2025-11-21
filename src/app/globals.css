@@ -604,13 +604,6 @@ footer a:focus,
   will-change: auto;
 }
 
-/* Optimize for mobile performance */
-@media (max-width: 640px) {
-  .swiper-slide {
-    transform: translateZ(0);
-  }
-}
-
 /* Trust badge animations */
 @keyframes trustPulse {
   0%, 100% { transform: scale(1); }

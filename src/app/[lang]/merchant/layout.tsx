@@ -32,7 +32,7 @@ export default function MerchantLayout({
   const { translate } = useTranslation();
   const { logout } = useAuth();
 
-  const lang = pathname?.split('/')?.[1] || 'en';
+  const lang = pathname?.split('/')?.[1] || 'de';
   const navigation: NavigationItem[] = [
     { name: 'merchant.dashboard', href: `/${lang}/merchant?tab=overview`, icon: Home, tab: 'overview' },
   ];

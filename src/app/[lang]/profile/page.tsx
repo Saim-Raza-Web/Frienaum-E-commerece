@@ -24,7 +24,7 @@ function ProfileContent() {
   const { translate } = useTranslation();
   const pathname = usePathname();
   const pathSegments = pathname?.split('/').filter(Boolean) || [];
-  const currentLang = pathSegments[0] || 'en';
+  const currentLang = pathSegments[0] || 'de';
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState('profile');
   

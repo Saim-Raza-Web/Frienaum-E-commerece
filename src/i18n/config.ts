@@ -1,5 +1,5 @@
 // Define the list of supported locales
-export const locales = ['en', 'es', 'fr', 'de'] as const;
+export const locales = ['de', 'en'] as const;
 export type Locale = typeof locales[number];
 
 // Type for our translation files
@@ -26,9 +26,9 @@ export async function getTranslations(locale: Locale): Promise<Translation> {
     return messages.default as Translation;
   } catch (error) {
     console.error(`Failed to load translations for locale: ${locale}`, error);
-    // Fallback to English if the requested locale fails to load
-    if (locale !== 'en') {
-      return getTranslations('en');
+    // Fallback to German if the requested locale fails to load
+    if (locale !== 'de') {
+      return getTranslations('de');
     }
     throw error;
   }

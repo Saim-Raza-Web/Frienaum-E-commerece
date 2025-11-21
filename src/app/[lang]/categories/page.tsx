@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { Search, Grid, List, Loader2, AlertCircle } from 'lucide-react';
 import { useTranslation } from '@/i18n/TranslationProvider';
+import SmartImage from '@/components/SmartImage';
 import { Category } from '@/types';
 
 export default function CategoriesPage() {
@@ -16,7 +17,7 @@ export default function CategoriesPage() {
   const [error, setError] = useState<string | null>(null);
   const pathname = usePathname();
   const router = useRouter();
-  const currentLang = pathname?.split('/')[1] || 'en';
+  const currentLang = pathname?.split('/')[1] || 'de';
   
   // Get the appropriate image source for a category
   const getCategoryImage = (category: Category) => {
@@ -223,15 +224,13 @@ export default function CategoriesPage() {
                 <div className="h-full flex flex-col bg-white rounded-xl shadow-sm hover:shadow-lg transition-all duration-300 overflow-hidden border border-gray-100">
                   {/* Category Image */}
                   <div className="relative h-40 sm:h-48 md:h-56 w-full overflow-hidden">
-                    <img
+                    <SmartImage
                       src={getCategoryImage(category)}
                       alt={category.name}
-                      className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
-                      onError={(e) => {
-                        // Fallback to placeholder if image fails to load
-                        const target = e.target as HTMLImageElement;
-                        target.src = '/images/placeholder-category.jpg';
-                      }}
+                      fill
+                      sizes="(max-width: 768px) 100vw, 33vw"
+                      className="object-cover transition-transform duration-300 group-hover:scale-105"
+                      fallbackSrc="/images/placeholder-category.jpg"
                     />
                     <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-300"></div>
                   </div>

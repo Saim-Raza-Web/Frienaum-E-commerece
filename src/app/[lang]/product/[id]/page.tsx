@@ -8,6 +8,7 @@ import { useCart } from '@/context/CartContext';
 import { useTranslation } from '@/i18n/TranslationProvider';
 import { Star, ShoppingCart, Heart, Truck, Shield, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import RatingDisplay from '@/components/RatingDisplay';
+import SmartImage from '@/components/SmartImage';
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -22,7 +23,7 @@ export default function ProductDetailPage() {
 
   // Get current language from URL
   const pathname = usePathname();
-  const currentLang = pathname?.split('/')[1] || 'en';
+  const currentLang = pathname?.split('/')[1] || 'de';
 
   useEffect(() => {
     const fetchProduct = async () => {
@@ -154,10 +155,14 @@ export default function ProductDetailPage() {
           <div className="space-y-4">
             {/* Main Image */}
             <div className="relative aspect-square bg-gray-100 rounded-lg overflow-hidden">
-              <img
+              <SmartImage
                 src={product.images[selectedImageIndex]}
                 alt={product.name}
-                className="w-full h-full object-cover"
+                fill
+                sizes="(max-width: 1024px) 100vw, 50vw"
+                className="object-cover"
+                fallbackSrc="/images/placeholder-product.png"
+                priority
               />
 
               {/* Navigation Arrows */}
@@ -187,11 +192,16 @@ export default function ProductDetailPage() {
                       : 'border-gray-200 hover:border-gray-300'
                   }`}
                 >
-                  <img
-                    src={image}
-                    alt={`${product.name} ${index + 1}`}
-                    className="w-full h-full object-cover"
-                  />
+                  <div className="relative w-full h-full">
+                    <SmartImage
+                      src={image}
+                      alt={`${product.name} ${index + 1}`}
+                      fill
+                      sizes="(max-width: 1024px) 25vw, 12vw"
+                      className="object-cover"
+                      fallbackSrc="/images/placeholder-product.png"
+                    />
+                  </div>
                 </button>
               ))}
             </div>

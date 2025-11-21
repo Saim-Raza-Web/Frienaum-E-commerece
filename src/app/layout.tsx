@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import { Montserrat, Lora } from 'next/font/google';
 import React from 'react';
-import { Providers } from '@/components/Providers';
 import './globals.css';
 
 const montserrat = Montserrat({ 
@@ -16,7 +15,7 @@ const lora = Lora({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://feinraum-e-commerce.vercel.app/en"),
+  metadataBase: new URL('https://feinraum-e-commerce.vercel.app/de'),
   title: 'Home | Feinraumshop',
   description: 'Discover premium products at Feinraumshop. Elevate your lifestyle with curated quality, design, and service.',
   openGraph: {
@@ -50,11 +49,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${montserrat.variable} ${lora.variable}`} suppressHydrationWarning>
+    <html lang="de" className={`${montserrat.variable} ${lora.variable}`} suppressHydrationWarning>
       <body className="font-montserrat" suppressHydrationWarning>
-        <Providers locale="en">
-          {children}
-        </Providers>
+        {children}
       </body>
     </html>
   );

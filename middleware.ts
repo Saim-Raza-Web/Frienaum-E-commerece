@@ -4,25 +4,14 @@ import { match as matchLocale } from '@formatjs/intl-localematcher';
 import Negotiator from 'negotiator';
 
 // Define supported locales
-const locales = ['en', 'es', 'fr', 'de'] as const;
+const locales = ['de', 'en'] as const;
 type Locale = typeof locales[number];
 
-// Function to get the locale from the request
-function getLocale(request: NextRequest): Locale {
-  // Get the locale from the cookie first
-  const cookieLocale = request.cookies.get('NEXT_LOCALE')?.value;
-  if (cookieLocale && locales.includes(cookieLocale as Locale)) {
-    return cookieLocale as Locale;
-  }
-
-  // Get the accept-language header
-  const acceptLanguage = request.headers.get('accept-language') || 'en';
-  const headers = { 'accept-language': acceptLanguage };
-  const languages = new Negotiator({ headers }).languages();
-  
-  // Match the best locale
-  const defaultLocale = 'en';
-  return matchLocale(languages, Array.from(locales), defaultLocale) as Locale;
+// Utility to extract locale from path
+function getUrlLocale(path: string): Locale | undefined {
+  const match = path.match(/^\/(de|en)(\/|$)/);
+  if (match) return match[1] as Locale;
+  return undefined;
 }
 
 export function middleware(request: NextRequest) {
@@ -31,7 +20,7 @@ export function middleware(request: NextRequest) {
     (locale) => pathname.startsWith(`/${locale}/`) || pathname === `/${locale}`
   );
 
-  // Skip if the request is for a static file, Next.js internal, or API route
+  // Skip static and API routes
   if (
     pathname.startsWith('/api/') ||
     pathname.startsWith('/_next/') ||
@@ -42,23 +31,20 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  // Redirect if there's no locale
+  // No locale: redirect to default (/de)
   if (!pathnameHasLocale) {
-    const locale = getLocale(request);
-    
-    // Create new URL with locale
+    // Always default to German if not in URL
+    const locale = 'de';
     const newUrl = new URL(
       `/${locale}${pathname.startsWith('/') ? '' : '/'}${pathname}${request.nextUrl.search}`,
       request.url
     );
-    
     return NextResponse.redirect(newUrl);
   }
 
-  // Set the locale cookie if it's not set
+  // Set locale cookie
   const response = NextResponse.next();
   const locale = pathname.split('/')[1] as Locale;
-  
   if (locales.includes(locale)) {
     response.cookies.set('NEXT_LOCALE', locale, {
       path: '/',
@@ -66,7 +52,6 @@ export function middleware(request: NextRequest) {
       sameSite: 'lax',
     });
   }
-
   return response;
 }
 

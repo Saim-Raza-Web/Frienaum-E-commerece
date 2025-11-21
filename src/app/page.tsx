@@ -1,8 +1,8 @@
 import { redirect } from 'next/navigation';
 
 export default function Home() {
-  // Redirect to the default language (English)
-  redirect('/en');
+  // Redirect to the default language (German)
+  redirect('/de');
   
   return null;
 }

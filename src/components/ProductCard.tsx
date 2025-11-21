@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { Star, ShoppingCart, Heart } from 'lucide-react';
 import { Product } from '@/types';
 import { useTranslation } from '@/i18n/TranslationProvider';
+import SmartImage from '@/components/SmartImage';
 
 interface ProductCardProps {
   product: Product;
@@ -16,7 +17,7 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
   const { translate } = useTranslation();
   const pathname = usePathname() || '';
   const segments = pathname.split('/');
-  const lang = segments[1] || 'en';
+  const lang = segments[1] || 'de';
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -29,19 +30,16 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
     <Link href={`/${lang}/product/${product.id}`} className="group h-full">
       <div className="card overflow-hidden h-full flex flex-col bg-white rounded-lg sm:rounded-xl shadow-sm hover:shadow-lg sm:hover:shadow-xl transition-all duration-300 border border-primary-100 hover:border-primary-200">
         {/* Product Image - High quality with white background */}
-        <div className="relative aspect-[4/3] overflow-hidden bg-white">
-          <div className="w-full h-full">
+        <div className="relative w-full h-[250px] overflow-hidden bg-white">
+          <div className="relative w-full h-full">
             {product.images && product.images[0] ? (
-              <img
+              <SmartImage
                 src={product.images[0]}
                 alt={product.name}
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                loading="lazy"
-                onError={(e) => {
-                  const target = e.target as HTMLImageElement;
-                  target.onerror = null;
-                  target.src = '/images/placeholder-product.png';
-                }}
+                fill
+                sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+                className="object-cover transition-transform duration-500 group-hover:scale-110"
+                fallbackSrc="/images/placeholder-product.png"
               />
             ) : (
               <div className="w-full h-full bg-gradient-to-br from-primary-50 to-primary-100 flex items-center justify-center">

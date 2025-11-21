@@ -27,7 +27,7 @@ export default function CartPage() {
   } = useCart();
   const { translate } = useTranslation();
   const pathname = usePathname();
-  const currentLang = pathname?.split('/')[1] || 'en';
+  const currentLang = pathname?.split('/')[1] || 'de';
 
   // Helper function to convert product name to kebab-case for translation keys
   const getProductKey = (productName: string) => {

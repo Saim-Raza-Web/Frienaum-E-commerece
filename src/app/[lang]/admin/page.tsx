@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useTranslation } from '@/i18n/TranslationProvider';
+import SmartImage from '@/components/SmartImage';
 
 type Product = {
   id: number;
@@ -1432,21 +1433,23 @@ function AdminDashboard() {
                       <div key={category.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow">
                         <div className="h-40 bg-gray-100 flex items-center justify-center overflow-hidden">
                           {category.image ? (
-                            <img 
-                              src={category.image} 
+                            <SmartImage
+                              src={category.image}
                               alt={category.name}
+                              fill={false}
+                              width={160}
+                              height={160}
                               className="w-full h-full object-cover"
-                              onError={(e) => {
-                                const target = e.target as HTMLImageElement;
-                                target.onerror = null;
-                                target.src = '/images/placeholder-category.jpg';
-                              }}
+                              fallbackSrc="/images/placeholder-category.jpg"
                             />
                           ) : (
                             <div className="text-gray-400 p-4 text-center">
-                              <img 
-                                src="/images/placeholder-category.jpg" 
-                                alt="No image" 
+                              <SmartImage
+                                src="/images/placeholder-category.jpg"
+                                alt="No image"
+                                fill={false}
+                                width={160}
+                                height={160}
                                 className="w-40 h-40 object-cover opacity-50 mx-auto"
                               />
                             </div>
@@ -1720,7 +1723,7 @@ function SettingsForm() {
   const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
   const [error, setError] = React.useState('');
-  const [form, setForm] = React.useState({ storeName: 'Fienraum', currency: 'CHF', defaultLanguage: 'en' });
+  const [form, setForm] = React.useState({ storeName: 'Fienraum', currency: 'CHF', defaultLanguage: 'de' });
 
   React.useEffect(() => {
     const load = async () => {
@@ -1731,7 +1734,7 @@ function SettingsForm() {
         setForm({
           storeName: data.storeName || 'Fienraum',
           currency: data.currency || 'CHF',
-          defaultLanguage: data.defaultLanguage || 'en'
+          defaultLanguage: data.defaultLanguage || 'de'
         });
       } catch (e: any) {
         setError(e?.message || 'Failed to load');

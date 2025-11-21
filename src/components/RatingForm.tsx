@@ -14,8 +14,8 @@ interface RatingFormProps {
 export default function RatingForm({ productId, orderItemId, onRatingSubmitted, onClose }: RatingFormProps) {
   const { translate: t } = useTranslation();
   const currentLang = typeof window !== 'undefined'
-    ? (window.location.pathname.match(/^\/(\w{2})\b/)?.[1] || 'en')
-    : 'en';
+    ? (window.location.pathname.match(/^\/(\w{2})\b/)?.[1] || 'de')
+    : 'de';
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [review, setReview] = useState('');
