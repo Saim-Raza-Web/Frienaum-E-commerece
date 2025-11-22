@@ -109,7 +109,7 @@ export default function UnifiedNavbar() {
         <div className="flex w-full items-center justify-between gap-2 sm:gap-4 py-2 sm:py-3 lg:py-4 min-w-0">
           {/* Logo */}
           <div className="flex-shrink-0 min-w-0">
-            <Link href={`/${lang}/`} className="flex min-w-0 items-center gap-1.5 sm:gap-2 group">
+            <Link href={`/${lang}/`} className="flex min-w-0 items-center gap-0.5 sm:gap-1 group">
               <div className="relative h-6 w-14 sm:h-8 sm:w-20 flex-shrink-0">
                 <SmartImage 
                   src="/images/Logo.png" 
