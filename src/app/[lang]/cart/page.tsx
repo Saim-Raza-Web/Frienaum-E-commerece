@@ -7,6 +7,7 @@ import { useCart } from '@/context/CartContext';
 import { useTranslation } from '@/i18n/TranslationProvider';
 import { Trash2, ArrowLeft, ShoppingBag, CreditCard } from 'lucide-react';
 import dynamic from 'next/dynamic';
+import SmartImage from '@/components/SmartImage';
 
 // Dynamically import the CheckoutPopup to avoid SSR issues
 const CheckoutPopup = dynamic(
@@ -136,8 +137,19 @@ export default function CartPage() {
                     <div key={item.product.id} className="p-4 sm:p-6">
                       <div className="flex flex-col sm:flex-row sm:items-center space-y-4 sm:space-y-0 sm:space-x-4">
                         {/* Product Image */}
-                        <div className="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                          <ShoppingBag className="w-8 h-8 text-gray-400" />
+                        <div className="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 bg-gray-100">
+                          <div className="relative w-full h-full">
+                            <SmartImage
+                              src={item.product.images?.[0] || '/images/placeholder-product.png'}
+                              alt={item.product.name}
+                              fill
+                              sizes="80px"
+                              className="object-cover"
+                              fallbackSrc="/images/placeholder-product.png"
+                              loading="lazy"
+                              decoding="async"
+                            />
+                          </div>
                         </div>
                         
                         {/* Product Info */}

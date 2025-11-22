@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Montserrat, Lora } from 'next/font/google';
 import React from 'react';
+import Script from 'next/script';
 import './globals.css';
 
 const montserrat = Montserrat({ 
@@ -48,10 +49,34 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  const gaId = process.env.NEXT_PUBLIC_GA_ID;
+
   return (
     <html lang="de" className={`${montserrat.variable} ${lora.variable}`} suppressHydrationWarning>
       <body className="font-montserrat" suppressHydrationWarning>
         {children}
+
+        {gaId && (
+          <>
+            <Script
+              src={`https://www.googletagmanager.com/gtag/js?id=${gaId}`}
+              strategy="afterInteractive"
+            />
+            <Script id="ga-init" strategy="lazyOnload">
+              {`
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+                gtag('config', '${gaId}', { anonymize_ip: true, transport_type: 'beacon' });
+              `}
+            </Script>
+          </>
+        )}
+
+        <Script
+          src="https://cdn.usercentrics.eu/browser-ui/latest/bundle.js"
+          strategy="lazyOnload"
+        />
       </body>
     </html>
   );

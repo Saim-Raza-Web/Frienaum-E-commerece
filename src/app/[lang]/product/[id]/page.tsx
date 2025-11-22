@@ -1,14 +1,21 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { Suspense, useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { useParams, usePathname } from 'next/navigation';
 
 import { Product } from '@/types';
 import { useCart } from '@/context/CartContext';
 import { useTranslation } from '@/i18n/TranslationProvider';
 import { Star, ShoppingCart, Heart, Truck, Shield, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
-import RatingDisplay from '@/components/RatingDisplay';
 import SmartImage from '@/components/SmartImage';
+
+const RatingDisplay = dynamic(() => import('@/components/RatingDisplay'), {
+  ssr: false,
+  loading: () => (
+    <div className="h-32 rounded-2xl bg-white shadow-md animate-pulse" />
+  )
+});
 
 export default function ProductDetailPage() {
   const params = useParams();
@@ -330,7 +337,9 @@ export default function ProductDetailPage() {
         {/* Reviews Section */}
         <div className="mt-16">
           <h2 className="text-2xl font-bold text-gray-900 mb-8">{t('productDetail.customerReviews')}</h2>
-          <RatingDisplay productId={product.id} />
+          <Suspense fallback={<div className="h-32 rounded-2xl bg-white shadow-md animate-pulse" />}>
+            <RatingDisplay productId={product.id} />
+          </Suspense>
         </div>
       </div>
     </div>

@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import ImageUpload from '@/components/ImageUpload';
 import {
   Users,
   ShoppingBag,
@@ -27,6 +27,13 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { useTranslation } from '@/i18n/TranslationProvider';
 import SmartImage from '@/components/SmartImage';
+
+const ImageUpload = dynamic(() => import('@/components/ImageUpload'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full rounded-xl border border-dashed border-gray-300 bg-gray-50 p-10 animate-pulse" />
+  )
+});
 
 type Product = {
   id: number;

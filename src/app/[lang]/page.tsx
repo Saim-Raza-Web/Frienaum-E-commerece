@@ -1,19 +1,25 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { useCart } from '@/context/CartContext';
 import { useTranslation } from '@/i18n/TranslationProvider';
 import { Product } from '@/types';
 import { ArrowRight, Star, Truck, Shield, Clock } from 'lucide-react';
-import ReviewsSlider from '@/components/ReviewsSlider';
 import SmartImage from '@/components/SmartImage';
 
 // Dynamically import the ProductCard component with no SSR
 const ProductCard = dynamic(() => import('@/components/ProductCard'), {
   ssr: false,
   loading: () => <div className="w-full h-64 bg-gray-200 animate-pulse rounded-lg"></div>
+});
+
+const ReviewsSlider = dynamic(() => import('@/components/ReviewsSlider'), {
+  ssr: false,
+  loading: () => (
+    <div className="h-48 w-full rounded-2xl bg-white shadow-md animate-pulse sm:h-56 lg:h-64" />
+  )
 });
 
 interface HomePageProps {
@@ -83,6 +89,8 @@ const CategoryCard = ({ category, index, lang, router }: {
           sizes="(max-width: 640px) 80vw, (max-width: 1024px) 40vw, 25vw"
           className="object-cover transition-transform duration-300 group-hover:scale-105"
           fallbackSrc="/images/placeholder-category.jpg"
+          loading="lazy"
+          decoding="async"
         />
         <div className="absolute inset-0 bg-black bg-opacity-20 group-hover:bg-opacity-30 transition-all duration-300"></div>
         <h3 className="absolute bottom-4 left-0 right-0 mx-auto text-white text-base font-medium drop-shadow-lg px-4">
@@ -116,6 +124,9 @@ function HomePage({ params }: HomePageProps) {
   const [error, setError] = useState('');
   const [categories, setCategories] = useState<{ id: string; name: string; productCount: number; firstProduct?: { imageUrl?: string; title?: string } }[]>([]);
   const [topReviews, setTopReviews] = useState<{ id: string; customerName: string; reviewText: string; rating: number; customerPhoto?: string | null; productName?: string; createdAt: string }[]>([]);
+  const [isReviewsVisible, setIsReviewsVisible] = useState(false);
+  const [hasRequestedReviews, setHasRequestedReviews] = useState(false);
+  const reviewsSectionRef = useRef<HTMLDivElement | null>(null);
   
   // Typing animation state
   const [displayText, setDisplayText] = useState('');
@@ -128,7 +139,7 @@ function HomePage({ params }: HomePageProps) {
       setError('');
       
       // Fetch products, categories, and reviews in parallel with error handling for each
-      const [productsResponse, categoriesResponse, reviewsResponse] = await Promise.all([
+      const [productsResponse, categoriesResponse] = await Promise.all([
         fetch(`/api/products?t=${Date.now()}`, { cache: 'no-store' }).then(res => {
           if (!res.ok) throw new Error('Failed to fetch products');
           return res.json();
@@ -142,23 +153,10 @@ function HomePage({ params }: HomePageProps) {
         }).catch(err => {
           console.error('Categories fetch error:', err);
           return []; // Return empty array for categories if fetch fails
-        }),
-        fetch(`/api/top-reviews?rating=5&limit=8&lang=${lang}`).then(res => {
-          if (!res.ok) {
-            console.error('Top reviews API response not ok:', res.status, res.statusText);
-            throw new Error(`Failed to fetch reviews: ${res.status} ${res.statusText}`);
-          }
-          return res.json();
-        }).catch(err => {
-          console.error('Top reviews fetch error:', err);
-          return { reviews: [] }; // Return empty array for reviews if fetch fails
         })
       ]);
 
-      const [productsData, categoriesData, reviewsData] = [productsResponse, categoriesResponse, reviewsResponse];
-
-      // Set top reviews
-      setTopReviews(reviewsData.reviews || []);
+      const [productsData, categoriesData] = [productsResponse, categoriesResponse];
 
       // Transform API data to match Product interface
       const transformedProducts: Product[] = productsData.map((product: any) => ({
@@ -257,6 +255,65 @@ function HomePage({ params }: HomePageProps) {
     };
   }, [lang]); // Add lang dependency to re-run animation when language changes
 
+  const fetchTopReviews = useCallback(async () => {
+    if (hasRequestedReviews) return;
+    setHasRequestedReviews(true);
+    try {
+      const response = await fetch(`/api/top-reviews?rating=5&limit=8&lang=${lang}`);
+      if (!response.ok) {
+        console.error('Top reviews API response not ok:', response.status, response.statusText);
+        return;
+      }
+      const data = await response.json();
+      setTopReviews(data.reviews || []);
+    } catch (err) {
+      console.error('Top reviews fetch error:', err);
+    }
+  }, [hasRequestedReviews, lang]);
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      setIsReviewsVisible(true);
+      return;
+    }
+
+    if (!reviewsSectionRef.current) {
+      setIsReviewsVisible(true);
+      return;
+    }
+
+    if (!('IntersectionObserver' in window)) {
+      setIsReviewsVisible(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setIsReviewsVisible(true);
+            observer.disconnect();
+          }
+        });
+      },
+      {
+        root: null,
+        threshold: 0.25,
+        rootMargin: '0px 0px -15% 0px',
+      }
+    );
+
+    observer.observe(reviewsSectionRef.current);
+
+    return () => observer.disconnect();
+  }, []);
+
+  useEffect(() => {
+    if (isReviewsVisible) {
+      fetchTopReviews();
+    }
+  }, [isReviewsVisible, fetchTopReviews]);
+
   const handleAddToCart = (product: Product) => {
     addToCart(product);
   };
@@ -306,13 +363,14 @@ function HomePage({ params }: HomePageProps) {
             <div className="w-full lg:w-1/2 flex justify-center lg:justify-end">
               <div className="relative w-full max-w-sm sm:max-w-md md:max-w-lg lg:max-w-xl xl:max-w-2xl h-[250px] sm:h-[300px] md:h-[400px] lg:h-[500px] xl:h-[600px]">
                 <SmartImage 
-                  src="/images/hero.png" 
+                  src="/images/Hero.webp" 
                   alt="Elegant Home Decor" 
                   fill
                   priority
                   sizes="(max-width: 1024px) 100vw, 50vw"
                   className="object-contain lg:object-cover rounded-lg sm:rounded-xl md:rounded-2xl shadow-lg sm:shadow-xl md:shadow-2xl hover:shadow-3xl transition-shadow duration-500"
                   style={{ objectPosition: 'center 10%' }}
+                  fallbackSrc="/images/hero.png"
                 />
               </div>
             </div>
@@ -462,11 +520,19 @@ function HomePage({ params }: HomePageProps) {
             </p>
           </div>
           
-          <ReviewsSlider 
-            reviews={topReviews}
-            autoSlide={true}
-            slideInterval={6000}
-          />
+          <div ref={reviewsSectionRef}>
+            {isReviewsVisible ? (
+              <Suspense fallback={<div className="h-48 w-full rounded-2xl bg-white shadow-md animate-pulse sm:h-56 lg:h-64" />}>
+                <ReviewsSlider 
+                  reviews={topReviews}
+                  autoSlide={true}
+                  slideInterval={6000}
+                />
+              </Suspense>
+            ) : (
+              <div className="h-48 w-full rounded-2xl bg-white shadow-md animate-pulse sm:h-56 lg:h-64" />
+            )}
+          </div>
         </div>
       </section>
 

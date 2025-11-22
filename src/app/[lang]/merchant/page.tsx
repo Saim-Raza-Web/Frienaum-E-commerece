@@ -1,10 +1,10 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { useAuth } from '@/context/AuthContext';
 import { useTranslation } from '@/i18n/TranslationProvider';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import ImageUpload from '@/components/ImageUpload';
 import {
   TrendingUp,
   ShoppingBag,
@@ -16,6 +16,13 @@ import {
   Filter,
   Loader2
 } from 'lucide-react';
+
+const ImageUpload = dynamic(() => import('@/components/ImageUpload'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full rounded-xl border border-dashed border-gray-300 bg-gray-50 p-10 animate-pulse" />
+  )
+});
 
 function MerchantDashboard() {
   const { translate } = useTranslation();

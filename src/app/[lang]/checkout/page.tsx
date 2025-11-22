@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { Suspense, useState } from 'react';
 import Link from 'next/link';
 import Navigation from '@/components/UnifiedNavbar';
 import Footer from '@/components/Footer';
@@ -8,10 +8,17 @@ import { Address } from '@/types';
 import { ArrowLeft, CreditCard, Lock, Truck, CheckCircle } from 'lucide-react';
 import { Elements } from '@stripe/react-stripe-js';
 import { loadStripe } from '@stripe/stripe-js';
-import StripePaymentForm from '@/components/StripePaymentForm';
+import dynamic from 'next/dynamic';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { useTranslation } from '@/i18n/TranslationProvider';
+
+const StripePaymentForm = dynamic(() => import('@/components/StripePaymentForm'), {
+  ssr: false,
+  loading: () => (
+    <div className="rounded-lg border border-gray-200 bg-white p-6 animate-pulse min-h-[280px]" />
+  )
+});
 
 const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
 
@@ -306,14 +313,16 @@ export default function CheckoutPage() {
 
               {step === 'payment' && paymentData && stripePromise && (
                 <Elements stripe={stripePromise} options={{ clientSecret: paymentData.clientSecret }}>
-                  <StripePaymentForm
-                    clientSecret={paymentData.clientSecret}
-                    orderId="" // Order will be created after payment
-                    amount={Math.round(total * 100)}
-                    onSuccess={handlePaymentSuccess}
-                    onError={handlePaymentError}
-                    onLoading={handlePaymentLoading}
-                  />
+                  <Suspense fallback={<div className="rounded-lg border border-gray-200 bg-white p-6 animate-pulse min-h-[280px]" />}>
+                    <StripePaymentForm
+                      clientSecret={paymentData.clientSecret}
+                      orderId="" // Order will be created after payment
+                      amount={Math.round(total * 100)}
+                      onSuccess={handlePaymentSuccess}
+                      onError={handlePaymentError}
+                      onLoading={handlePaymentLoading}
+                    />
+                  </Suspense>
                 </Elements>
               )}
 

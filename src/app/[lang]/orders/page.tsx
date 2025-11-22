@@ -1,12 +1,23 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { Suspense, useState, useEffect } from 'react';
+import dynamic from 'next/dynamic';
 import { usePathname, useRouter } from 'next/navigation';
 import { useTranslation } from '@/i18n/TranslationProvider';
 import { useAuth } from '@/context/AuthContext';
 import { Package, Clock, CheckCircle, XCircle, Eye, Star, Trash2 } from 'lucide-react';
-import RatingForm from '@/components/RatingForm';
 import SmartImage from '@/components/SmartImage';
+
+const RatingForm = dynamic(() => import('@/components/RatingForm'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full rounded-lg bg-white p-6 shadow animate-pulse">
+      <div className="h-4 w-1/2 rounded bg-gray-200 mb-4" />
+      <div className="h-4 w-full rounded bg-gray-200 mb-2" />
+      <div className="h-4 w-2/3 rounded bg-gray-200" />
+    </div>
+  )
+});
 
 interface Order {
   id: string;
@@ -349,12 +360,14 @@ function RatingModal({ target, onClose, onSubmitted }: { target: { productId: st
             <button className="text-gray-400 hover:text-gray-600" onClick={onClose}>✕</button>
           </div>
           <div className="p-4">
-            <RatingForm
-              productId={target.productId}
-              orderItemId={target.orderItemId}
-              onRatingSubmitted={onSubmitted}
-              onClose={onClose}
-            />
+            <Suspense fallback={<div className="h-32 rounded-lg bg-gray-100 animate-pulse" />}>
+              <RatingForm
+                productId={target.productId}
+                orderItemId={target.orderItemId}
+                onRatingSubmitted={onSubmitted}
+                onClose={onClose}
+              />
+            </Suspense>
           </div>
         </div>
       </div>
