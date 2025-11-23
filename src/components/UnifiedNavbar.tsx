@@ -109,7 +109,7 @@ export default function UnifiedNavbar() {
         <div className="flex w-full items-center justify-between gap-2 sm:gap-4 py-2 sm:py-3 lg:py-4 min-w-0">
           {/* Logo */}
           <div className="flex-shrink-0 min-w-0">
-            <Link href={`/${lang}/`} className="flex min-w-0 items-center gap-0.5 sm:gap-1 group">
+            <Link href={`/${lang}/`} className="flex min-w-0 items-center gap-0 group">
               <div className="relative h-6 w-14 sm:h-8 sm:w-20 flex-shrink-0">
                 <SmartImage 
                   src="/images/Logo.png" 
@@ -121,7 +121,7 @@ export default function UnifiedNavbar() {
                   style={{ filter: 'invert(37%) sepia(53%) saturate(946%) hue-rotate(336deg) brightness(90%) contrast(100%)' }}
                 />
               </div>
-              <span className="font-montserrat font-bold text-sm sm:text-lg lg:text-xl text-primary-800 group-hover:text-primary-600 transition-colors truncate">Feinraumshop</span>
+              <span className="font-montserrat font-bold text-sm sm:text-lg lg:text-xl text-primary-800 group-hover:text-primary-600 transition-colors truncate -ml-1 sm:-ml-3.5">Feinraumshop</span>
             </Link>
           </div>
 
@@ -286,7 +286,7 @@ export default function UnifiedNavbar() {
                 )}
               </div>
             ) : (
-              <Link href={`/${lang}/login`} className="hidden xs:inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-700 hover:text-[var(--color-primary-700)] rounded-full border border-gray-200 hover:bg-gray-50 transition-colors">
+              <Link href={`/${lang}/login`} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-gray-700 hover:text-[var(--color-primary-700)] rounded-full border border-gray-200 hover:bg-gray-50 transition-colors">
                 <User className="w-4 h-4" />
                 <span className="hidden sm:block">{translate('signIn')}</span>
               </Link>
