@@ -36,7 +36,7 @@ export default function LoginPage() {
         </label>
         <label className="block mb-4">
           <span className="text-sm">Password</span>
-          <input type="password" value={password} onChange={e=>setPassword(e.target.value)} className="w-full border rounded p-2" />
+          <input type="password" value={password} onChange={e=>setPassword(e.target.value)} className="w-full border rounded p-2 text-gray-900" />
         </label>
         <button className="w-full rounded-2xl p-2 border shadow">Login</button>
       </form>

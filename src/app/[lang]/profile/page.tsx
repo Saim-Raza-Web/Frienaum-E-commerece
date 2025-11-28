@@ -689,7 +689,7 @@ function ProfileContent() {
                             type="password"
                             value={passwordForm.currentPassword}
                             onChange={(e) => handlePasswordChange('currentPassword', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-turquoise-500 focus:border-turquoise-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-turquoise-500 focus:border-turquoise-500 text-gray-900"
                             required
                           />
                         </div>
@@ -699,7 +699,7 @@ function ProfileContent() {
                             type="password"
                             value={passwordForm.newPassword}
                             onChange={(e) => handlePasswordChange('newPassword', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-turquoise-500 focus:border-turquoise-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-turquoise-500 focus:border-turquoise-500 text-gray-900"
                             required
                             minLength={6}
                           />
@@ -710,7 +710,7 @@ function ProfileContent() {
                             type="password"
                             value={passwordForm.confirmPassword}
                             onChange={(e) => handlePasswordChange('confirmPassword', e.target.value)}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-turquoise-500 focus:border-turquoise-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-turquoise-500 focus:border-turquoise-500 text-gray-900"
                             required
                             minLength={6}
                           />
@@ -824,7 +824,7 @@ function ProfileContent() {
                               type="text"
                               value={newPaymentForm.cardholderName}
                               onChange={(e) => handlePaymentFormChange('cardholderName', e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-turquoise-500 focus:border-turquoise-500"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-turquoise-500 focus:border-turquoise-500 text-gray-900"
                               placeholder="John Doe"
                               required
                             />
@@ -838,7 +838,7 @@ function ProfileContent() {
                               type="text"
                               value={newPaymentForm.cardNumber}
                               onChange={(e) => handlePaymentFormChange('cardNumber', e.target.value.replace(/\D/g, '').slice(0, 16))}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-turquoise-500 focus:border-turquoise-500"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-turquoise-500 focus:border-turquoise-500 text-gray-900"
                               placeholder="1234 5678 9012 3456"
                               maxLength={16}
                               required
@@ -859,7 +859,7 @@ function ProfileContent() {
                                 }
                                 handlePaymentFormChange('expiryDate', value);
                               }}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-turquoise-500 focus:border-turquoise-500"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-turquoise-500 focus:border-turquoise-500 text-gray-900"
                               placeholder="MM/YY"
                               maxLength={5}
                               required
@@ -874,7 +874,7 @@ function ProfileContent() {
                               type="text"
                               value={newPaymentForm.cvv}
                               onChange={(e) => handlePaymentFormChange('cvv', e.target.value.replace(/\D/g, '').slice(0, 4))}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-turquoise-500 focus:border-turquoise-500"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-turquoise-500 focus:border-turquoise-500 text-gray-900"
                               placeholder="123"
                               maxLength={4}
                               required
@@ -994,7 +994,7 @@ function ProfileContent() {
                               type="text"
                               value={editBillingForm.name}
                               onChange={(e) => handleBillingFormChange('name', e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-turquoise-500 focus:border-turquoise-500"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-turquoise-500 focus:border-turquoise-500 text-gray-900"
                               required
                             />
                           </div>
@@ -1007,7 +1007,7 @@ function ProfileContent() {
                               type="text"
                               value={editBillingForm.street}
                               onChange={(e) => handleBillingFormChange('street', e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-turquoise-500 focus:border-turquoise-500"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-turquoise-500 focus:border-turquoise-500 text-gray-900"
                               required
                             />
                           </div>
@@ -1020,7 +1020,7 @@ function ProfileContent() {
                               type="text"
                               value={editBillingForm.city}
                               onChange={(e) => handleBillingFormChange('city', e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-turquoise-500 focus:border-turquoise-500"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-turquoise-500 focus:border-turquoise-500 text-gray-900"
                               required
                             />
                           </div>
@@ -1033,7 +1033,7 @@ function ProfileContent() {
                               type="text"
                               value={editBillingForm.state}
                               onChange={(e) => handleBillingFormChange('state', e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-turquoise-500 focus:border-turquoise-500"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-turquoise-500 focus:border-turquoise-500 text-gray-900"
                               required
                             />
                           </div>
@@ -1046,7 +1046,7 @@ function ProfileContent() {
                               type="text"
                               value={editBillingForm.zipCode}
                               onChange={(e) => handleBillingFormChange('zipCode', e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-turquoise-500 focus:border-turquoise-500"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-turquoise-500 focus:border-turquoise-500 text-gray-900"
                               required
                             />
                           </div>
@@ -1059,7 +1059,7 @@ function ProfileContent() {
                               type="text"
                               value={editBillingForm.country}
                               onChange={(e) => handleBillingFormChange('country', e.target.value)}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-turquoise-500 focus:border-turquoise-500"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-turquoise-500 focus:border-turquoise-500 text-gray-900"
                               required
                             />
                           </div>
