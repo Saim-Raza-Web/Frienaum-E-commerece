@@ -2,11 +2,18 @@ import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
+const SKIP_SEED = true; // Set to false if you want to enable seeding again.
 
 async function main() {
-  const adminPass = await bcrypt.hash("Admin@12345", 10);
-  const merchantPass = await bcrypt.hash("Merchant@12345", 10);
-  const customerPass = await bcrypt.hash("Customer@12345", 10);
+  if (SKIP_SEED) {
+    console.log("Prisma seed skipped (SKIP_SEED=true). Remove or toggle this flag to re-enable seeding.");
+    return;
+  }
+
+  // Hash passwords with bcrypt (12 rounds for strong security - consistent with registration)
+  const adminPass = await bcrypt.hash("Admin@12345", 12);
+  const merchantPass = await bcrypt.hash("Merchant@12345", 12);
+  const customerPass = await bcrypt.hash("Customer@12345", 12);
 
   // Seed categories first
   const categories = [

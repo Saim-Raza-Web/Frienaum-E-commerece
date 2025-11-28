@@ -3,7 +3,7 @@ import { getUserFromReq } from '@/lib/apiAuth';
 
 let inMemorySettings = {
   storeName: 'Fienraum',
-  currency: 'USD',
+  currency: 'CHF',
   defaultLanguage: 'en'
 };
 

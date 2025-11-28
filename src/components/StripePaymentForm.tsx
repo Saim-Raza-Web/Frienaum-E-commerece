@@ -126,7 +126,7 @@ export default function StripePaymentForm({
       <div className="bg-gray-50 p-3 rounded-lg">
         <div className="flex items-center justify-between text-sm">
           <span>Total Amount:</span>
-          <span className="font-semibold">${(amount / 100).toFixed(2)}</span>
+          <span className="font-semibold">{(amount / 100).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF</span>
         </div>
       </div>
 
@@ -136,7 +136,7 @@ export default function StripePaymentForm({
         className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
       >
         <CreditCard className="w-5 h-5" />
-        <span>Pay ${(amount / 100).toFixed(2)}</span>
+        <span>Pay {(amount / 100).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF</span>
       </button>
     </form>
   );

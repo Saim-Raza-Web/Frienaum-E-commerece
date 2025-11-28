@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
 import { verifyToken } from '@/lib/auth';
+import { sendPasswordChangeNotification } from '@/lib/email';
 
 export async function POST(req: NextRequest) {
   try {
@@ -52,6 +53,12 @@ export async function POST(req: NextRequest) {
     await prisma.user.update({
       where: { id: userId },
       data: { password: hashedPassword },
+    });
+
+    // Send password change notification email (don't wait for it - send asynchronously)
+    sendPasswordChangeNotification(user.email, user.name).catch((error) => {
+      console.error('Failed to send password change notification email:', error);
+      // Don't fail the password change if email fails
     });
 
     return NextResponse.json({ message: 'Password changed successfully' });

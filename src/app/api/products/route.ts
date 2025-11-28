@@ -73,9 +73,20 @@ function getUserFromNextRequest(req: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
+    // Check if user is admin/merchant (they can see all statuses) or public (only published)
+    const user = getUserFromNextRequest(request);
+    const isAdminOrMerchant = user && (user.role === 'ADMIN' || user.role === 'MERCHANT');
+    
+    // Public listings only show published products
+    const whereClause: any = {};
+    if (!isAdminOrMerchant) {
+      whereClause.status = 'PUBLISHED';
+    }
+
     // Get all products with proper error handling for deleted merchants
     // We'll use a raw query approach to handle the case where merchants might be deleted
     const products = await prisma.product.findMany({
+      where: whereClause,
       include: {
         merchant: {
           include: {
@@ -161,7 +172,15 @@ export async function GET(request: NextRequest) {
     // If the main query fails due to orphaned data, try a simpler approach
     try {
       console.log('Trying fallback query...');
+      const user = getUserFromNextRequest(request);
+      const isAdminOrMerchant = user && (user.role === 'ADMIN' || user.role === 'MERCHANT');
+      const whereClause: any = {};
+      if (!isAdminOrMerchant) {
+        whereClause.status = 'PUBLISHED';
+      }
+      
       const fallbackProducts = await prisma.product.findMany({
+        where: whereClause,
         select: {
           id: true,
           slug: true,
@@ -174,6 +193,7 @@ export async function GET(request: NextRequest) {
           imageUrl: true,
           categoryId: true,
           merchantId: true,
+          status: true,
           createdAt: true,
           updatedAt: true,
           category: {
@@ -271,6 +291,15 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Determine product status: merchants default to PENDING (can also create as DRAFT), admins can create as PUBLISHED
+    let productStatus = 'PENDING';
+    if (user.role === 'ADMIN') {
+      productStatus = productData.status || 'PUBLISHED';
+    } else if (user.role === 'MERCHANT') {
+      // Merchants can create as DRAFT or PENDING (default PENDING)
+      productStatus = productData.status === 'DRAFT' ? 'DRAFT' : 'PENDING';
+    }
+
     // Create the product
     const created = await prisma.product.create({
       data: {
@@ -283,7 +312,8 @@ export async function POST(request: NextRequest) {
         stock: Number(stock),
         imageUrl: imageUrl || undefined,
         categoryId: categoryId,
-        merchantId: targetMerchantId
+        merchantId: targetMerchantId,
+        status: productStatus
       },
       include: {
         merchant: {

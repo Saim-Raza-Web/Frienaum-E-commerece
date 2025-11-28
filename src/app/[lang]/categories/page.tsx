@@ -7,6 +7,7 @@ import { Search, Grid, List, Loader2, AlertCircle } from 'lucide-react';
 import { useTranslation } from '@/i18n/TranslationProvider';
 import SmartImage from '@/components/SmartImage';
 import { Category } from '@/types';
+import MerchantBlocker from '@/components/MerchantBlocker';
 
 export default function CategoriesPage() {
   const { translate } = useTranslation();
@@ -121,6 +122,7 @@ export default function CategoriesPage() {
   }
 
   return (
+    <MerchantBlocker>
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white shadow-sm border-b">
@@ -270,5 +272,6 @@ export default function CategoriesPage() {
         )}
       </div>
     </div>
+    </MerchantBlocker>
   );
 }

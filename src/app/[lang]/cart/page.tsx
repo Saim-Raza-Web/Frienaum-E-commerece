@@ -8,6 +8,7 @@ import { useTranslation } from '@/i18n/TranslationProvider';
 import { Trash2, ArrowLeft, ShoppingBag, CreditCard } from 'lucide-react';
 import dynamic from 'next/dynamic';
 import SmartImage from '@/components/SmartImage';
+import MerchantBlocker from '@/components/MerchantBlocker';
 
 // Dynamically import the CheckoutPopup to avoid SSR issues
 const CheckoutPopup = dynamic(
@@ -93,6 +94,7 @@ export default function CartPage() {
   }
 
   return (
+    <MerchantBlocker>
     <div className="min-h-screen bg-gray-50 overflow-x-hidden">
       <CheckoutPopup 
         isOpen={isCheckoutOpen} 
@@ -345,5 +347,6 @@ export default function CartPage() {
       `}</style>
     </div>
     </div>
+    </MerchantBlocker>
   );
 }

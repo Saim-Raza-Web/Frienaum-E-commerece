@@ -22,12 +22,12 @@ export async function GET(request: NextRequest) {
       prisma.user.count(),
       prisma.user.count({ where: { isDeleted: true } as any }),
       prisma.order.count(),
-      // Primary source of truth: sum of successful USD payments
+      // Primary source of truth: sum of successful CHF payments
       prisma.payment.aggregate({
         _sum: { amount: true },
-        where: { status: 'SUCCEEDED', currency: 'USD' },
+        where: { status: 'SUCCEEDED', currency: 'CHF' },
       }),
-      // Fallback: sum of delivered orders' grandTotal (assumed USD by default schema)
+      // Fallback: sum of delivered orders' grandTotal (assumed CHF by default schema)
       prisma.order.aggregate({
         _sum: { grandTotal: true },
         where: { status: 'DELIVERED' },

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getUserFromReq } from '@/lib/apiAuth';
+import { sendOrderStatusUpdateEmail } from '@/lib/email';
 
 function getUserFromNextRequest(req: NextRequest) {
   const cookieHeader = req.headers.get('cookie') || '';
@@ -113,7 +114,7 @@ export async function PATCH(
     const order = await prisma.order.update({
       where: {
         id: orderId!,
-        merchantId: merchant.id,
+          merchantId: merchant.id,
       },
       data: {
         status,
@@ -124,11 +125,30 @@ export async function PATCH(
             product: true,
           },
         },
+        customer: {
+          select: { name: true, email: true }
+        }
       },
     });
 
     if (!order) {
       return NextResponse.json({ error: 'Order not found' }, { status: 404 });
+    }
+
+    // Send status update email to customer (don't block response)
+    try {
+      sendOrderStatusUpdateEmail(
+        order.customer.email,
+        order.customer.name,
+        {
+          orderId: order.id,
+          status,
+          totalAmount: order.totalAmount,
+          currency: order.currency
+        }
+      ).catch(err => console.error('Failed to send status update email:', err));
+    } catch (error) {
+      console.error('Error sending status update email:', error);
     }
 
     return NextResponse.json(order);

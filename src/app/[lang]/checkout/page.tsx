@@ -12,6 +12,7 @@ import dynamic from 'next/dynamic';
 import { useAuth } from '@/context/AuthContext';
 import { useCart } from '@/context/CartContext';
 import { useTranslation } from '@/i18n/TranslationProvider';
+import MerchantBlocker from '@/components/MerchantBlocker';
 
 const StripePaymentForm = dynamic(() => import('@/components/StripePaymentForm'), {
   ssr: false,
@@ -165,6 +166,7 @@ export default function CheckoutPage() {
   const handlePaymentLoading = (loading: boolean) => setIsLoading(loading);
 
   return (
+    <MerchantBlocker>
     <div className="min-h-screen bg-gray-50">
       <Navigation />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -386,5 +388,6 @@ export default function CheckoutPage() {
       </div>
       <Footer />
     </div>
+    </MerchantBlocker>
   );
 } 

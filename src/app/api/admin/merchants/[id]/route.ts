@@ -30,10 +30,10 @@ export async function GET(request: NextRequest, context: { params: Promise<{ id:
     const [productCount, orderCount, paymentsRevenueAgg, deliveredOrdersRevenueAgg, latestProducts, latestOrders] = await Promise.all([
       prisma.product.count({ where: { merchantId: id } }),
       prisma.order.count({ where: { merchantId: id } }),
-      // Primary revenue source: successful USD payments linked to this merchant's orders
+      // Primary revenue source: successful CHF payments linked to this merchant's orders
       prisma.payment.aggregate({
         _sum: { amount: true },
-        where: { status: 'SUCCEEDED', currency: 'USD', order: { merchantId: id } },
+        where: { status: 'SUCCEEDED', currency: 'CHF', order: { merchantId: id } },
       }),
       // Fallback: sum of delivered orders' grand totals
       prisma.order.aggregate({ _sum: { grandTotal: true }, where: { merchantId: id, status: 'DELIVERED' } }),

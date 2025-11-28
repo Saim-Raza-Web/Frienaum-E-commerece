@@ -93,8 +93,16 @@ export default function UnifiedNavbar() {
   const changeLanguage = (newLang: string) => {
     setIsLanguageOpen(false);
     if (newLang === lang) return;
-    
+
     const pathWithoutLocale = pathname.replace(/^\/[a-z]{2}(\/|$)/, '/');
+
+    // Prevent customers from being redirected to merchant pages
+    if (user?.role !== 'merchant' && user?.role !== 'admin' && pathWithoutLocale.startsWith('/merchant')) {
+      // Redirect customers to home page instead of merchant pages
+      router.push(`/${newLang}/`);
+      return;
+    }
+
     router.push(`/${newLang}${pathWithoutLocale}`);
   };
 
@@ -128,43 +136,58 @@ export default function UnifiedNavbar() {
           {/* Desktop Navigation - Clean minimalist design */}
           <div className="hidden lg:block flex-1">
             <div className="ml-8 flex items-center gap-8">
-              <Link
-                href={`/${lang}/`}
-                className={`font-lora inline-flex items-center text-sm transition-colors duration-200 underline-offset-4 ${
-                  isHomeActive
-                    ? 'text-[var(--color-primary-700)] underline'
-                    : 'text-gray-700 hover:text-[var(--color-primary-700)] hover:underline active:text-[var(--color-primary-800)] active:underline'
-                }`}
-              >
-                {translate('home')}
-              </Link>
-              <NavLink
-                href="/products"
-                className="font-lora"
-              >
-                {translate('navigation.products')}
-              </NavLink>
-              <NavLink href="/categories" className="font-lora">{translate('navigation.categories')}</NavLink>
-              <NavLink href="/about" className="font-lora">{translate('about')}</NavLink>
-              <NavLink href="/contact" className="font-lora">{translate('contact')}</NavLink>
+              {/* For merchants, show dashboard link instead of shopping links */}
+              {isAuthenticated && user?.role === 'merchant' ? (
+                <>
+                  <NavLink href="/merchant" className="font-lora">
+                    {translate('merchant.dashboard') || 'Merchant Dashboard'}
+                  </NavLink>
+                  <NavLink href="/about" className="font-lora">{translate('about')}</NavLink>
+                  <NavLink href="/contact" className="font-lora">{translate('contact')}</NavLink>
+                </>
+              ) : (
+                <>
+                  <Link
+                    href={`/${lang}/`}
+                    className={`font-lora inline-flex items-center text-sm transition-colors duration-200 underline-offset-4 ${
+                      isHomeActive
+                        ? 'text-[var(--color-primary-700)] underline'
+                        : 'text-gray-700 hover:text-[var(--color-primary-700)] hover:underline active:text-[var(--color-primary-800)] active:underline'
+                    }`}
+                  >
+                    {translate('home')}
+                  </Link>
+                  <NavLink
+                    href="/products"
+                    className="font-lora"
+                  >
+                    {translate('navigation.products')}
+                  </NavLink>
+                  <NavLink href="/categories" className="font-lora">{translate('navigation.categories')}</NavLink>
+                  <NavLink href="/about" className="font-lora">{translate('about')}</NavLink>
+                  <NavLink href="/contact" className="font-lora">{translate('contact')}</NavLink>
+                </>
+              )}
             </div>
           </div>
 
           {/* Right side - Search, Cart, User/Language */}
           <div className="flex items-center gap-1.5 sm:gap-3 lg:gap-4 flex-shrink-0 ml-auto lg:pl-6">
-            {/* Search Bar - Responsive design */}
-            <div className="hidden sm:block">
-              <div className="relative">
-                <input
-                  type="search"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={handleSearch}
-                  className="w-40 sm:w-48 lg:w-56 xl:w-64 px-3 sm:px-4 h-10 bg-white border border-gray-200 rounded-xl shadow-sm placeholder-gray-400 text-gray-900 font-lora text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-300 focus:border-primary-300 hover:border-gray-300"
-                  placeholder="Search products..."
-                />
+            {/* Search Bar - Responsive design (hidden for merchants) */}
+            {(!isAuthenticated || user?.role !== 'merchant') && (
+              <div className="hidden sm:block">
+                <div className="relative">
+                  <input
+                    type="search"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={handleSearch}
+                    className="w-40 sm:w-48 lg:w-56 xl:w-64 px-3 sm:px-4 h-10 bg-white border border-gray-200 rounded-xl shadow-sm placeholder-gray-400 text-gray-900 font-lora text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-300 focus:border-primary-300 hover:border-gray-300"
+                    placeholder="Search products..."
+                  />
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Language Selector - Responsive design */}
             <div className="relative">
@@ -193,15 +216,17 @@ export default function UnifiedNavbar() {
               </div>
             </div>
 
-            {/* Cart - Responsive design */}
-            <Link href={`/${lang}/cart`} className="relative inline-flex h-9 w-9 items-center justify-center text-gray-600 hover:text-[var(--color-primary-700)] transition-colors duration-200 rounded-full hover:bg-gray-50">
-              <ShoppingCart className="w-4 h-4" />
-              {cartItemCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-cta-500 text-white text-xs rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center font-montserrat font-bold shadow-sm text-[10px] sm:text-xs">
-                  {cartItemCount > 99 ? '99+' : cartItemCount}
-                </span>
-              )}
-            </Link>
+            {/* Cart - Responsive design (hidden for merchants) */}
+            {(!isAuthenticated || user?.role !== 'merchant') && (
+              <Link href={`/${lang}/cart`} className="relative inline-flex h-9 w-9 items-center justify-center text-gray-600 hover:text-[var(--color-primary-700)] transition-colors duration-200 rounded-full hover:bg-gray-50">
+                <ShoppingCart className="w-4 h-4" />
+                {cartItemCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-cta-500 text-white text-xs rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center font-montserrat font-bold shadow-sm text-[10px] sm:text-xs">
+                    {cartItemCount > 99 ? '99+' : cartItemCount}
+                  </span>
+                )}
+              </Link>
+            )}
 
             {/* User Menu or Sign In - Responsive design */}
             {isAuthenticated && user ? (
@@ -244,14 +269,17 @@ export default function UnifiedNavbar() {
                       {translate('profile')}
                     </Link>
 
-                    <Link
-                      href={`/${lang}/orders`}
-                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-[var(--color-primary-50)] hover:text-[var(--color-primary-700)]"
-                      onClick={() => setIsUserMenuOpen(false)}
-                    >
-                      <Package className="w-4 h-4 mr-2" />
-                      {translate('orders')}
-                    </Link>
+                    {/* Show orders link only for customers, not merchants */}
+                    {user.role !== 'merchant' && (
+                      <Link
+                        href={`/${lang}/orders`}
+                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-[var(--color-primary-50)] hover:text-[var(--color-primary-700)]"
+                        onClick={() => setIsUserMenuOpen(false)}
+                      >
+                        <Package className="w-4 h-4 mr-2" />
+                        {translate('orders')}
+                      </Link>
+                    )}
 
                     {user.role === 'merchant' && (
                       <Link
@@ -260,7 +288,7 @@ export default function UnifiedNavbar() {
                         onClick={() => setIsUserMenuOpen(false)}
                       >
                         <ShoppingBag className="w-4 h-4 mr-2" />
-                        {translate('merchantDashboard')}
+                        {translate('merchant.dashboard') || 'Merchant Dashboard'}
                       </Link>
                     )}
 
@@ -308,19 +336,21 @@ export default function UnifiedNavbar() {
       {isMobileMenuOpen && (
         <div className="lg:hidden">
           <div className="px-3 sm:px-4 pt-2 pb-3 space-y-3 bg-white border-t border-gray-100 ">
-            {/* Mobile Search */}
-            <div className="py-2">
-              <div className="relative">
-                <input
-                  type="search"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  onKeyDown={handleSearch}
-                  className="search-input block w-full px-4 py-2 rounded-full placeholder-gray-500 text-gray-900 text-sm transition-all duration-200 focus:outline-none"
-                  placeholder="Search..."
-                />
+            {/* Mobile Search (hidden for merchants) */}
+            {(!isAuthenticated || user?.role !== 'merchant') && (
+              <div className="py-2">
+                <div className="relative">
+                  <input
+                    type="search"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    onKeyDown={handleSearch}
+                    className="search-input block w-full px-4 py-2 rounded-full placeholder-gray-500 text-gray-900 text-sm transition-all duration-200 focus:outline-none"
+                    placeholder="Search..."
+                  />
+                </div>
               </div>
-            </div>
+            )}
 
             {/* Mobile Language Selector - Show for both logged in and out */}
             <div className="px-1 py-2">
@@ -345,41 +375,70 @@ export default function UnifiedNavbar() {
             {isAuthenticated ? (
               // Logged in mobile navigation
               <>
-                <Link
-                  href={`/${lang}/`}
-                  className="block px-3 py-2 text-gray-700 hover:text-[var(--color-primary-700)] hover:bg-[var(--color-primary-50)] rounded text-base"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  {translate('home')}
-                </Link>
-                <Link
-                  href={`/${lang}/products`}
-                  className="block px-3 py-2 text-gray-700 hover:text-[var(--color-primary-700)] hover:bg-[var(--color-primary-50)] rounded text-base"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  {translate('navigation.products')}
-                </Link>
-                <Link
-                  href={`/${lang}/categories`}
-                  className="block px-3 py-2 text-gray-700 hover:text-[var(--color-primary-700)] hover:bg-[var(--color-primary-50)] rounded text-base"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  {translate('navigation.categories')}
-                </Link>
-                <Link
-                  href={`/${lang}/about`}
-                  className="block px-3 py-2 text-gray-700 hover:text-[var(--color-primary-700)] hover:bg-[var(--color-primary-50)] rounded text-base"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  {translate('about')}
-                </Link>
-                <Link
-                  href={`/${lang}/contact`}
-                  className="block px-3 py-2 text-gray-700 hover:text-[var(--color-primary-700)] hover:bg-[var(--color-primary-50)] rounded text-base"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  {translate('contact')}
-                </Link>
+                {/* For merchants, show dashboard link instead of shopping links */}
+                {user?.role === 'merchant' ? (
+                  <>
+                    <Link
+                      href={`/${lang}/merchant`}
+                      className="block px-3 py-2 text-gray-700 hover:text-[var(--color-primary-700)] hover:bg-[var(--color-primary-50)] rounded text-base"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      {translate('merchant.dashboard') || 'Merchant Dashboard'}
+                    </Link>
+                    <Link
+                      href={`/${lang}/about`}
+                      className="block px-3 py-2 text-gray-700 hover:text-[var(--color-primary-700)] hover:bg-[var(--color-primary-50)] rounded text-base"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      {translate('about')}
+                    </Link>
+                    <Link
+                      href={`/${lang}/contact`}
+                      className="block px-3 py-2 text-gray-700 hover:text-[var(--color-primary-700)] hover:bg-[var(--color-primary-50)] rounded text-base"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      {translate('contact')}
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <Link
+                      href={`/${lang}/`}
+                      className="block px-3 py-2 text-gray-700 hover:text-[var(--color-primary-700)] hover:bg-[var(--color-primary-50)] rounded text-base"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      {translate('home')}
+                    </Link>
+                    <Link
+                      href={`/${lang}/products`}
+                      className="block px-3 py-2 text-gray-700 hover:text-[var(--color-primary-700)] hover:bg-[var(--color-primary-50)] rounded text-base"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      {translate('navigation.products')}
+                    </Link>
+                    <Link
+                      href={`/${lang}/categories`}
+                      className="block px-3 py-2 text-gray-700 hover:text-[var(--color-primary-700)] hover:bg-[var(--color-primary-50)] rounded text-base"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      {translate('navigation.categories')}
+                    </Link>
+                    <Link
+                      href={`/${lang}/about`}
+                      className="block px-3 py-2 text-gray-700 hover:text-[var(--color-primary-700)] hover:bg-[var(--color-primary-50)] rounded text-base"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      {translate('about')}
+                    </Link>
+                    <Link
+                      href={`/${lang}/contact`}
+                      className="block px-3 py-2 text-gray-700 hover:text-[var(--color-primary-700)] hover:bg-[var(--color-primary-50)] rounded text-base"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                    >
+                      {translate('contact')}
+                    </Link>
+                  </>
+                )}
               </>
             ) : (
               // Logged out mobile navigation
@@ -412,20 +471,23 @@ export default function UnifiedNavbar() {
                 >
                   {translate('profile')}
                 </Link>
-                <Link
-                  href={`/${lang}/orders`}
-                  className="block px-3 py-2 text-gray-700 hover:text-[var(--color-primary-700)] hover:bg-[var(--color-primary-50)] rounded text-base"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  {translate('orders')}
-                </Link>
+                {/* Show orders link only for customers, not merchants */}
+                {user.role !== 'merchant' && (
+                  <Link
+                    href={`/${lang}/orders`}
+                    className="block px-3 py-2 text-gray-700 hover:text-[var(--color-primary-700)] hover:bg-[var(--color-primary-50)] rounded text-base"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    {translate('orders')}
+                  </Link>
+                )}
                 {user.role === 'merchant' && (
                   <Link
                     href={`/${lang}/merchant`}
                     className="block px-3 py-2 text-gray-700 hover:text-[var(--color-primary-700)] hover:bg-[var(--color-primary-50)] rounded text-base"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    {translate('merchantDashboard')}
+                    {translate('merchant.dashboard') || 'Merchant Dashboard'}
                   </Link>
                 )}
                 {user.role === 'admin' && (

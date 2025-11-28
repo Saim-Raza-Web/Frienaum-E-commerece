@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/authOptions';
 import { prisma } from '@/lib/prisma';
+import { sendMerchantWelcomeEmail } from '@/lib/email';
 
 export async function POST(request: Request) {
   try {
@@ -35,6 +36,17 @@ export async function POST(request: Request) {
       where: { id: session.user.id },
       data: { role: 'MERCHANT' },
     }).catch(() => {});
+
+    // Send welcome email (don't block response if email fails)
+    try {
+      sendMerchantWelcomeEmail(
+        session.user.email!,
+        session.user.name || 'Merchant',
+        storeName.trim()
+      ).catch(err => console.error('Failed to send merchant welcome email:', err));
+    } catch (error) {
+      console.error('Error sending welcome email:', error);
+    }
 
     return NextResponse.json(created, { status: 201 });
   } catch (error) {

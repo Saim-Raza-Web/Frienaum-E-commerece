@@ -40,7 +40,7 @@ async function testAPI() {
       console.log('\nSample product:');
       const sample = validProducts[0];
       console.log(`  - Title: ${sample.title_en}`);
-      console.log(`  - Price: $${sample.price}`);
+      console.log(`  - Price: ${sample.price.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF`);
       console.log(`  - Merchant: ${sample.merchant.name} (${sample.merchant.email})`);
     }
     

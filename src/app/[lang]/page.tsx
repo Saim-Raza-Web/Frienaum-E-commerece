@@ -8,6 +8,7 @@ import { useTranslation } from '@/i18n/TranslationProvider';
 import { Product } from '@/types';
 import { ArrowRight, Star, Truck, Shield, Clock } from 'lucide-react';
 import SmartImage from '@/components/SmartImage';
+import MerchantBlocker from '@/components/MerchantBlocker';
 
 // Dynamically import the ProductCard component with no SSR
 const ProductCard = dynamic(() => import('@/components/ProductCard'), {
@@ -321,6 +322,7 @@ function HomePage({ params }: HomePageProps) {
   // categories are built from products fetch above
 
   return (
+    <MerchantBlocker>
     <div className="min-h-screen bg-primary-50 overflow-x-hidden">
       {/* Hero Section - Responsive design */}
       <section className="bg-primary-50 overflow-hidden">
@@ -602,6 +604,7 @@ function HomePage({ params }: HomePageProps) {
       `}</style>
 
     </div>
+    </MerchantBlocker>
   );
 }
 

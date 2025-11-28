@@ -186,7 +186,7 @@ export default function MerchantOrdersPage() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="font-medium">${order.totalAmount.toFixed(2)}</div>
+                      <div className="font-medium">{order.totalAmount.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF</div>
                       {nextStatus && (
                         <button
                           onClick={() => updateOrderStatus(order.id, nextStatus)}
@@ -214,11 +214,11 @@ export default function MerchantOrdersPage() {
                           <div className="ml-4 flex-1">
                             <div className="font-medium">{item.product.title_en}</div>
                             <div className="text-sm text-gray-500">
-                              Qty: {item.quantity} × ${item.price.toFixed(2)}
+                              Qty: {item.quantity} × {item.price.toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
                             </div>
                           </div>
                           <div className="font-medium">
-                            ${(item.quantity * item.price).toFixed(2)}
+                            {(item.quantity * item.price).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF
                           </div>
                         </div>
                       ))}

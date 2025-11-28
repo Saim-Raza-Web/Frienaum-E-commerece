@@ -14,7 +14,9 @@ import {
   Plus,
   Search,
   Filter,
-  Loader2
+  Loader2,
+  CreditCard,
+  CheckCircle
 } from 'lucide-react';
 
 const ImageUpload = dynamic(() => import('@/components/ImageUpload'), {
@@ -27,6 +29,7 @@ const ImageUpload = dynamic(() => import('@/components/ImageUpload'), {
 function MerchantDashboard() {
   const { translate } = useTranslation();
   const { user } = useAuth();
+  const [merchantStatus, setMerchantStatus] = useState<string>('PENDING');
 
   const formatCurrency = (amount: number | string | null | undefined) => {
     const value = typeof amount === 'string' ? parseFloat(amount) : amount ?? 0;
@@ -53,11 +56,33 @@ function MerchantDashboard() {
     fetchCategories();
   }, []);
 
+  // Fetch merchant status
+  useEffect(() => {
+    const fetchMerchantStatus = async () => {
+      try {
+        const response = await fetch('/api/merchant/stats', {
+          method: 'GET',
+          credentials: 'include'
+        });
+        if (response.ok) {
+          const data = await response.json();
+          // We can infer merchant status from whether they have stats or not
+          // For now, assume all merchants are active. In a real implementation,
+          // you'd have a separate endpoint to get merchant profile including status
+          setMerchantStatus('ACTIVE');
+        }
+      } catch (error) {
+        console.error('Error fetching merchant status:', error);
+      }
+    };
+
+    if (user?.role === 'merchant' && user?.id) {
+      fetchMerchantStatus();
+    }
+  }, [user?.role, user?.id]); // More specific dependencies
+
   // State declarations
   const [activeTab, setActiveTab] = useState('overview');
-  
-  // Debug active tab state
-  console.log('Merchant - Current active tab:', activeTab);
   const [searchTerm, setSearchTerm] = useState('');
   const [products, setProducts] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
@@ -66,6 +91,7 @@ function MerchantDashboard() {
   // State for add product modal
   const [showAddModal, setShowAddModal] = useState(false);
   const [creating, setCreating] = useState(false);
+  const [isProductImageUploading, setIsProductImageUploading] = useState(false);
   const [newProduct, setNewProduct] = useState({
     slug: '',
     title_en: '',
@@ -107,6 +133,14 @@ function MerchantDashboard() {
   const [analyticsLoading, setAnalyticsLoading] = useState(false);
   const [analyticsError, setAnalyticsError] = useState<string | null>(null);
 
+  // State for payouts
+  const [payouts, setPayouts] = useState<any>(null);
+  const [payoutsLoading, setPayoutsLoading] = useState(false);
+  const [payoutsError, setPayoutsError] = useState<string | null>(null);
+  const [showPayoutRequest, setShowPayoutRequest] = useState(false);
+  const [payoutAmount, setPayoutAmount] = useState('');
+  const [payoutRequestLoading, setPayoutRequestLoading] = useState(false);
+
   // State for customer detail modal
   const [showCustomerModal, setShowCustomerModal] = useState(false);
   const [selectedCustomerId, setSelectedCustomerId] = useState<string | null>(null);
@@ -125,6 +159,7 @@ function MerchantDashboard() {
     imageUrl: ''
   });
   const [creatingCategory, setCreatingCategory] = useState(false);
+  const [isCategoryImageUploading, setIsCategoryImageUploading] = useState(false);
   const [customerSaving, setCustomerSaving] = useState(false);
 
   // Helper function to transform order status for merchant view
@@ -166,7 +201,11 @@ function MerchantDashboard() {
   // Create new category
   const createCategory = async () => {
     if (!newCategory.name.trim()) {
-      alert('Category name is required');
+      alert(translate('merchant.categoryNameRequired'));
+      return;
+    }
+    if (isCategoryImageUploading) {
+      alert(translate('merchant.waitForImageUpload'));
       return;
     }
 
@@ -200,10 +239,10 @@ function MerchantDashboard() {
         imageUrl: ''
       });
       setShowNewCategoryModal(false);
-      alert('Category created successfully!');
+      alert(translate('merchant.categoryCreatedSuccess'));
     } catch (error) {
       console.error('Error creating category:', error);
-      alert(error instanceof Error ? error.message : 'Failed to create category');
+      alert(error instanceof Error ? error.message : translate('merchant.failedToCreateCategory'));
     } finally {
       setCreatingCategory(false);
     }
@@ -223,79 +262,53 @@ function MerchantDashboard() {
 
   // Initialize stats with loading state
   const [stats, setStats] = useState([
-    { label: 'Total Sales', value: 'Loading...', change: '', icon: DollarSign, color: 'text-green-600' },
-    { label: 'Orders', value: 'Loading...', change: '', icon: ShoppingBag, color: 'text-blue-600' },
-    { label: 'Customers', value: 'Loading...', change: '', icon: Users, color: 'text-purple-600' },
-    { label: 'Products', value: 'Loading...', change: '', icon: Package, color: 'text-orange-600' }
+    { label: translate('merchant.totalSales'), value: translate('merchant.loading'), change: '', icon: DollarSign, color: 'text-green-600' },
+    { label: translate('merchant.orders'), value: translate('merchant.loading'), change: '', icon: ShoppingBag, color: 'text-blue-600' },
+    { label: translate('merchant.customers'), value: translate('merchant.loading'), change: '', icon: Users, color: 'text-purple-600' },
+    { label: translate('merchant.products'), value: translate('merchant.loading'), change: '', icon: Package, color: 'text-orange-600' }
   ]);
 
   // Fetch stats data
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-
-        // Check if user is authenticated first
-        if (!user) {
-          setError('Please log in to access merchant dashboard');
-          return;
-        }
-
-        // Fetch stats with proper session handling
-        const response = await fetch('/api/merchant/stats', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'include' // Include cookies for session
-        });
-
-        if (!response.ok) {
-          if (response.status === 401) {
-            throw new Error('Please log in to view merchant statistics');
-          }
-          throw new Error(`Failed to fetch stats: ${response.statusText}`);
-        }
-
-        const data = await response.json();
-
-        // Validate data structure
-        if (data && typeof data === 'object' && !data.error) {
-          setStats(prevStats => [
-            {
-              ...prevStats[0],
-              value: new Intl.NumberFormat('de-CH', {
-                style: 'currency',
-                currency: 'CHF'
-              }).format(Number(data.totalSales) || 0)
-            },
-            {
-              ...prevStats[1],
-              value: data.totalOrders?.toString() || '0'
-            },
-            {
-              ...prevStats[2],
-              value: data.totalCustomers?.toString() || '0'
-            },
-            {
-              ...prevStats[3],
-              value: data.totalProducts?.toString() || '0'
-            }
-          ]);
-        } else {
-          console.error('Unexpected data format:', data);
-          throw new Error('Invalid data received from server');
-        }
-      } catch (error) {
-        console.error('Error fetching stats:', error);
-        setError(error instanceof Error ? error.message : 'Failed to load stats');
-      } finally {
-        setLoading(false);
+  const fetchStats = async (setLoadingStats: ((v: boolean) => void) | undefined = undefined) => {
+    try {
+      if (setLoadingStats) setLoadingStats(true);
+      setError(null);
+      if (!user) {
+        setError('Please log in to access merchant dashboard');
+        return;
       }
-    };
+      const response = await fetch('/api/merchant/stats', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include', // Include cookies for session
+        cache: 'no-store'
+      });
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Please log in to view merchant statistics');
+        }
+        throw new Error(`Failed to fetch stats: ${response.statusText}`);
+      }
+      const data = await response.json();
+      if (data && typeof data === 'object' && !data.error) {
+        setStats(prevStats => [
+          { ...prevStats[0], value: new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF' }).format(Number(data.totalSales) || 0) },
+          { ...prevStats[1], value: data.totalOrders?.toString() || '0' },
+          { ...prevStats[2], value: data.totalCustomers?.toString() || '0' },
+          { ...prevStats[3], value: data.totalProducts?.toString() || '0' },
+        ]);
+      }
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+      setError(error instanceof Error ? error.message : 'Failed to load stats');
+    } finally {
+      if (setLoadingStats) setLoadingStats(false);
+    }
+  };
+
+  useEffect(() => {
     fetchStats();
-  }, [user]); // Add user dependency to refetch when user changes
+  }, [user]);
 
   // --- Orders: handlers ---
   const openOrderModal = (order: any) => {
@@ -351,13 +364,13 @@ function MerchantDashboard() {
       );
 
       // Update the selected order
-      setSelectedOrder((prev: any) => prev ? { ...prev, status: orderStatusDraft } : null);
-
-      alert('Order status updated successfully');
+      setSelectedOrder((prev) => prev ? { ...prev, status: orderStatusDraft } : null);
+      await fetchStats(); // <-- immediately refresh stats on status update
+      alert(translate('merchant.orderStatusUpdatedSuccess'));
     } catch (err) {
       console.error('Error updating order status:', err);
     } finally {
-      setUpdatingOrderItems(false);
+      setUpdatingOrderStatus(false);
     }
   };
 
@@ -407,7 +420,7 @@ function MerchantDashboard() {
       setEditingOrder(null);
       setEditingOrderItems([]);
 
-      alert('Order items updated successfully');
+      alert(translate('merchant.orderItemsUpdatedSuccess'));
     } catch (err) {
       console.error('Error updating order items:', err);
       setError(err instanceof Error ? err.message : 'Failed to update order items');
@@ -419,7 +432,7 @@ function MerchantDashboard() {
   const deleteOrder = async (orderId: string) => {
     console.log('Attempting to delete order:', orderId);
 
-    if (!confirm('Are you sure you want to delete this order? This action cannot be undone.')) return;
+    if (!confirm(translate('merchant.confirmDeleteOrder'))) return;
 
     try {
       const response = await fetch(`/api/merchant/orders/${orderId}`, {
@@ -450,7 +463,8 @@ function MerchantDashboard() {
 
       // Remove order from local state
       setOrders(prevOrders => prevOrders.filter(order => order.id !== orderId));
-      alert('Order deleted successfully');
+      await fetchStats(); // <-- refresh stats after deleting order
+      alert(translate('merchant.orderDeletedSuccess'));
     } catch (err) {
       console.error('Error deleting order:', err);
       setError(err instanceof Error ? err.message : 'Failed to delete order');
@@ -475,7 +489,7 @@ function MerchantDashboard() {
       setCustomerOrders(ordersJson);
     } catch (e) {
       console.error(e);
-      alert('Failed to load customer');
+      alert(translate('merchant.failedToLoadCustomer'));
     }
   };
 
@@ -506,10 +520,10 @@ function MerchantDashboard() {
       // Refresh list
       const list = await fetch('/api/merchant/customers', { credentials: 'include' }).then(r => r.json());
       setCustomers(list);
-      alert('Saved');
+      alert(translate('merchant.saved'));
     } catch (e) {
       console.error(e);
-      alert('Failed to save');
+      alert(translate('merchant.failedToSave'));
     } finally {
       setCustomerSaving(false);
     }
@@ -522,7 +536,7 @@ function MerchantDashboard() {
       return;
     }
     console.log('About to delete customer:', targetCustomerId);
-    if (!confirm('Remove this customer from your list?')) {
+    if (!confirm(translate('merchant.confirmRemoveCustomer'))) {
       console.log('User cancelled deletion');
       return;
     }
@@ -553,7 +567,7 @@ function MerchantDashboard() {
 
     } catch (e) {
       console.error('Delete error:', e);
-      alert('Failed to remove: ' + (e instanceof Error ? e.message : 'Unknown error'));
+      alert(translate('merchant.failedToRemove') + ': ' + (e instanceof Error ? e.message : translate('merchant.unknown')));
     }
   };
 
@@ -577,7 +591,8 @@ function MerchantDashboard() {
           headers: {
             'Content-Type': 'application/json',
           },
-          credentials: 'include' // Include cookies for session
+          credentials: 'include', // Include cookies for session
+          cache: 'no-store'
         });
 
         if (!response.ok) {
@@ -664,6 +679,80 @@ function MerchantDashboard() {
     fetchAnalytics();
   }, [user, activeTab]);
 
+  // Fetch payouts on tab switch to payouts
+  useEffect(() => {
+    if (activeTab !== 'payouts') return;
+    const fetchPayouts = async () => {
+      try {
+        setPayoutsLoading(true);
+        setPayoutsError(null);
+        if (!user) {
+          setPayoutsError('Please log in to access merchant dashboard');
+          return;
+        }
+        const response = await fetch('/api/merchant/payouts', {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include'
+        });
+        if (!response.ok) {
+          if (response.status === 401) throw new Error('Please log in to view payouts');
+          throw new Error(`Failed to fetch payouts: ${response.statusText}`);
+        }
+        const data = await response.json();
+        setPayouts(data);
+      } catch (err) {
+        console.error('Error fetching payouts:', err);
+        setPayoutsError(err instanceof Error ? err.message : 'Failed to load payouts');
+      } finally {
+        setPayoutsLoading(false);
+      }
+    };
+    fetchPayouts();
+  }, [user, activeTab]);
+
+  const requestPayout = async () => {
+    if (!payoutAmount || parseFloat(payoutAmount) <= 0) {
+      alert('Please enter a valid amount');
+      return;
+    }
+
+    const amount = parseFloat(payoutAmount);
+    const available = payouts?.balance?.available || 0;
+
+    if (amount > available) {
+      alert('Requested amount exceeds available balance');
+      return;
+    }
+
+    setPayoutRequestLoading(true);
+    try {
+      const response = await fetch('/api/merchant/payouts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ amount })
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: 'Failed to request payout' }));
+        throw new Error(error.error || 'Failed to request payout');
+      }
+
+      const result = await response.json();
+      alert('Payout request submitted successfully!');
+      setPayoutAmount('');
+      setShowPayoutRequest(false);
+      // Refresh payouts data
+      fetchPayouts();
+    } catch (error) {
+      console.error('Payout request error:', error);
+      alert(error instanceof Error ? error.message : 'Failed to request payout');
+    } finally {
+      setPayoutRequestLoading(false);
+    }
+  };
+
   // Shared fetch orders function so we can reuse in buttons and effects
   const fetchOrdersData = async () => {
     try {
@@ -698,9 +787,41 @@ function MerchantDashboard() {
     fetchOrdersData();
   }, [user, activeTab]);
 
+  // Handle submit for approval
+  const handleSubmitForApproval = async (productId: number) => {
+    try {
+      const response = await fetch(`/api/products/${productId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ status: 'PENDING' })
+      });
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error('Please log in to submit products for approval');
+        }
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'Failed to submit product for approval');
+      }
+
+      // Refresh products list
+      const refreshed = await fetch('/api/merchant/products', {
+        credentials: 'include',
+        cache: 'no-store'
+      });
+      const items = await refreshed.json();
+      setProducts(items);
+      alert(translate('merchant.productSubmittedForApproval'));
+    } catch (err: any) {
+      setError(err?.message || 'Failed to submit product for approval');
+      alert(err?.message || 'Failed to submit product for approval');
+    }
+  };
+
   // Handle delete product
   const handleDeleteProduct = async (productId: number) => {
-    if (!confirm('Are you sure you want to delete this product?')) return;
+    if (!confirm(translate('merchant.confirmDeleteProduct'))) return;
 
     try {
       const response = await fetch(`/api/products/${productId}`, {
@@ -715,8 +836,15 @@ function MerchantDashboard() {
         throw new Error('Failed to delete product');
       }
 
-      // Remove product from state
-      setProducts(products.filter(product => product.id !== productId));
+      // Refresh list from server to avoid stale state
+      const refreshed = await fetch('/api/merchant/products', {
+        credentials: 'include',
+        cache: 'no-store'
+      });
+      const items = await refreshed.json();
+      setProducts(items);
+
+      await fetchStats(); // Refresh stats after deletion
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete product');
       console.error('Error deleting product:', err);
@@ -891,6 +1019,10 @@ function MerchantDashboard() {
 
   const createProduct = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isProductImageUploading) {
+      alert(translate('merchant.waitForImageUploadProduct'));
+      return;
+    }
     setCreating(true);
     setError('');
     try {
@@ -910,7 +1042,7 @@ function MerchantDashboard() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
-        credentials: 'include', // Include cookies for session
+        credentials: 'include',
       });
 
       if (!res.ok) {
@@ -923,10 +1055,12 @@ function MerchantDashboard() {
 
       // refresh list
       const refreshed = await fetch('/api/merchant/products', {
-        credentials: 'include' // Include cookies for session
+        credentials: 'include',
+        cache: 'no-store'
       });
       const items = await refreshed.json();
       setProducts(items);
+      await fetchStats(); // <--- ADD THIS LINE to update stats after product creation
       closeAddModal();
     } catch (err: any) {
       setError(err?.message || 'Failed to create product');
@@ -940,7 +1074,8 @@ function MerchantDashboard() {
     { id: 'orders', label: translate('merchant.orders'), icon: ShoppingBag },
     { id: 'products', label: translate('merchant.products'), icon: Package },
     { id: 'customers', label: translate('merchant.customerManagement'), icon: Users },
-    { id: 'analytics', label: translate('merchant.businessAnalytics'), icon: TrendingUp }
+    { id: 'analytics', label: translate('merchant.businessAnalytics'), icon: TrendingUp },
+    { id: 'payouts', label: translate('merchant.payouts') || 'Payouts', icon: CreditCard }
   ];
 
   return (
@@ -956,8 +1091,8 @@ function MerchantDashboard() {
                 {/* Debug info - remove in production */}
                 {process.env.NODE_ENV === 'development' && (
                   <div className="mt-1 sm:mt-2 text-xs text-gray-500">
-                    Auth Status: {user ? `Logged in as ${user.role}` : 'Not authenticated'} |
-                    User ID: {user?.id || 'N/A'}
+                    {translate('merchant.authStatus')}: {user ? `${translate('merchant.loggedInAs')} ${user.role}` : translate('merchant.notAuthenticated')} |
+                    {translate('merchant.userId')}: {user?.id || translate('merchant.nA')}
                   </div>
                 )}
               </div>
@@ -965,12 +1100,60 @@ function MerchantDashboard() {
                 <button onClick={openAddModal} className="btn-primary flex items-center space-x-1 sm:space-x-2 text-sm sm:text-base px-3 sm:px-4 py-2 sm:py-3">
                   <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">{translate('merchant.addProduct')}</span>
-                  <span className="sm:hidden">Add</span>
+                  <span className="sm:hidden">{translate('merchant.add')}</span>
                 </button>
               </div>
             </div>
           </div>
         </div>
+
+        {/* Merchant Status Notices */}
+        {merchantStatus === 'PENDING' && (
+          <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6">
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-yellow-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-yellow-800">
+                    Store Under Review
+                  </h3>
+                  <div className="mt-2 text-sm text-yellow-700">
+                    <p>
+                      Your merchant application is being reviewed by our team. You'll receive an email notification once your store is approved and goes live.
+                      This usually takes 24-48 hours.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {merchantStatus === 'ACTIVE' && (
+          <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6">
+            <div className="bg-green-50 border border-green-200 rounded-lg p-6">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <CheckCircle className="h-5 w-5 text-green-400" />
+                </div>
+                <div className="ml-3">
+                  <h3 className="text-sm font-medium text-green-800">
+                    Welcome to Feinraum!
+                  </h3>
+                  <div className="mt-2 text-sm text-green-700">
+                    <p>
+                      Your store is now live and ready to accept orders. Start by adding your first products to attract customers.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
           {/* Stats Grid - Responsive design */}
@@ -999,7 +1182,7 @@ function MerchantDashboard() {
                             ...
                           </span>
                         ) : error ? (
-                          <span className="text-red-600">Error</span>
+                          <span className="text-red-600">{translate('merchant.error')}</span>
                         ) : (
                           <>{displayValue}</>
                         )}
@@ -1082,7 +1265,7 @@ function MerchantDashboard() {
                             <div key={order.id} className="flex items-center justify-between p-4 border border-gray-200 rounded-lg">
                               <div>
                                 <h3 className="font-semibold text-gray-900">#{order.id.slice(-8)}</h3>
-                                <p className="text-sm text-gray-600">Customer ID: {order.customerId}</p>
+                                <p className="text-sm text-gray-600">{translate('merchant.customerId')}: {order.customerId}</p>
                                 <p className="text-xs text-gray-500">{new Date(order.createdAt).toLocaleDateString()}</p>
                               </div>
                               <div className="text-right">
@@ -1107,41 +1290,41 @@ function MerchantDashboard() {
         <div className="modal fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-2xl bg-white rounded-lg shadow-lg max-h-[85vh] flex flex-col">
             <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white rounded-t-lg">
-              <h3 className="text-lg font-semibold text-gray-900">Order #{selectedOrder.id?.slice(-8)}</h3>
+              <h3 className="text-lg font-semibold text-gray-900">{translate('merchant.order')} #{selectedOrder.id?.slice(-8)}</h3>
               <button onClick={closeOrderModal} className="text-gray-500 hover:text-gray-700 focus:outline-none">✕</button>
             </div>
             <div className="p-6 overflow-y-auto space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Status</label>
+                  <label className="block text-sm font-medium text-gray-700">{translate('merchant.orderStatus')}</label>
                   <select value={orderStatusDraft} onChange={e=>setOrderStatusDraft(e.target.value)} className="input-field h-11">
-                    <option value="PENDING">PENDING</option>
-                    <option value="PROCESSING">PROCESSING</option>
-                    <option value="SHIPPED">SHIPPED</option>
-                    <option value="DELIVERED">DELIVERED</option>
-                    <option value="CANCELLED">CANCELLED</option>
+                    <option value="PENDING">{translate('status.pending')}</option>
+                    <option value="PROCESSING">{translate('status.processing')}</option>
+                    <option value="SHIPPED">{translate('status.shipped')}</option>
+                    <option value="DELIVERED">{translate('status.delivered')}</option>
+                    <option value="CANCELLED">{translate('status.cancelled')}</option>
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Total</label>
+                  <label className="block text-sm font-medium text-gray-700">{translate('merchant.orderTotal')}</label>
                   <p className="mt-1 text-sm text-gray-900 bg-gray-50 p-2 rounded">{formatCurrency(selectedOrder.grandTotal ?? selectedOrder.totalAmount)}</p>
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Items</label>
+                <label className="block text-sm font-medium text-gray-700">{translate('merchant.orderItemsTitle')}</label>
                 <div className="mt-2 border rounded">
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Qty</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('merchant.product')}</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('merchant.quantityShort')}</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('merchant.price')}</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
                       {(selectedOrder.items || []).map((it:any) => (
                         <tr key={it.id}>
-                          <td className="px-4 py-2 text-sm text-gray-900">{it.product?.title_en || it.product?.name || it.nameSnapshot || 'Item'}</td>
+                          <td className="px-4 py-2 text-sm text-gray-900">{it.product?.title_en || it.product?.name || it.nameSnapshot || translate('merchant.items')}</td>
                           <td className="px-4 py-2 text-sm text-gray-900">{it.quantity}</td>
                           <td className="px-4 py-2 text-sm text-gray-900">{formatCurrency(it.price)}</td>
                         </tr>
@@ -1158,11 +1341,11 @@ function MerchantDashboard() {
                 setShowEditOrderModal(true);
                 setShowOrderModal(false);
               }} className="btn-secondary">
-                Edit Items
+                {translate('merchant.editItems')}
               </button>
-              <button onClick={closeOrderModal} className="btn-secondary">Close</button>
+              <button onClick={closeOrderModal} className="btn-secondary">{translate('merchant.close')}</button>
               <button onClick={saveOrderStatus} disabled={updatingOrderStatus} className="btn-primary focus:outline-none">
-                {updatingOrderStatus ? 'Saving...' : 'Save'}
+                {updatingOrderStatus ? translate('merchant.saving') : translate('merchant.save')}
               </button>
             </div>
           </div>
@@ -1194,7 +1377,7 @@ function MerchantDashboard() {
                         </p>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Quantity</label>
+                        <label className="block text-sm font-medium text-gray-700">{translate('merchant.quantityShort')}</label>
                         <input
                           type="number"
                           min="1"
@@ -1208,7 +1391,7 @@ function MerchantDashboard() {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Price</label>
+                        <label className="block text-sm font-medium text-gray-700">{translate('merchant.price')}</label>
                         <input
                           type="number"
                           min="0"
@@ -1223,7 +1406,7 @@ function MerchantDashboard() {
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Image</label>
+                        <label className="block text-sm font-medium text-gray-700">{translate('merchant.viewProductImage')}</label>
                         <div className="mt-1">
                           {item.product?.imageUrl && (
                             <img
@@ -1240,7 +1423,7 @@ function MerchantDashboard() {
                               newItems[index] = { ...item, imageUrl: e.target.value };
                               setEditingOrderItems(newItems);
                             }}
-                            placeholder="Image URL"
+                            placeholder={translate('merchant.imageUrl')}
                             className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-turquoise-500 focus:border-turquoise-500 text-sm"
                           />
                         </div>
@@ -1257,10 +1440,10 @@ function MerchantDashboard() {
                 setEditingOrderItems([]);
                 setShowOrderModal(true);
               }} className="btn-secondary">
-                Cancel
+                {translate('merchant.cancel')}
               </button>
               <button onClick={saveOrderItems} disabled={updatingOrderItems} className="btn-primary focus:outline-none">
-                {updatingOrderItems ? 'Saving...' : 'Save Changes'}
+                {updatingOrderItems ? translate('merchant.saving') : translate('merchant.saveChanges')}
               </button>
             </div>
           </div>
@@ -1272,37 +1455,37 @@ function MerchantDashboard() {
         <div className="modal fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-3xl bg-white rounded-lg shadow-lg max-h-[85vh] flex flex-col">
             <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white rounded-t-lg">
-              <h3 className="text-lg font-semibold text-gray-900">Customer {customerDetail.name || customerDetail.email}</h3>
+              <h3 className="text-lg font-semibold text-gray-900">{translate('merchant.customer')} {customerDetail.name || customerDetail.email}</h3>
               <button onClick={closeCustomerModal} className="text-gray-500 hover:text-gray-700 focus:outline-none">✕</button>
             </div>
             <div className="p-6 overflow-y-auto space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Email</label>
+                  <label className="block text-sm font-medium text-gray-700">{translate('merchant.email')}</label>
                   <p className="mt-1 text-sm text-gray-900 bg-gray-50 p-2 rounded">{customerDetail.email}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Phone</label>
+                  <label className="block text-sm font-medium text-gray-700">{translate('merchant.phone')}</label>
                   <p className="mt-1 text-sm text-gray-900 bg-gray-50 p-2 rounded">{customerDetail.profile?.phone || '—'}</p>
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Tags (comma separated)</label>
+                <label className="block text-sm font-medium text-gray-700">{translate('merchant.tags')} ({translate('merchant.commaSeparated')})</label>
                 <input value={customerTags} onChange={e=>setCustomerTags(e.target.value)} className="input-field h-11" placeholder="vip, newsletter" />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Notes</label>
-                <textarea rows={4} value={customerNotes} onChange={e=>setCustomerNotes(e.target.value)} className="input-field min-h-28" placeholder="Internal notes..." />
+                <label className="block text-sm font-medium text-gray-700">{translate('merchant.notes')}</label>
+                <textarea rows={4} value={customerNotes} onChange={e=>setCustomerNotes(e.target.value)} className="input-field min-h-28" placeholder={translate('merchant.internalNotes')} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">Recent Orders</label>
+                <label className="block text-sm font-medium text-gray-700">{translate('merchant.recentOrders')}</label>
                 <div className="mt-2 border rounded">
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('merchant.order')}</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('merchant.date')}</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('merchant.orderTotal')}</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
@@ -1315,7 +1498,7 @@ function MerchantDashboard() {
                       ))}
                       {customerOrders.length === 0 && (
                         <tr>
-                          <td colSpan={3} className="px-4 py-6 text-center text-sm text-gray-500">No orders</td>
+                          <td colSpan={3} className="px-4 py-6 text-center text-sm text-gray-500">{translate('merchant.noOrders')}</td>
                         </tr>
                       )}
                     </tbody>
@@ -1324,10 +1507,10 @@ function MerchantDashboard() {
               </div>
             </div>
             <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between gap-3">
-              <button onClick={() => removeCustomerLink(selectedCustomerId)} className="text-red-600 hover:text-red-800 focus:outline-none">Remove from my customers</button>
+              <button onClick={() => removeCustomerLink(selectedCustomerId)} className="text-red-600 hover:text-red-800 focus:outline-none">{translate('merchant.removeCustomer')}</button>
               <div className="flex items-center gap-2">
-                <button onClick={closeCustomerModal} className="btn-secondary">Close</button>
-                <button onClick={saveCustomerDetail} disabled={customerSaving} className="btn-primary focus:outline-none">{customerSaving ? 'Saving...' : 'Save'}</button>
+                <button onClick={closeCustomerModal} className="btn-secondary">{translate('merchant.close')}</button>
+                <button onClick={saveCustomerDetail} disabled={customerSaving} className="btn-primary focus:outline-none">{customerSaving ? translate('merchant.saving') : translate('merchant.save')}</button>
               </div>
             </div>
           </div>
@@ -1375,7 +1558,7 @@ function MerchantDashboard() {
                             <tr>
                               <td colSpan={6} className="px-6 py-4 text-center">
                                 <Loader2 className="w-6 h-6 animate-spin text-turquoise-600 mx-auto" />
-                                <span className="text-gray-600 ml-2">Loading orders...</span>
+                                <span className="text-gray-600 ml-2">{translate('merchant.loadingOrders')}</span>
                               </td>
                             </tr>
                           ) : ordersError ? (
@@ -1386,14 +1569,14 @@ function MerchantDashboard() {
                                   onClick={() => fetchOrdersData()}
                                   className="btn-primary"
                                 >
-                                  Try Again
+                                  {translate('merchant.tryAgain')}
                                 </button>
                               </td>
                             </tr>
                           ) : orders.length === 0 ? (
                             <tr>
                               <td colSpan={6} className="px-6 py-4 text-center">
-                                <p className="text-gray-600">No orders yet</p>
+                                <p className="text-gray-600">{translate('merchant.noOrdersYet')}</p>
                               </td>
                             </tr>
                           ) : (
@@ -1468,12 +1651,12 @@ function MerchantDashboard() {
                             </svg>
                           </div>
                           <div className="ml-3">
-                            <h3 className="text-sm font-medium text-red-800">Access Error</h3>
+                            <h3 className="text-sm font-medium text-red-800">{translate('merchant.accessError')}</h3>
                             <div className="mt-2 text-sm text-red-700">
                               <p>{error}</p>
                               {!user && (
                                 <p className="mt-1">
-                                  Please <a href="/login" className="underline hover:no-underline">log in</a> as a merchant to access this dashboard.
+                                  {translate('merchant.pleaseLogIn')} <a href="/login" className="underline hover:no-underline">{translate('merchant.logInAsMerchant')}</a>
                                 </p>
                               )}
                             </div>
@@ -1511,31 +1694,54 @@ function MerchantDashboard() {
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatCurrency(product.price)}</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.stock}</td>
                                 <td className="px-6 py-4 whitespace-nowrap">
-                                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                                    product.stock > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-                                  }`}>
-                                    {product.stock > 0 ? 'In Stock' : 'Out of Stock'}
-                                  </span>
+                                  <div className="flex flex-col gap-1">
+                                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                      product.stock > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                                    }`}>
+                                      {product.stock > 0 ? translate('merchant.inStock') : translate('merchant.outOfStock')}
+                                    </span>
+                                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                      product.status === 'PUBLISHED' ? 'bg-blue-100 text-blue-800' :
+                                      product.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
+                                      'bg-gray-100 text-gray-800'
+                                    }`}>
+                                      {product.status === 'PUBLISHED' ? translate('merchant.statusPublished') :
+                                       product.status === 'PENDING' ? translate('merchant.statusPending') :
+                                       translate('merchant.statusDraft')}
+                                    </span>
+                                  </div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                  <button
-                                    onClick={() => handleViewProduct(product.id)}
-                                    className="text-turquoise-600 hover:text-turquoise-900 mr-3"
-                                  >
-                                    {translate('merchant.view')}
-                                  </button>
-                                  <button
-                                    onClick={() => handleEditProduct(product.id)}
-                                    className="text-primary-600 hover:text-primary-900 mr-3"
-                                  >
-                                    {translate('merchant.edit')}
-                                  </button>
-                                  <button
-                                    onClick={() => handleDeleteProduct(product.id)}
-                                    className="text-red-600 hover:text-red-900"
-                                  >
-                                    {translate('merchant.delete')}
-                                  </button>
+                                  <div className="flex flex-col gap-1">
+                                    <div>
+                                      <button
+                                        onClick={() => handleViewProduct(product.id)}
+                                        className="text-turquoise-600 hover:text-turquoise-900 mr-3"
+                                      >
+                                        {translate('merchant.view')}
+                                      </button>
+                                      <button
+                                        onClick={() => handleEditProduct(product.id)}
+                                        className="text-primary-600 hover:text-primary-900 mr-3"
+                                      >
+                                        {translate('merchant.edit')}
+                                      </button>
+                                      <button
+                                        onClick={() => handleDeleteProduct(product.id)}
+                                        className="text-red-600 hover:text-red-900"
+                                      >
+                                        {translate('merchant.delete')}
+                                      </button>
+                                    </div>
+                                    {(product.status === 'DRAFT' || product.status === 'PENDING') && (
+                                      <button
+                                        onClick={() => handleSubmitForApproval(product.id)}
+                                        className="text-sm text-blue-600 hover:text-blue-900 font-medium"
+                                      >
+                                        {translate('merchant.submitForApproval')}
+                                      </button>
+                                    )}
+                                  </div>
                                 </td>
                               </tr>
                             ))}
@@ -1588,7 +1794,7 @@ function MerchantDashboard() {
                             </svg>
                           </div>
                           <div className="ml-3">
-                            <h3 className="text-sm font-medium text-red-800">Error</h3>
+                            <h3 className="text-sm font-medium text-red-800">{translate('merchant.error')}</h3>
                             <div className="mt-2 text-sm text-red-700">
                               <p>{customersError}</p>
                               {!user && (
@@ -1641,20 +1847,20 @@ function MerchantDashboard() {
                                       <div className="text-sm font-medium text-gray-900">
                                         {customer.firstName && customer.lastName
                                           ? `${customer.firstName} ${customer.lastName}`
-                                          : customer.email?.split('@')[0] || 'Unknown Customer'
+                                          : customer.email?.split('@')[0] || translate('merchant.unknownCustomer')
                                         }
                                       </div>
                                       <div className="text-sm text-gray-500">
-                                        ID: {customer.id}
+                                        {translate('merchant.customerId')}: {customer.id}
                                       </div>
                                     </div>
                                   </div>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                  {customer.email || 'N/A'}
+                                  {customer.email || translate('merchant.nA')}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                  {customer.phone || 'N/A'}
+                                  {customer.phone || translate('merchant.nA')}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                   {customer.totalOrders || 0}
@@ -1663,7 +1869,7 @@ function MerchantDashboard() {
                                   {formatCurrency(customer.totalSpent)}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                  {customer.lastOrderDate ? new Date(customer.lastOrderDate).toLocaleDateString() : 'Never'}
+                                  {customer.lastOrderDate ? new Date(customer.lastOrderDate).toLocaleDateString() : translate('merchant.never')}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap">
                                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
@@ -1671,7 +1877,7 @@ function MerchantDashboard() {
                                     customer.status === 'inactive' ? 'bg-red-100 text-red-800' :
                                     'bg-yellow-100 text-yellow-800'
                                   }`}>
-                                    {customer.status || 'Unknown'}
+                                    {customer.status || translate('merchant.unknown')}
                                   </span>
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
@@ -1935,6 +2141,234 @@ function MerchantDashboard() {
                   )}
                 </div>
               )}
+
+              {/* Payouts Tab */}
+              {activeTab === 'payouts' && (
+                <div className="space-y-6">
+                  {/* Payouts Header */}
+                  <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+                    <div className="px-6 py-4 border-b border-gray-200">
+                      <h2 className="text-xl font-semibold text-gray-900">{translate('merchant.payouts') || 'Payouts'}</h2>
+                      <p className="text-sm text-gray-600 mt-1">Manage your earnings and payout history</p>
+                    </div>
+                  </div>
+
+                  {/* Loading State */}
+                  {payoutsLoading && (
+                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                      <div className="flex items-center justify-center py-12">
+                        <Loader2 className="w-6 h-6 animate-spin text-turquoise-600 mr-2" />
+                        <span className="text-gray-600">Loading payouts...</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Error State */}
+                  {payoutsError && (
+                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                        <div className="flex items-center">
+                          <div className="flex-shrink-0">
+                            <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                          <div className="ml-3">
+                            <h3 className="text-sm font-medium text-red-800">Error Loading Payouts</h3>
+                            <div className="mt-2 text-sm text-red-700">
+                              <p>{payoutsError}</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Payouts Content */}
+                  {!payoutsLoading && !payoutsError && payouts && (
+                    <div className="space-y-6">
+                      {/* Balance Overview */}
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-medium text-gray-500">Available Balance</p>
+                              <p className="text-2xl font-semibold text-green-600">
+                                {formatCurrency(payouts.balance?.available || 0)}
+                              </p>
+                            </div>
+                            <div className="p-3 rounded-full bg-green-100">
+                              <CreditCard className="w-6 h-6 text-green-600" />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-medium text-gray-500">Pending Balance</p>
+                              <p className="text-2xl font-semibold text-yellow-600">
+                                {formatCurrency(payouts.balance?.pending || 0)}
+                              </p>
+                            </div>
+                            <div className="p-3 rounded-full bg-yellow-100">
+                              <TrendingUp className="w-6 h-6 text-yellow-600" />
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <p className="text-sm font-medium text-gray-500">Total Earnings</p>
+                              <p className="text-2xl font-semibold text-blue-600">
+                                {formatCurrency(payouts.summary?.totalEarnings || 0)}
+                              </p>
+                            </div>
+                            <div className="p-3 rounded-full bg-blue-100">
+                              <DollarSign className="w-6 h-6 text-blue-600" />
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Payout Request */}
+                      <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                        <div className="flex items-center justify-between mb-4">
+                          <div>
+                            <h3 className="text-lg font-semibold text-gray-900">Request Payout</h3>
+                            <p className="text-sm text-gray-600">Withdraw your available earnings</p>
+                          </div>
+                          <button
+                            onClick={() => setShowPayoutRequest(!showPayoutRequest)}
+                            disabled={(payouts?.balance?.available || 0) <= 0}
+                            className="px-4 py-2 font-semibold bg-turquoise-600 text-white text-base rounded-lg hover:bg-turquoise-700 focus:outline-none focus:ring-2 focus:ring-turquoise-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 mb-2 w-full max-w-xs mx-auto shadow"
+                          >
+                            <CreditCard className="w-5 h-5 mr-2" />
+                            <span>Request Payout</span>
+                          </button>
+                        </div>
+
+                        {showPayoutRequest && (
+                          <div className="border-t pt-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                                  Amount (Max: {formatCurrency(payouts?.balance?.available || 0)})
+                                </label>
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  min="0.01"
+                                  max={payouts?.balance?.available || 0}
+                                  value={payoutAmount}
+                                  onChange={(e) => setPayoutAmount(e.target.value)}
+                                  className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 text-base shadow"
+                                  placeholder="Enter amount"
+                                />
+                              </div>
+                              <div className="flex items-end gap-2">
+                                <button
+                                  onClick={requestPayout}
+                                  disabled={payoutRequestLoading || !payoutAmount}
+                                  className="w-full px-4 py-2 font-semibold bg-green-600 text-white text-base rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                                >
+                                  {payoutRequestLoading && <Loader2 className="w-5 h-5 animate-spin mr-2" />}
+                                  <span>Submit Request</span>
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setShowPayoutRequest(false);
+                                    setPayoutAmount('');
+                                  }}
+                                  className="w-full px-4 py-2 font-semibold bg-gray-300 text-gray-700 text-base rounded-lg hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                            <div className="mt-3 text-xs text-gray-500">
+                              Payout requests are processed within 3-5 business days. You'll receive an email confirmation once processed.
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Transaction History */}
+                      <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+                        <div className="px-6 py-4 border-b border-gray-200">
+                          <h3 className="text-lg font-semibold text-gray-900">Transaction History</h3>
+                        </div>
+                        <div className="p-6">
+                          {payouts.transactions?.length > 0 ? (
+                            <div className="overflow-x-auto">
+                              <table className="min-w-full divide-y divide-gray-200">
+                                <thead className="bg-gray-50">
+                                  <tr>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                      Date
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                      Amount
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                      Status
+                                    </th>
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                      Method
+                                    </th>
+                                  </tr>
+                                </thead>
+                                <tbody className="bg-white divide-y divide-gray-200">
+                                  {payouts.transactions.map((transaction: any, index: number) => (
+                                    <tr key={transaction.id || index}>
+                                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                        {new Date(transaction.createdAt).toLocaleDateString()}
+                                      </td>
+                                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                        {formatCurrency(transaction.amount)}
+                                      </td>
+                                      <td className="px-6 py-4 whitespace-nowrap">
+                                        <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                          transaction.status === 'PAID' ? 'bg-green-100 text-green-800' :
+                                          transaction.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
+                                          'bg-red-100 text-red-800'
+                                        }`}>
+                                          {transaction.status}
+                                        </span>
+                                      </td>
+                                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                        {transaction.method || 'PLATFORM'}
+                                      </td>
+                                    </tr>
+                                  ))}
+                                </tbody>
+                              </table>
+                            </div>
+                          ) : (
+                            <div className="text-center py-12">
+                              <CreditCard className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                              <h3 className="text-lg font-medium text-gray-900 mb-2">No Transactions Yet</h3>
+                              <p className="text-gray-600">Your payout transactions will appear here once you start earning</p>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Empty State */}
+                  {!payoutsLoading && !payoutsError && !payouts && (
+                    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                      <div className="text-center py-12">
+                        <CreditCard className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">No Payout Data</h3>
+                        <p className="text-gray-600">Start making sales to see your payout information</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -1951,43 +2385,43 @@ function MerchantDashboard() {
               <div className="space-y-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">{translate('Title (EN)')}</label>
+                    <label className="block text-sm font-medium text-gray-700">{translate('merchant.viewProductTitleEn')}</label>
                     <p className="mt-1 text-sm text-gray-900 bg-gray-50 p-2 rounded">{selectedProduct.title_en}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">{translate('Title (DE)')}</label>
-                    <p className="mt-1 text-sm text-gray-900 bg-gray-50 p-2 rounded">{selectedProduct.title_de || 'N/A'}</p>
+                    <label className="block text-sm font-medium text-gray-700">{translate('merchant.viewProductTitleDe')}</label>
+                    <p className="mt-1 text-sm text-gray-900 bg-gray-50 p-2 rounded">{selectedProduct.title_de || translate('merchant.nA')}</p>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Slug</label>
+                  <label className="block text-sm font-medium text-gray-700">{translate('admin.slug')}</label>
                   <p className="mt-1 text-sm text-gray-900 bg-gray-50 p-2 rounded">{selectedProduct.slug}</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">{translate('Price')}</label>
+                    <label className="block text-sm font-medium text-gray-700">{translate('merchant.price')}</label>
                     <p className="mt-1 text-sm text-gray-900 bg-gray-50 p-2 rounded">{formatCurrency(selectedProduct.price)}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">{translate('Stock')}</label>
+                    <label className="block text-sm font-medium text-gray-700">{translate('merchant.stock')}</label>
                     <p className="mt-1 text-sm text-gray-900 bg-gray-50 p-2 rounded">{selectedProduct.stock}</p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">{translate('Category')}</label>
+                    <label className="block text-sm font-medium text-gray-700">{translate('admin.category')}</label>
                     <p className="mt-1 text-sm text-gray-900 bg-gray-50 p-2 rounded">{selectedProduct.category}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">{translate('Status')}</label>
+                    <label className="block text-sm font-medium text-gray-700">{translate('merchant.status')}</label>
                     <p className="mt-1">
                       <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                         selectedProduct.stock > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                       }`}>
-                        {selectedProduct.stock > 0 ? 'In Stock' : 'Out of Stock'}
+                        {selectedProduct.stock > 0 ? translate('merchant.inStock') : translate('merchant.outOfStock')}
                       </span>
                     </p>
                   </div>
@@ -1995,7 +2429,7 @@ function MerchantDashboard() {
 
                 {selectedProduct.imageUrl && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">{translate('Image')}</label>
+                    <label className="block text-sm font-medium text-gray-700">{translate('merchant.viewProductImage')}</label>
                     <div className="mt-1">
                       <img
                         src={selectedProduct.imageUrl}
@@ -2007,31 +2441,31 @@ function MerchantDashboard() {
                 )}
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">{translate('Description (EN)')}</label>
-                  <p className="mt-1 text-sm text-gray-900 bg-gray-50 p-2 rounded whitespace-pre-wrap">{selectedProduct.desc_en || 'No description'}</p>
+                  <label className="block text-sm font-medium text-gray-700">{translate('admin.englishDescription')}</label>
+                  <p className="mt-1 text-sm text-gray-900 bg-gray-50 p-2 rounded whitespace-pre-wrap">{selectedProduct.desc_en || translate('merchant.noDescription')}</p>
                 </div>
 
                 {selectedProduct.desc_de && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">{translate('Description (DE)')}</label>
+                    <label className="block text-sm font-medium text-gray-700">{translate('admin.germanDescription')}</label>
                     <p className="mt-1 text-sm text-gray-900 bg-gray-50 p-2 rounded whitespace-pre-wrap">{selectedProduct.desc_de}</p>
                   </div>
                 )}
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs text-gray-500">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Created</label>
+                    <label className="block text-sm font-medium text-gray-700">{translate('merchant.createdAt')}</label>
                     <p>{new Date(selectedProduct.createdAt).toLocaleDateString()}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Last Updated</label>
+                    <label className="block text-sm font-medium text-gray-700">{translate('merchant.updatedAt')}</label>
                     <p>{new Date(selectedProduct.updatedAt).toLocaleDateString()}</p>
                   </div>
                 </div>
               </div>
             </div>
             <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-end gap-3">
-              <button onClick={closeViewModal} className="btn-secondary">{translate('Close')}</button>
+              <button onClick={closeViewModal} className="btn-secondary">{translate('merchant.close')}</button>
               <button
                 onClick={() => {
                   closeViewModal();
@@ -2063,7 +2497,7 @@ function MerchantDashboard() {
                     onChange={e => setEditingProduct(p => ({ ...p, title_en: e.target.value }))}
                     className="input-field h-11 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors"
                     required
-                    placeholder="Ex: Wireless Headphones"
+                    placeholder={translate('merchant.exampleWirelessHeadphones')}
                   />
                 </div>
                 <div>
@@ -2072,7 +2506,7 @@ function MerchantDashboard() {
                     value={editingProduct.title_de}
                     onChange={e => setEditingProduct(p => ({ ...p, title_de: e.target.value }))}
                     className="input-field h-11 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors"
-                    placeholder="Optional"
+                    placeholder={translate('merchant.optional')}
                   />
                 </div>
               </div>
@@ -2087,7 +2521,7 @@ function MerchantDashboard() {
                     placeholder={toSlug(editingProduct.title_en || 'my-product')}
                     required
                   />
-                  <p className="mt-1 text-xs text-gray-500">Used in the URL, lowercase and hyphenated (e.g. my-awesome-product).</p>
+                  <p className="mt-1 text-xs text-gray-500">{translate('merchant.slugDescription')}</p>
                 </div>
               </div>
 
@@ -2102,7 +2536,7 @@ function MerchantDashboard() {
                     onChange={e => setEditingProduct(p => ({ ...p, price: e.target.value }))}
                     className="input-field h-11 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors"
                     required
-                    placeholder="Ex: 49.99"
+                    placeholder={translate('merchant.examplePrice')}
                   />
                 </div>
                 <div>
@@ -2115,7 +2549,7 @@ function MerchantDashboard() {
                     onChange={e => setEditingProduct(p => ({ ...p, stock: e.target.value }))}
                     className="input-field h-11 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors"
                     required
-                    placeholder="Ex: 100"
+                    placeholder={translate('merchant.exampleStock')}
                   />
                 </div>
               </div>
@@ -2161,7 +2595,7 @@ function MerchantDashboard() {
                       value={editingProduct.imageUrl}
                       onChange={e => setEditingProduct(p => ({ ...p, imageUrl: e.target.value }))}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                      placeholder="https://.../image.jpg"
+                      placeholder={translate('merchant.exampleImageUrl')}
                     />
                   </div>
                 </div>
@@ -2174,7 +2608,7 @@ function MerchantDashboard() {
                   value={editingProduct.desc_en}
                   onChange={e => setEditingProduct(p => ({ ...p, desc_en: e.target.value }))}
                   className="input-field min-h-28 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors"
-                  placeholder="Short description in English"
+                  placeholder={translate('merchant.shortDescriptionEn')}
                 />
               </div>
               <div>
@@ -2184,12 +2618,12 @@ function MerchantDashboard() {
                   value={editingProduct.desc_de}
                   onChange={e => setEditingProduct(p => ({ ...p, desc_de: e.target.value }))}
                   className="input-field min-h-28 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors"
-                  placeholder="Kurze Beschreibung auf Deutsch (optional)"
+                  placeholder={translate('merchant.shortDescriptionDe')}
                 />
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-2">
-                <button type="button" onClick={closeEditModal} className="btn-secondary">{translate('Cancel')}</button>
+                <button type="button" onClick={closeEditModal} className="btn-secondary">{translate('merchant.cancel')}</button>
                 <button type="submit" disabled={updating} className="btn-primary focus:outline-none">
                   {updating ? translate('merchant.loading') : translate('merchant.updateProduct')}
                 </button>
@@ -2202,7 +2636,15 @@ function MerchantDashboard() {
       {/* Add Product Modal */}
       {showAddModal && (
         <div className="modal fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-3xl bg-white rounded-lg shadow-lg max-h-[85vh] flex flex-col">
+          <div className="w-full max-w-3xl bg-white rounded-lg shadow-lg max-h-[85vh] flex flex-col relative">
+            {isProductImageUploading && (
+              <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center z-10">
+                <Loader2 className="w-10 h-10 text-turquoise-600 animate-spin mb-3" />
+                <p className="text-sm font-medium text-gray-700 text-center px-6">
+                  Uploading image… please wait while we generate the link.
+                </p>
+              </div>
+            )}
             <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white rounded-t-lg">
               <h3 className="text-lg font-semibold text-gray-900">{translate('merchant.addProduct')}</h3>
               <button onClick={closeAddModal} className="text-gray-500 hover:text-gray-700 focus:outline-none">✕</button>
@@ -2210,18 +2652,18 @@ function MerchantDashboard() {
             <form onSubmit={createProduct} className="p-6 space-y-5 overflow-y-auto">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">{translate('Title (EN)')}</label>
-                  <input value={newProduct.title_en} onChange={e=>setNewProduct(p=>({...p, title_en: e.target.value}))} className="input-field h-11 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors" required placeholder="Ex: Wireless Headphones" />
+                  <label className="block text-sm font-medium text-gray-700">{translate('merchant.viewProductTitleEn')}</label>
+                  <input value={newProduct.title_en} onChange={e=>setNewProduct(p=>({...p, title_en: e.target.value}))} className="input-field h-11 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors" required placeholder={translate('merchant.exampleWirelessHeadphones')} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">{translate('Title (DE)')}</label>
-                  <input value={newProduct.title_de} onChange={e=>setNewProduct(p=>({...p, title_de: e.target.value}))} className="input-field h-11 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors" placeholder="Optional" />
+                  <label className="block text-sm font-medium text-gray-700">{translate('merchant.viewProductTitleDe')}</label>
+                  <input value={newProduct.title_de} onChange={e=>setNewProduct(p=>({...p, title_de: e.target.value}))} className="input-field h-11 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors" placeholder={translate('merchant.optional')} />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="sm:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700">Slug</label>
+                  <label className="block text-sm font-medium text-gray-700">{translate('admin.slug')}</label>
                   <input
                     value={newProduct.slug}
                     onChange={e=>setNewProduct(p=>({...p, slug: e.target.value.toLowerCase()}))}
@@ -2229,31 +2671,31 @@ function MerchantDashboard() {
                     placeholder={toSlug(newProduct.title_en || 'my-product')}
                     required
                   />
-                  <p className="mt-1 text-xs text-gray-500">Used in the URL, lowercase and hyphenated (e.g. my-awesome-product).</p>
+                  <p className="mt-1 text-xs text-gray-500">{translate('merchant.slugDescription')}</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">{translate('Price')}</label>
-                  <input type="number" min="0" step="0.01" value={newProduct.price} onChange={e=>setNewProduct(p=>({...p, price: e.target.value}))} className="input-field h-11 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors" required placeholder="Ex: 49.99" />
+                  <label className="block text-sm font-medium text-gray-700">{translate('merchant.price')}</label>
+                  <input type="number" min="0" step="0.01" value={newProduct.price} onChange={e=>setNewProduct(p=>({...p, price: e.target.value}))} className="input-field h-11 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors" required placeholder={translate('merchant.examplePrice')} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">{translate('Stock')}</label>
-                  <input type="number" min="0" step="1" value={newProduct.stock} onChange={e=>setNewProduct(p=>({...p, stock: e.target.value}))} className="input-field h-11 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors" required placeholder="Ex: 100" />
+                  <label className="block text-sm font-medium text-gray-700">{translate('merchant.stock')}</label>
+                  <input type="number" min="0" step="1" value={newProduct.stock} onChange={e=>setNewProduct(p=>({...p, stock: e.target.value}))} className="input-field h-11 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors" required placeholder={translate('merchant.exampleStock')} />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">{translate('Category')}</label>
+                  <label className="block text-sm font-medium text-gray-700">{translate('admin.category')}</label>
                   <div className="flex gap-2">
                     <select
                       value={newProduct.category}
                       onChange={e=>setNewProduct(p=>({...p, category: e.target.value}))}
                       className="input-field h-11 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors cursor-pointer flex-1"
                     >
-                      <option value="General">General</option>
+                      <option value="General">{translate('admin.general')}</option>
                       {categories.map(category => (
                         <option key={category.id} value={category.name}>
                           {category.name}
@@ -2264,46 +2706,52 @@ function MerchantDashboard() {
                       type="button"
                       onClick={() => setShowNewCategoryModal(true)}
                       className="btn-primary text-sm"
-                      title="Add new category"
+                      title={translate('admin.addNewCategory')}
                     >
                       +
                     </button>
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Product Image</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">{translate('admin.productImage')}</label>
                   <ImageUpload
                     onImageUpload={handleProductImageUpload}
+                    onUploadStart={() => setIsProductImageUploading(true)}
+                    onUploadEnd={() => setIsProductImageUploading(false)}
                     currentImageUrl={newProduct.imageUrl}
                     className="mb-2"
                   />
                   
                   {/* Alternative: Manual URL Input */}
                   <div className="mt-2">
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Or enter image URL manually:</label>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">{translate('admin.enterImageURLManually')}:</label>
                     <input
                       value={newProduct.imageUrl}
                       onChange={e => setNewProduct(p => ({ ...p, imageUrl: e.target.value }))}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                      placeholder="https://.../image.jpg"
+                      placeholder={translate('merchant.exampleImageUrl')}
                     />
                   </div>
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">{translate('Description (EN)')}</label>
-                <textarea rows={4} value={newProduct.desc_en} onChange={e=>setNewProduct(p=>({...p, desc_en: e.target.value}))} className="input-field min-h-28 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors" placeholder="Short description in English" />
+                <label className="block text-sm font-medium text-gray-700">{translate('admin.englishDescription')}</label>
+                <textarea rows={4} value={newProduct.desc_en} onChange={e=>setNewProduct(p=>({...p, desc_en: e.target.value}))} className="input-field min-h-28 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors" placeholder={translate('merchant.shortDescriptionEn')} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">{translate('Description (DE)')}</label>
-                <textarea rows={4} value={newProduct.desc_de} onChange={e=>setNewProduct(p=>({...p, desc_de: e.target.value}))} className="input-field min-h-28 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors" placeholder="Kurze Beschreibung auf Deutsch (optional)" />
+                <label className="block text-sm font-medium text-gray-700">{translate('admin.germanDescription')}</label>
+                <textarea rows={4} value={newProduct.desc_de} onChange={e=>setNewProduct(p=>({...p, desc_de: e.target.value}))} className="input-field min-h-28 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors" placeholder={translate('merchant.shortDescriptionDe')} />
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-2">
-                <button type="button" onClick={closeAddModal} className="btn-secondary">{translate('Cancel')}</button>
-                <button type="submit" disabled={creating} className="btn-primary focus:outline-none">
-                  {creating ? translate('merchant.loading') : translate('merchant.addProduct')}
+                <button type="button" onClick={closeAddModal} className="btn-secondary">{translate('merchant.cancel')}</button>
+                <button type="submit" disabled={creating || isProductImageUploading} className="btn-primary focus:outline-none">
+                  {creating
+                    ? translate('merchant.creating')
+                    : isProductImageUploading
+                      ? translate('admin.waitingForImageUpload')
+                      : translate('merchant.addProduct')}
                 </button>
               </div>
             </form>
@@ -2314,7 +2762,15 @@ function MerchantDashboard() {
       {/* New Category Modal */}
       {showNewCategoryModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4">
+          <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 relative">
+            {isCategoryImageUploading && (
+              <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center z-10 rounded-lg">
+                <Loader2 className="w-8 h-8 text-turquoise-600 animate-spin mb-3" />
+                <p className="text-sm font-medium text-gray-700 text-center px-4">
+                  Uploading image… please wait while we generate the link.
+                </p>
+              </div>
+            )}
             <div className="px-6 py-4 border-b border-gray-200">
               <h3 className="text-lg font-semibold text-gray-900">Add New Category</h3>
             </div>
@@ -2326,24 +2782,26 @@ function MerchantDashboard() {
                   value={newCategory.name}
                   onChange={(e) => setNewCategory(prev => ({ ...prev, name: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent"
-                  placeholder="Enter category name"
+                  placeholder={translate('admin.categoryName')}
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{translate('admin.description')}</label>
                 <textarea
                   value={newCategory.description}
                   onChange={(e) => setNewCategory(prev => ({ ...prev, description: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent"
-                  placeholder="Enter category description"
+                  placeholder={translate('admin.description')}
                   rows={3}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Category Image</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{translate('admin.categoryImage')}</label>
                 <ImageUpload
                   onImageUpload={handleCategoryImageUpload}
+                  onUploadStart={() => setIsCategoryImageUploading(true)}
+                  onUploadEnd={() => setIsCategoryImageUploading(false)}
                   currentImageUrl={newCategory.imageUrl}
                   className="mb-2"
                 />
@@ -2361,14 +2819,18 @@ function MerchantDashboard() {
                   }}
                   className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
                 >
-                  Cancel
+                  {translate('merchant.cancel')}
                 </button>
                 <button
                   type="submit"
-                  disabled={creatingCategory}
+                  disabled={creatingCategory || isCategoryImageUploading}
                   className="btn-primary disabled:opacity-50 focus:outline-none"
                 >
-                  {creatingCategory ? 'Creating...' : 'Create Category'}
+                  {creatingCategory
+                    ? translate('merchant.creating')
+                    : isCategoryImageUploading
+                      ? translate('admin.waitingForImageUpload')
+                      : translate('admin.createCategory')}
                 </button>
               </div>
             </form>

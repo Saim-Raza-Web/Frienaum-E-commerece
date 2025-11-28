@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { signToken } from "@/lib/auth";
 import { setAuthCookie } from "@/lib/cookies";
+import { sendLoginNotificationEmail } from "@/lib/email";
 
 export async function POST(request: NextRequest) {
   try {
@@ -42,6 +43,19 @@ export async function POST(request: NextRequest) {
 
     // Attach cookie
     response.headers.append("Set-Cookie", setAuthCookie(token));
+
+    // Send login notification email (don't wait for it - send asynchronously)
+    // Only send if SMTP is configured (to avoid errors in development)
+    if (process.env.SMTP_HOST || process.env.NODE_ENV === 'production') {
+      sendLoginNotificationEmail(user.email, user.name, {
+        loginTime: new Date().toISOString(),
+        ipAddress: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'Unknown',
+        userAgent: req.headers.get('user-agent') || 'Unknown',
+      }).catch((error) => {
+        console.error('Failed to send login notification email:', error);
+        // Don't fail the login if email fails
+      });
+    }
 
     return response;
   } catch (error) {

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { Eye, EyeOff, Mail, Lock, User, ShoppingBag, Loader2 } from 'lucide-react';
 import { useTranslation } from '@/i18n/TranslationProvider';
 
@@ -21,36 +21,48 @@ export default function LoginPage() {
     firstName: '',
     lastName: '',
     email: '',
+    phone: '',
     password: '',
     confirmPassword: '',
     role: 'customer' as 'customer' | 'merchant',
     storeName: ''
   });
 
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
   const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false);
   const [forgotPasswordError, setForgotPasswordError] = useState('');
   const [forgotPasswordSuccess, setForgotPasswordSuccess] = useState(false);
+  const [resetEmail, setResetEmail] = useState('');
 
   const { login, register, isAuthenticated, isLoading, error, clearError, user } = useAuth();
   const router = useRouter();
+  const pathname = usePathname();
+  const pathSegments = pathname?.split('/').filter(Boolean) || [];
+  const currentLang = pathSegments[0] || 'de';
 
   // Redirect if already authenticated
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && user) {
       // Get the current language from the URL path
       const currentPath = window.location.pathname;
       const langMatch = currentPath.match(/^\/([a-z]{2})(\/|$)/);
       const currentLang = langMatch ? langMatch[1] : 'en';
 
-      // Get the redirect URL from the query parameters or default to home
-      const redirectTo = new URLSearchParams(window.location.search).get('redirect') || `/${currentLang}`;
+      // Role-based redirect logic
+      if (user.role === 'merchant') {
+        // Merchants always go to their dashboard
+        router.push(`/${currentLang}/merchant`);
+        return;
+      } else if (user.role === 'admin') {
+        // Admins go to admin dashboard
+        router.push(`/${currentLang}/admin`);
+        return;
+      }
 
-      // Redirect to the intended page or home page
+      // For customers, use redirect parameter or default to home
+      const redirectTo = new URLSearchParams(window.location.search).get('redirect') || `/${currentLang}`;
       router.push(redirectTo);
     }
-  }, [isAuthenticated, router, user?.role]);
+  }, [isAuthenticated, router, user]);
 
   // Clear error when switching between login/register
   useEffect(() => {
@@ -73,18 +85,8 @@ export default function LoginPage() {
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.email || !newPassword || !confirmPassword) {
-      setForgotPasswordError('Please fill in all fields');
-      return;
-    }
-
-    if (newPassword !== confirmPassword) {
-      setForgotPasswordError('Passwords do not match');
-      return;
-    }
-
-    if (newPassword.length < 6) {
-      setForgotPasswordError('Password must be at least 6 characters long');
+    if (!formData.email) {
+      setForgotPasswordError(translate('forgotPasswordEmailRequired') || 'Please enter your email address');
       return;
     }
 
@@ -92,33 +94,24 @@ export default function LoginPage() {
       setForgotPasswordLoading(true);
       setForgotPasswordError('');
 
-      const response = await fetch('/api/auth/reset-password-direct', {
+      const response = await fetch('/api/auth/forgot-password', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           email: formData.email,
-          newPassword: newPassword,
+          lang: currentLang,
         }),
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to reset password');
+        throw new Error(errorData.error || 'Failed to send reset email');
       }
 
+      setResetEmail(formData.email);
       setForgotPasswordSuccess(true);
-      // Clear the form
-      setNewPassword('');
-      setConfirmPassword('');
-      setFormData(prev => ({ ...prev, email: '' }));
-
-      // Auto close modal after 2 seconds
-      setTimeout(() => {
-        setIsForgotPassword(false);
-        setForgotPasswordSuccess(false);
-      }, 2000);
 
     } catch (err: any) {
       console.error('Forgot password error:', err);
@@ -132,8 +125,7 @@ export default function LoginPage() {
     setIsForgotPassword(false);
     setForgotPasswordSuccess(false);
     setForgotPasswordError('');
-    setNewPassword('');
-    setConfirmPassword('');
+    setResetEmail('');
   };
 
   const handleInputChange = (field: string, value: string) => {
@@ -302,6 +294,26 @@ export default function LoginPage() {
               </div>
             </div>
 
+            {!isLogin && (
+              <div>
+                <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+                  {translate('Phone Number')}
+                </label>
+                <div className="mt-1 relative">
+                  <input
+                    id="phone"
+                    name="phone"
+                    type="tel"
+                    autoComplete="tel"
+                    value={formData.phone}
+                    onChange={(e) => handleInputChange('phone', e.target.value)}
+                    className="input-field pl-4"
+                    placeholder={translate('+41 79 123 45 67')}
+                  />
+                </div>
+              </div>
+            )}
+
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                 {translate('Password')}
@@ -410,9 +422,9 @@ export default function LoginPage() {
             <div className="mt-6">
               <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10">
                 <div className="text-center mb-6">
-                  <h3 className="text-lg font-medium text-gray-900">{translate('Reset your password')}</h3>
+                  <h3 className="text-lg font-medium text-gray-900">{translate('resetYourPassword')}</h3>
                   <p className="mt-2 text-sm text-gray-600">
-                    {translate('Enter your email and new password to reset your password directly.')}
+                    {translate('forgotPasswordInstructions')}
                   </p>
                 </div>
 
@@ -423,15 +435,20 @@ export default function LoginPage() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                       </svg>
                     </div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-2">{translate('Password Reset Successful!')}</h3>
-                    <p className="text-sm text-gray-600 mb-4">
-                      {translate('Your password has been updated successfully.')}
+                    <h3 className="text-lg font-medium text-gray-900 mb-2">{translate('passwordResetEmailSent')}</h3>
+                    <p className="text-sm text-gray-600 mb-1">
+                      {translate('passwordResetEmailSentDescription')}
                     </p>
+                    {resetEmail && (
+                      <p className="text-sm font-semibold text-gray-900 break-all mb-4">
+                        {resetEmail}
+                      </p>
+                    )}
                     <button
                       onClick={resetForgotPassword}
                       className="font-medium text-primary-warm hover:text-primary-warm-hover"
                     >
-                      {translate('Back to sign in')}
+                      {translate('backToSignIn')}
                     </button>
                   </div>
                 ) : (
@@ -451,42 +468,6 @@ export default function LoginPage() {
                           onChange={(e) => handleInputChange('email', e.target.value)}
                           className="input-field"
                           placeholder={translate('john@example.com')}
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700">
-                        {translate('New Password')}
-                      </label>
-                      <div className="mt-1 relative">
-                        <input
-                          id="newPassword"
-                          name="newPassword"
-                          type="password"
-                          required
-                          value={newPassword}
-                          onChange={(e) => setNewPassword(e.target.value)}
-                          className="input-field pl-4"
-                          placeholder={translate('••••••••')}
-                        />
-                      </div>
-                    </div>
-
-                    <div>
-                      <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-                        {translate('Confirm New Password')}
-                      </label>
-                      <div className="mt-1 relative">
-                        <input
-                          id="confirmPassword"
-                          name="confirmPassword"
-                          type="password"
-                          required
-                          value={confirmPassword}
-                          onChange={(e) => setConfirmPassword(e.target.value)}
-                          className="input-field pl-4"
-                          placeholder={translate('••••••••')}
                         />
                       </div>
                     </div>
@@ -515,10 +496,10 @@ export default function LoginPage() {
                         {forgotPasswordLoading ? (
                           <>
                             <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                            {translate('Resetting...')}
+                            {translate('sendingResetLink')}
                           </>
                         ) : (
-                          translate('Reset Password')
+                          translate('sendResetLink')
                         )}
                       </button>
                     </div>

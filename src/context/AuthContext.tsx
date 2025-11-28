@@ -227,6 +227,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           firstName: data.firstName,
           lastName: data.lastName,
           email: data.email,
+          phone: data.phone,
           password: data.password,
           role: data.role,
           // If merchant, pass optional storeName (UI can provide it)

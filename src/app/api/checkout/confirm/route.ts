@@ -4,6 +4,8 @@ import { paymentService } from '@/lib/payment-service';
 import { verifyToken } from '@/lib/auth';
 import { OrderStatus } from '@prisma/client';
 import Stripe from 'stripe';
+import { sendOrderConfirmationEmail, sendOrderNotificationToMerchant } from '@/lib/email';
+import { sendOrderConfirmationToCustomer, sendNewOrderNotificationToMerchant } from '@/lib/email';
 
 export async function POST(req: NextRequest) {
   try {
@@ -49,7 +51,7 @@ export async function POST(req: NextRequest) {
     const cartItems = metadata.cartItems ? JSON.parse(metadata.cartItems) : [];
     const shippingAddress = metadata.shippingAddress ? JSON.parse(metadata.shippingAddress) : {};
     const splitData = metadata.splitData ? JSON.parse(metadata.splitData) : {};
-    const currency = metadata.currency || 'USD';
+    const currency = metadata.currency || 'CHF';
 
     if (!cartItems.length) {
       return NextResponse.json(
@@ -88,6 +90,8 @@ export async function POST(req: NextRequest) {
           shippingAddressId: address.id,
           grandTotal: splitData.grandTotal,
           currency,
+          gatewayUsed: metadata.paymentMethod === 'paypal' ? 'PAYPAL' : 'STRIPE',
+          paymentStatus: 'SUCCEEDED',
         },
       });
 
@@ -161,6 +165,50 @@ export async function POST(req: NextRequest) {
         },
       });
     });
+
+    // Send order confirmation emails asynchronously (don't block response)
+    try {
+      // Send confirmation to customer
+      sendOrderConfirmationEmail(
+        shippingAddress.email,
+        `${shippingAddress.firstName} ${shippingAddress.lastName}`,
+        {
+          orderId: result.id,
+          totalAmount: result.grandTotal,
+          currency: result.currency,
+          items: result.subOrders.flatMap(subOrder =>
+            subOrder.items.map(item => ({
+              productTitle: item.product.title_en,
+              quantity: item.quantity,
+              price: item.price
+            }))
+          )
+        }
+      ).catch(err => console.error('Failed to send customer confirmation email:', err));
+
+      // Send notifications to merchants
+      for (const subOrder of result.subOrders) {
+        sendOrderNotificationToMerchant(
+          subOrder.merchant.user.email,
+          subOrder.merchant.user.name,
+          {
+            orderId: result.id,
+            customerName: `${shippingAddress.firstName} ${shippingAddress.lastName}`,
+            customerEmail: shippingAddress.email,
+            totalAmount: subOrder.subtotal,
+            currency: result.currency,
+            items: subOrder.items.map(item => ({
+              productTitle: item.product.title_en,
+              quantity: item.quantity,
+              price: item.price
+            }))
+          }
+        ).catch(err => console.error('Failed to send merchant notification:', err));
+      }
+    } catch (error) {
+      // Don't fail the order if emails fail
+      console.error('Error sending order emails:', error);
+    }
 
     return NextResponse.json({
       success: true,

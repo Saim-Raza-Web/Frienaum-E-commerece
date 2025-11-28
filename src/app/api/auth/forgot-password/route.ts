@@ -3,13 +3,28 @@ import { prisma } from '@/lib/prisma';
 import { v4 as uuidv4 } from 'uuid';
 import { sendPasswordResetEmail } from '@/lib/email';
 
+function getAppBaseUrl(request: NextRequest) {
+  const envUrl =
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.NEXTAUTH_URL ||
+    (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null) ||
+    request.headers.get('origin') ||
+    request.nextUrl.origin;
+
+  const fallback = 'https://feinraumshop.ch';
+  return (envUrl || fallback).replace(/\/$/, '');
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const { email } = await request.json();
+    const { email, lang } = await request.json();
 
     if (!email) {
       return NextResponse.json({ error: 'Email is required' }, { status: 400 });
     }
+
+    const locale = typeof lang === 'string' && /^[a-z]{2}$/i.test(lang) ? lang.toLowerCase() : 'de';
+    const appBaseUrl = getAppBaseUrl(request);
 
     // Find user by email
     const user = await prisma.user.findUnique({
@@ -35,7 +50,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Send reset email
-    const resetUrl = `${process.env.NEXTAUTH_URL}/login?token=${resetToken}`;
+    const resetUrl = `${appBaseUrl}/${locale}/reset-password?token=${resetToken}`;
     await sendPasswordResetEmail(user.email, user.name, resetUrl);
 
     return NextResponse.json({

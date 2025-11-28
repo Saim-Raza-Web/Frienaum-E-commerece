@@ -7,6 +7,7 @@ import { useTranslation } from '@/i18n/TranslationProvider';
 import { useAuth } from '@/context/AuthContext';
 import { Package, Clock, CheckCircle, XCircle, Eye, Star, Trash2 } from 'lucide-react';
 import SmartImage from '@/components/SmartImage';
+import MerchantBlocker from '@/components/MerchantBlocker';
 
 const RatingForm = dynamic(() => import('@/components/RatingForm'), {
   ssr: false,
@@ -203,6 +204,7 @@ export default function OrdersPage() {
   }
 
   return (
+    <MerchantBlocker>
     <>
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -242,7 +244,7 @@ export default function OrdersPage() {
                         <span className="ml-1.5 sm:ml-2 capitalize">{translate(`status.${order.status.toLowerCase()}`)}</span>
                       </span>
                       <span className="text-sm sm:text-lg font-semibold text-gray-900">
-                        ${order.totalAmount.toFixed(2)}
+                        {formatPrice(order.totalAmount, currentLang)}
                       </span>
                     </div>
                   </div>
@@ -255,7 +257,7 @@ export default function OrdersPage() {
                         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:mb-3">
                           <h4 className="text-sm sm:text-base font-medium text-gray-900">{translate('ordersPage.fromMerchant')}</h4>
                           <span className="text-xs sm:text-sm text-gray-600">
-                            {translate('ordersPage.subtotal')}: ${subOrder.subtotal.toFixed(2)}
+                            {translate('ordersPage.subtotal')}: {formatPrice(subOrder.subtotal, currentLang)}
                           </span>
                         </div>
                         <div className="flex justify-between text-gray-600 text-xs sm:text-sm">
@@ -344,6 +346,7 @@ export default function OrdersPage() {
       onSubmitted={handleRatingSubmitted}
     />
     </>
+  </MerchantBlocker>
   );
 }
 

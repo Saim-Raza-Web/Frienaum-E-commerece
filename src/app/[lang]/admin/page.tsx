@@ -22,7 +22,8 @@ import {
   Eye,
   Save,
   Upload,
-  X
+  X,
+  Loader2
 } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { useTranslation } from '@/i18n/TranslationProvider';
@@ -48,6 +49,7 @@ type Product = {
   category?: string;
   createdAt: string;
   updatedAt: string;
+  status?: 'PUBLISHED' | 'PENDING' | 'DRAFT';
 };
 
 function AdminDashboard() {
@@ -65,7 +67,7 @@ function AdminDashboard() {
     slug:"", title_en:"", title_de:"", desc_en:"", desc_de:"",
     price:"0", stock:"0", imageUrl:"", category: "General"
   });
-  const [isUploading, setIsUploading] = useState(false);
+  const [isProductImageUploading, setIsProductImageUploading] = useState(false);
   // Admin-only: selected merchant for new product
   const [selectedMerchantId, setSelectedMerchantId] = useState<string>('');
 
@@ -147,7 +149,10 @@ function AdminDashboard() {
     try {
       setCategoriesLoading(true);
       setCategoriesError(null);
-      const response = await fetch('/api/categories');
+      const response = await fetch('/api/categories', {
+        cache: 'no-store',
+        credentials: 'include'
+      });
       if (!response.ok) {
         throw new Error('Failed to fetch categories');
       }
@@ -256,7 +261,7 @@ function AdminDashboard() {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || 'Delete user failed');
       }
-      await loadUsers();
+      await Promise.all([loadUsers(), loadStats()]);
       alert('User deleted successfully');
     } catch (e: any) {
       alert(e?.message || 'Failed to delete user');
@@ -268,7 +273,10 @@ function AdminDashboard() {
   const openViewMerchant = async (merchantId: string) => {
     setViewing({ open: true, loading: true, error: '', data: null });
     try {
-      const res = await fetch(`/api/admin/merchants/${merchantId}`, { credentials: 'include' });
+      const res = await fetch(`/api/admin/merchants/${merchantId}`, {
+        credentials: 'include',
+        cache: 'no-store',
+      });
       if (!res.ok) throw new Error('Failed to load merchant');
       const data = await res.json();
       setViewing({ open: true, loading: false, error: '', data });
@@ -286,7 +294,7 @@ function AdminDashboard() {
         const data = await res.json().catch(() => ({}));
         throw new Error(data.error || 'Delete failed');
       }
-      await loadUsers();
+      await Promise.all([loadUsers(), loadStats()]);
       if (viewing.open) closeViewMerchant();
       alert('Merchant deleted successfully');
     } catch (e: any) {
@@ -320,7 +328,10 @@ function AdminDashboard() {
     try {
       setUsersLoading(true);
       setUsersError('');
-      const res = await fetch('/api/admin/users', { credentials: 'include' });
+      const res = await fetch('/api/admin/users', {
+        credentials: 'include',
+        cache: 'no-store',
+      });
       if (!res.ok) throw new Error('Failed to fetch users');
       const data = await res.json();
       setUsers(data);
@@ -381,7 +392,7 @@ function AdminDashboard() {
         body: JSON.stringify({ status })
       });
       if (!res.ok) throw new Error('Failed to update status');
-      await loadUsers();
+      await Promise.all([loadUsers(), loadStats()]);
     } catch (e: any) {
       alert(e?.message || 'Status update failed');
     }
@@ -435,21 +446,30 @@ function AdminDashboard() {
   const tabs = [
     { id: 'overview', label: translate('admin.overview'), icon: BarChart3 },
     { id: 'users', label: translate('admin.userManagement'), icon: Users },
-    { id: 'orders', label: translate('admin.orders'), icon: ShoppingBag },
-    { id: 'products', label: translate('admin.products'), icon: Package },
-    { id: 'categories', label: 'Categories', icon: Package },
-    { id: 'analytics', label: translate('admin.analytics'), icon: TrendingUp },
-    { id: 'settings', label: translate('admin.systemSettings'), icon: Settings }
+    { id: 'orders', label: translate('admin.orderManagement'), icon: ShoppingBag },
+    { id: 'products', label: translate('admin.productManagement'), icon: Package },
+    { id: 'categories', label: translate('admin.categories'), icon: Package },
+    { id: 'analytics', label: translate('admin.analyticsDashboard'), icon: TrendingUp },
+    { id: 'settings', label: translate('admin.systemSettings'), icon: Settings },
   ];
 
   // Product management functions
   const loadProducts = async () => {
     try {
-      const res = await fetch("/api/products");
+      const res = await fetch("/api/products", {
+        credentials: 'include',
+        cache: 'no-store',
+      });
+
+      if (!res.ok) {
+        throw new Error(`Failed to load products: ${res.status} ${res.statusText}`);
+      }
+
       const data = await res.json();
       setProducts(data);
     } catch (error) {
       console.error("Failed to load products:", error);
+      alert(error instanceof Error ? error.message : "Failed to load products");
     }
   };
 
@@ -482,7 +502,10 @@ function AdminDashboard() {
 
   const handleProductImageUpload = (url: string) => {
     setForm((prev: any) => ({ ...prev, imageUrl: url }));
+    setIsProductImageUploading(false);
   };
+  const handleProductImageUploadStart = () => setIsProductImageUploading(true);
+  const handleProductImageUploadEnd = () => setIsProductImageUploading(false);
 
   const [isImageUploading, setIsImageUploading] = useState(false);
 
@@ -505,6 +528,10 @@ function AdminDashboard() {
 
   const saveProduct = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isProductImageUploading) {
+      alert('Please wait for the product image upload to finish before saving.');
+      return;
+    }
     setLoading(true);
 
     try {
@@ -535,7 +562,7 @@ function AdminDashboard() {
         setShowForm(false);
         setEditingProduct(null);
         setSelectedMerchantId('');
-        loadProducts();
+        await Promise.all([loadProducts(), loadStats()]);
       } else {
         const error = await res.json();
         alert(`Save failed: ${error.message || 'Unknown error'}`);
@@ -553,7 +580,7 @@ function AdminDashboard() {
     try {
       const res = await fetch(`/api/products/${id}`, { method:"DELETE", credentials: 'include' });
       if (res.ok) {
-        loadProducts();
+        await Promise.all([loadProducts(), loadStats()]);
       } else {
         alert("Delete failed");
       }
@@ -588,6 +615,7 @@ function AdminDashboard() {
     setForm({ slug:"", title_en:"", title_de:"", desc_en:"", desc_de:"", price:"0", stock:"0", imageUrl:"", category: "General" });
     setEditingProduct(null);
     setShowForm(false);
+    setIsProductImageUploading(false);
   };
 
   // Delete category
@@ -605,11 +633,16 @@ function AdminDashboard() {
         throw new Error(errorData.error || 'Failed to delete category');
       }
 
-      // Refresh the categories list from the server
+      // Optimistically remove from UI immediately
+      setCategories(prev => prev.filter(cat => cat.id !== id));
+      
+      // Refresh the categories list from the server to ensure consistency
       await fetchCategories();
       alert('Category deleted successfully');
     } catch (error) {
       console.error('Error deleting category:', error);
+      // If deletion failed, refresh from server to restore correct state
+      await fetchCategories();
       alert(error instanceof Error ? error.message : 'Failed to delete category');
     }
   };
@@ -916,6 +949,13 @@ function AdminDashboard() {
                                       Approve
                                     </button>
                                     <button
+                                      className="px-3 py-1 rounded-md border border-orange-300 text-orange-700 hover:bg-orange-50 disabled:opacity-50"
+                                      onClick={() => setMerchantStatus(u.merchantId!, 'SUSPENDED')}
+                                      disabled={u.merchantStatus === 'SUSPENDED' || u.isDeleted}
+                                    >
+                                      Suspend
+                                    </button>
+                                    <button
                                       className="px-3 py-1 rounded-md border border-blue-300 text-blue-700 hover:bg-blue-50"
                                       onClick={() => openViewMerchant(u.merchantId!)}
                                       disabled={u.isDeleted}
@@ -969,20 +1009,20 @@ function AdminDashboard() {
                 <div className="p-6">
                   <div className="overflow-x-auto">
                     {ordersLoading ? (
-                      <div className="py-8 text-center text-gray-500">Loading orders...</div>
+                      <div className="py-8 text-center text-gray-500">{translate('admin.loadingOrders')}</div>
                     ) : ordersError ? (
                       <div className="py-8 text-center text-red-600">{ordersError}</div>
                     ) : (
                       <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                           <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Order ID</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Amount</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Merchant</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Created At</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('table.orderId')}</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('table.status')}</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('table.totalAmount')}</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('table.customer')}</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('table.merchant')}</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('table.createdAt')}</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('table.actions')}</th>
                           </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
@@ -1026,7 +1066,7 @@ function AdminDashboard() {
                                     onClick={() => openOrderModal(order)}
                                     className="text-blue-600 hover:text-blue-900"
                                   >
-                                    View Details
+                                    {translate('admin.viewDetails')}
                                   </button>
                                   <button
                                     className="text-red-600 hover:text-red-800"
@@ -1061,7 +1101,7 @@ function AdminDashboard() {
                       className="btn-primary"
                     >
                       <Plus className="w-5 h-5 mr-2" />
-                      Add Product
+                      {translate('admin.addProduct')}
                     </button>
                   </div>
                 </div>
@@ -1080,7 +1120,16 @@ function AdminDashboard() {
                         />
                       </div>
                     </div>
-                    <button className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        // Filter functionality - placeholder for future implementation
+                        // Currently search is handled by the search input above
+                      }}
+                      className="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 cursor-not-allowed opacity-60"
+                      disabled
+                      title="Filter functionality coming soon"
+                    >
                       <Filter className="w-5 h-5 mr-2" />
                       Filter
                     </button>
@@ -1098,9 +1147,9 @@ function AdminDashboard() {
                     ) : filteredProducts.length === 0 ? (
                       <div className="text-center py-12">
                         <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                        <h3 className="text-base font-montserrat font-semibold text-primary-800 mb-2">No products found</h3>
+                        <h3 className="text-base font-montserrat font-semibold text-primary-800 mb-2">{translate('admin.noProductsFound')}</h3>
                         <p className="text-gray-600 mb-6 text-sm">
-                          {searchTerm ? 'Try adjusting your search terms.' : 'Get started by adding your first product.'}
+                          {translate(searchTerm ? 'admin.tryAdjustingSearch' : 'admin.getStartedAddProduct')}
                         </p>
                         {!searchTerm && (
                           <button
@@ -1108,7 +1157,7 @@ function AdminDashboard() {
                             className="btn-primary"
                           >
                             <Plus className="w-5 h-5 mr-2" />
-                            Add Your First Product
+                            {translate('admin.addYourFirstProduct')}
                           </button>
                         )}
                       </div>
@@ -1150,11 +1199,11 @@ function AdminDashboard() {
 
                               <div className="space-y-2">
                                 <div className="flex items-center justify-between">
-                                  <span className="text-sm text-gray-600">Price:</span>
+                                  <span className="text-sm text-gray-600">{translate('admin.price')}:</span>
                                   <span className="font-montserrat font-semibold text-sm text-primary-warm">{formatCurrency(p.price)}</span>
                                 </div>
                                 <div className="flex items-center justify-between">
-                                  <span className="text-sm text-gray-600">Stock:</span>
+                                  <span className="text-sm text-gray-600">{translate('admin.stock')}:</span>
                                   <span className={`${p.stock > 0 ? 'text-green-600' : 'text-red-600'} font-semibold`}>
                                     {p.stock}
                                   </span>
@@ -1163,8 +1212,33 @@ function AdminDashboard() {
 
                               <div className="mt-4 pt-4 border-t border-gray-100">
                                 <p className="text-xs text-gray-500">
-                                  Created: {new Date(p.createdAt).toLocaleDateString()}
+                                  {translate('admin.created')}: {new Date(p.createdAt).toLocaleDateString()}
                                 </p>
+                              </div>
+                              <div className="mt-2 flex flex-row items-center gap-2">
+                                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                  p.status === 'PUBLISHED' ? 'bg-blue-100 text-blue-800' :
+                                  p.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
+                                  'bg-gray-100 text-gray-800'}`}>{
+                                  p.status === 'PUBLISHED' ? `${translate('admin.statusPublished')}` :
+                                  p.status === 'PENDING' ? `${translate('admin.statusPending')}` :
+                                  translate('admin.statusDraft')
+                                }</span>
+                                {p.status === 'PENDING' && (
+                                  <button
+                                    className="ml-2 px-4 py-1 text-xs rounded bg-green-600 text-white hover:bg-green-700"
+                                    onClick={async () => {
+                                      try {
+                                        const res = await fetch(`/api/admin/products/${p.id}/approve`, { method: 'POST', credentials: 'include' });
+                                        if (!res.ok) throw new Error('Failed to publish');
+                                        await loadProducts();
+                                        alert(translate('admin.productApproved'));
+                                      } catch (err) {
+                                        alert(translate('admin.errorApprovingProduct'));
+                                      }
+                                    }}
+                                  >{translate('admin.approve')}</button>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -1177,11 +1251,19 @@ function AdminDashboard() {
                 {/* Add/Edit Form Modal */}
                 {showForm && (
                   <div className="modal fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                    <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl md:max-w-3xl mx-4 max-h-[90vh] overflow-y-auto">
+                    <div className="bg-white rounded-lg shadow-xl w-full max-w-2xl md|max-w-3xl mx-4 max-h-[90vh] overflow-y-auto relative">
+                      {isProductImageUploading && (
+                        <div className="absolute inset-0 bg-white/85 backdrop-blur-sm flex flex-col items-center justify-center z-10">
+                          <Loader2 className="w-8 h-8 text-turquoise-600 animate-spin mb-2" />
+                          <p className="text-sm font-medium text-gray-700 text-center px-4">
+                            Uploading product image… please wait while the link is generated.
+                          </p>
+                        </div>
+                      )}
                       <div className="px-6 py-4 border-b border-gray-200">
                         <div className="flex items-center justify-between">
                           <h2 className="text-xl font-montserrat font-semibold text-primary-800">
-                            {editingProduct ? 'Edit Product' : 'Add New Product'}
+                            {editingProduct ? translate('admin.editProduct') : translate('admin.addNewProduct')}
                           </h2>
                           <button
                             onClick={resetForm}
@@ -1194,7 +1276,7 @@ function AdminDashboard() {
                       <form onSubmit={saveProduct} className="p-6 space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Slug (Unique)</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">{translate('admin.slug')}:</label>
                             <input
                               type="text"
                               required
@@ -1207,14 +1289,14 @@ function AdminDashboard() {
                           {/* Admin-only merchant selector when creating new product */}
                           {(!editingProduct && user?.role === 'admin') && (
                             <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-2">Merchant</label>
+                              <label className="block text-sm font-medium text-gray-700 mb-2">{translate('admin.merchant')}:</label>
                               <select
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent"
                                 value={selectedMerchantId}
                                 onChange={e=>setSelectedMerchantId(e.target.value)}
                                 required
                               >
-                                <option value="">Select a merchant...</option>
+                                <option value="">{translate('admin.selectMerchant')}</option>
                                 {users.filter(u => !!u.merchantId && !u.isDeleted).map(u => (
                                   <option key={u.merchantId!} value={u.merchantId!}>
                                     {u.storeName || u.name || u.email}
@@ -1224,7 +1306,7 @@ function AdminDashboard() {
                             </div>
                           )}
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">English Title</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">{translate('admin.englishTitle')}:</label>
                             <input
                               type="text"
                               required
@@ -1235,7 +1317,7 @@ function AdminDashboard() {
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">German Title</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">{translate('admin.germanTitle')}:</label>
                             <input
                               type="text"
                               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent"
@@ -1245,7 +1327,7 @@ function AdminDashboard() {
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Price (CHF)</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">{translate('admin.price')}:</label>
                             <input
                               type="number"
                               step="0.01"
@@ -1257,7 +1339,7 @@ function AdminDashboard() {
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Stock Quantity</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">{translate('admin.stockQuantity')}:</label>
                             <input
                               type="number"
                               required
@@ -1268,14 +1350,14 @@ function AdminDashboard() {
                             />
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">{translate('admin.category')}:</label>
                             <div className="flex gap-2">
                               <select
                                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent cursor-pointer flex-1"
                                 value={form.category}
                                 onChange={e=>setForm({...form, category:e.target.value})}
                               >
-                                <option value="General">General</option>
+                                <option value="General">{translate('admin.general')}</option>
                                 {categories.map(category => (
                                   <option key={category.id} value={category.name}>
                                     {category.name}
@@ -1286,23 +1368,26 @@ function AdminDashboard() {
                                 type="button"
                                 onClick={() => setShowNewCategoryModal(true)}
                                 className="btn-primary text-sm"
-                                title="Add new category"
+                                title={translate('admin.addNewCategory')}
                               >
                                 +
                               </button>
                             </div>
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">Product Image</label>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">{translate('admin.productImage')}:</label>
                             <ImageUpload
                               onImageUpload={handleProductImageUpload}
+                              onUploadStart={handleProductImageUploadStart}
+                              onUploadEnd={handleProductImageUploadEnd}
                               currentImageUrl={form.imageUrl}
                               className="mb-2"
+                              disabled={loading}
                             />
                             
                             {/* Alternative: Manual URL Input */}
                             <div className="mt-2">
-                              <label className="block text-xs font-medium text-gray-600 mb-1">Or enter image URL manually:</label>
+                              <label className="block text-xs font-medium text-gray-600 mb-1">{translate('admin.enterImageURLManually')}:</label>
                               <input
                                 type="text"
                                 value={form.imageUrl}
@@ -1314,7 +1399,7 @@ function AdminDashboard() {
                           </div>
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">English Description</label>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">{translate('admin.englishDescription')}:</label>
                           <textarea
                             rows={3}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent"
@@ -1324,7 +1409,7 @@ function AdminDashboard() {
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">German Description</label>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">{translate('admin.germanDescription')}:</label>
                           <textarea
                             rows={3}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent"
@@ -1339,15 +1424,19 @@ function AdminDashboard() {
                             onClick={resetForm}
                             className="btn-secondary focus:outline-none"
                           >
-                            {isUploading ? 'Cancel Upload' : 'Cancel'}
+                            {isProductImageUploading ? translate('admin.cancelUpload') : translate('admin.cancel')}
                           </button>
                           <button
                             type="submit"
-                            disabled={loading}
+                            disabled={loading || isProductImageUploading}
                             className="btn-primary disabled:opacity-50 flex items-center focus:outline-none"
                           >
                             <Save className="w-4 h-4 mr-2" />
-                            {loading ? 'Saving...' : (editingProduct ? 'Update Product' : 'Add Product')}
+                            {loading
+                              ? translate('admin.saving')
+                              : isProductImageUploading
+                                ? translate('admin.waitingForImageUpload')
+                                : (editingProduct ? translate('admin.updateProduct') : translate('admin.addProduct'))}
                           </button>
                         </div>
                       </form>
@@ -1361,7 +1450,7 @@ function AdminDashboard() {
             {activeTab === 'analytics' && (
               <div className="bg-white rounded-lg shadow-sm border border-gray-200">
                 <div className="px-6 py-4 border-b border-gray-200">
-                  <h2 className="text-xl font-semibold text-gray-900">{translate('admin.analyticsSection.title')}</h2>
+                  <h2 className="text-xl font-semibold text-gray-900">{translate('admin.analyticsDashboard')}</h2>
                 </div>
                 <div className="p-6 space-y-6">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -1391,7 +1480,7 @@ function AdminDashboard() {
                         </div>
                       ))}
                       {products.length === 0 && (
-                        <div className="text-sm text-gray-500">No products</div>
+                        <div className="text-sm text-gray-500">{translate('admin.noProducts')}</div>
                       )}
                     </div>
                   </div>
@@ -1403,7 +1492,7 @@ function AdminDashboard() {
             {activeTab === 'categories' && (
               <div className="space-y-6">
                 <div className="flex justify-between items-center">
-                  <h2 className="text-xl font-montserrat font-semibold text-primary-800">Categories</h2>
+                  <h2 className="text-xl font-montserrat font-semibold text-primary-800">{translate('admin.categories')}</h2>
                   <button
                     onClick={() => {
                       resetCategoryForm();
@@ -1412,7 +1501,7 @@ function AdminDashboard() {
                     className="btn-primary flex items-center gap-2"
                   >
                     <Plus size={16} />
-                    Add New Category
+                    {translate('admin.addNewCategory')}
                   </button>
                 </div>
 
@@ -1422,18 +1511,16 @@ function AdminDashboard() {
                   </div>
                 ) : categoriesError ? (
                   <div className="text-center py-8">
-                    <div className="text-red-600 mb-4">Error loading categories: {categoriesError}</div>
+                    <div className="text-red-600 mb-4">{translate('admin.errorLoadingCategories')}: {categoriesError}</div>
                     <button
                       onClick={fetchCategories}
                       className="btn-primary"
                     >
-                      Retry
+                      {translate('admin.retry')}
                     </button>
                   </div>
                 ) : categories.length === 0 ? (
-                  <div className="text-center py-12 text-gray-500">
-                    No categories found. Click "Add New Category" to create one.
-                  </div>
+                  <div className="text-center py-12 text-gray-500">{translate('admin.noCategoriesFound')}</div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
                     {categories.map((category) => (
@@ -1470,7 +1557,7 @@ function AdminDashboard() {
                                 ? 'bg-green-100 text-green-800' 
                                 : 'bg-gray-100 text-gray-800'
                             }`}>
-                              {category.isActive ? 'Active' : 'Inactive'}
+                              {category.isActive ? translate('admin.active') : translate('admin.inactive')}
                             </span>
                           </div>
                           {category.description && (
@@ -1478,7 +1565,7 @@ function AdminDashboard() {
                           )}
                           <div className="mt-3 flex justify-between items-center">
                             <span className="text-xs text-gray-500">
-                              {category.productCount} {category.productCount === 1 ? 'product' : 'products'}
+                              {category.productCount} {category.productCount === 1 ? translate('admin.product') : translate('admin.products')}
                             </span>
                             <div className="flex space-x-2">
                               <button
@@ -1487,7 +1574,7 @@ function AdminDashboard() {
                                   handleEditCategory(category);
                                 }}
                                 className="p-1.5 text-gray-500 hover:text-turquoise-600 hover:bg-gray-100 rounded"
-                                title="Edit"
+                                title={translate('admin.edit')}
                               >
                                 <Edit size={16} />
                               </button>
@@ -1499,7 +1586,7 @@ function AdminDashboard() {
                                   }
                                 }}
                                 className="p-1.5 text-gray-500 hover:text-red-600 hover:bg-gray-100 rounded"
-                                title="Delete"
+                                title={translate('admin.delete')}
                               >
                                 <Trash2 size={16} />
                               </button>
@@ -1533,7 +1620,7 @@ function AdminDashboard() {
             <div className="px-6 py-4 border-b border-gray-200 sticky top-0 bg-white z-10">
               <div className="flex justify-between items-center">
                 <h3 className="text-lg font-semibold text-gray-900">
-                  {editingCategoryId ? 'Edit Category' : 'Add New Category'}
+                  {editingCategoryId ? translate('admin.editCategory') : translate('admin.addNewCategory')}
                 </h3>
                 <button
                   onClick={resetCategoryForm}
@@ -1552,7 +1639,7 @@ function AdminDashboard() {
               className="p-6 space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto"
             >
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Category Name</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{translate('admin.categoryName')}:</label>
                 <input
                   type="text"
                   value={newCategory.name}
@@ -1563,7 +1650,7 @@ function AdminDashboard() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{translate('admin.description')}:</label>
                 <textarea
                   value={newCategory.description}
                   onChange={(e) => setNewCategory(prev => ({ ...prev, description: e.target.value }))}
@@ -1573,7 +1660,7 @@ function AdminDashboard() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Category Image</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{translate('admin.categoryImage')}:</label>
                 <ImageUpload
                   onImageUpload={handleCategoryImageUpload}
                   onUploadStart={handleImageUploadStart}
@@ -1590,7 +1677,7 @@ function AdminDashboard() {
                   className="btn-secondary focus:outline-none"
                   disabled={creatingCategory}
                 >
-                  Cancel
+                  {translate('admin.cancel')}
                 </button>
                 <button
                   type="submit"
@@ -1598,10 +1685,10 @@ function AdminDashboard() {
                   className="btn-primary disabled:opacity-50 focus:outline-none"
                 >
                   {creatingCategory || isImageUploading
-                    ? (isImageUploading ? 'Uploading Image...' : 'Saving...')
+                    ? (isImageUploading ? translate('admin.uploadingImage') : translate('admin.saving'))
                     : editingCategoryId
-                      ? 'Update Category'
-                      : 'Create Category'}
+                      ? translate('admin.updateCategory')
+                      : translate('admin.createCategory')}
                 </button>
               </div>
             </form>
@@ -1614,14 +1701,14 @@ function AdminDashboard() {
         <div className="modal fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-4xl bg-white rounded-lg shadow-lg max-h-[85vh] flex flex-col">
             <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white rounded-t-lg">
-              <h3 className="text-lg font-semibold text-gray-900">Order #{selectedOrder.id?.slice(-8)}</h3>
+              <h3 className="text-lg font-semibold text-gray-900">{translate('admin.orderDetails')}: #{selectedOrder.id?.slice(-8)}</h3>
               <button onClick={closeOrderModal} className="text-gray-500 hover:text-gray-700 focus:outline-none">✕</button>
             </div>
             <div className="p-6 overflow-y-auto space-y-6">
               {/* Order Status and Basic Info */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Status</label>
+                  <label className="block text-sm font-medium text-gray-700">{translate('admin.status')}:</label>
                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                     selectedOrder.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
                     selectedOrder.status === 'PROCESSING' ? 'bg-blue-100 text-blue-800' :
@@ -1633,25 +1720,25 @@ function AdminDashboard() {
                   </span>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Total Amount</label>
+                  <label className="block text-sm font-medium text-gray-700">{translate('admin.totalAmount')}:</label>
                   <p className="mt-1 text-sm text-gray-900">{formatCurrency(selectedOrder.grandTotal)}</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Order Date</label>
+                  <label className="block text-sm font-medium text-gray-700">{translate('admin.orderDate')}:</label>
                   <p className="mt-1 text-sm text-gray-900">{new Date(selectedOrder.createdAt).toLocaleDateString()}</p>
                 </div>
               </div>
 
               {/* Customer Information */}
               <div>
-                <h4 className="text-lg font-medium text-gray-900 mb-3">Customer Information</h4>
+                <h4 className="text-lg font-medium text-gray-900 mb-3">{translate('admin.customerInformation')}</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Name</label>
+                    <label className="block text-sm font-medium text-gray-700">{translate('admin.name')}:</label>
                     <p className="mt-1 text-sm text-gray-900 bg-gray-50 p-2 rounded">{selectedOrder.customer.name || '—'}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Email</label>
+                    <label className="block text-sm font-medium text-gray-700">{translate('admin.email')}:</label>
                     <p className="mt-1 text-sm text-gray-900 bg-gray-50 p-2 rounded">{selectedOrder.customer.email}</p>
                   </div>
                 </div>
@@ -1659,14 +1746,14 @@ function AdminDashboard() {
 
               {/* Merchant Information */}
               <div>
-                <h4 className="text-lg font-medium text-gray-900 mb-3">Merchant Information</h4>
+                <h4 className="text-lg font-medium text-gray-900 mb-3">{translate('admin.merchantInformation')}</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Store Name</label>
+                    <label className="block text-sm font-medium text-gray-700">{translate('admin.storeName')}:</label>
                     <p className="mt-1 text-sm text-gray-900 bg-gray-50 p-2 rounded">{selectedOrder.merchant.storeName}</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">Merchant Contact</label>
+                    <label className="block text-sm font-medium text-gray-700">{translate('admin.merchantContact')}:</label>
                     <p className="mt-1 text-sm text-gray-900 bg-gray-50 p-2 rounded">{selectedOrder.merchant.user.name || selectedOrder.merchant.user.email}</p>
                   </div>
                 </div>
@@ -1674,21 +1761,21 @@ function AdminDashboard() {
 
               {/* Shipping Address */}
               <div>
-                <h4 className="text-lg font-medium text-gray-900 mb-3">Shipping Address</h4>
+                <h4 className="text-lg font-medium text-gray-900 mb-3">{translate('admin.shippingAddress')}:</h4>
                 <p className="text-sm text-gray-900 bg-gray-50 p-3 rounded">{selectedOrder.shippingAddress}</p>
               </div>
 
               {/* Order Items */}
               <div>
-                <h4 className="text-lg font-medium text-gray-900 mb-3">Order Items</h4>
+                <h4 className="text-lg font-medium text-gray-900 mb-3">{translate('admin.orderItems')}:</h4>
                 <div className="overflow-x-auto">
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Product</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Quantity</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Price</th>
-                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('admin.product')}:</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('admin.quantity')}:</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('admin.price')}:</th>
+                        <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('admin.total')}:</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
@@ -1716,7 +1803,7 @@ function AdminDashboard() {
               </div>
             </div>
             <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-end gap-3">
-              <button onClick={closeOrderModal} className="btn-secondary">Close</button>
+              <button onClick={closeOrderModal} className="btn-secondary">{translate('admin.close')}</button>
             </div>
           </div>
         </div>
@@ -1784,7 +1871,7 @@ function SettingsForm() {
         <form onSubmit={onSave} className="max-w-xl space-y-5">
           {error && <div className="text-sm text-red-600">{error}</div>}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">{translate('admin.settings.storeName')}</label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">{translate('admin.settings.storeName')}:</label>
             <input
               className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-400"
               value={form.storeName}
@@ -1794,20 +1881,17 @@ function SettingsForm() {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">{translate('admin.settings.currency')}</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{translate('admin.settings.currency')}:</label>
               <select
                 className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent bg-white text-gray-900"
                 value={form.currency}
                 onChange={(e)=>setForm({ ...form, currency: e.target.value })}
               >
                 <option value="CHF">CHF</option>
-                <option value="EUR">EUR</option>
-                <option value="USD">USD</option>
-                <option value="GBP">GBP</option>
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">{translate('admin.settings.defaultLanguage')}</label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">{translate('admin.settings.defaultLanguage')}:</label>
               <select
                 className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent bg-white text-gray-900"
                 value={form.defaultLanguage}
@@ -1826,7 +1910,7 @@ function SettingsForm() {
               disabled={saving}
               className="btn-primary disabled:opacity-50 focus:outline-none"
             >
-              {saving ? 'Saving...' : translate('admin.settings.save')}
+              {saving ? translate('admin.saving') : translate('admin.settings.save')}
             </button>
           </div>
         </form>

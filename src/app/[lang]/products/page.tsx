@@ -7,6 +7,7 @@ import { useCart } from '@/context/CartContext';
 import { Product } from '@/types';
 import { Filter, Search, Loader2, X } from 'lucide-react';
 import { useTranslation } from '@/i18n/TranslationProvider';
+import MerchantBlocker from '@/components/MerchantBlocker';
 
 interface Category {
   id: string;
@@ -210,6 +211,7 @@ export default function ProductsPage() {
   };
 
   return (
+    <MerchantBlocker>
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-6 sm:py-8">
         <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-8">
@@ -421,5 +423,6 @@ export default function ProductsPage() {
         </div>
       </div>
     </div>
+    </MerchantBlocker>
   );
 }

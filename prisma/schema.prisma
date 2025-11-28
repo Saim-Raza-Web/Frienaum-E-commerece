@@ -113,11 +113,18 @@ enum PayoutStatus {
   FAILED
 }
 
+enum ProductStatus {
+  DRAFT
+  PENDING
+  PUBLISHED
+}
+
 model User {
   id       String  @id @default(auto()) @map("_id") @db.ObjectId
   email    String  @unique
   password String
   name     String
+  phone    String?
   role     Role    @default(CUSTOMER)
   isDeleted Boolean @default(false)
 
@@ -171,6 +178,7 @@ model Product {
   stock      Int
   imageUrl   String?
   categoryId String?    @db.ObjectId
+  status     ProductStatus @default(PENDING)
 
   // Rating fields
   averageRating Float?   @default(0)
@@ -187,6 +195,7 @@ model Product {
   updatedAt  DateTime   @updatedAt
 
   @@index([categoryId])
+  @@index([status])
 }
 
 model OrderItem {
@@ -233,7 +242,7 @@ model Order {
 
   // Aggregated payment info for checkout
   grandTotal Float
-  currency   String      @default("USD")
+  currency   String      @default("CHF")
   gatewayUsed   PaymentGateway?
   paymentStatus PaymentStatus?
 

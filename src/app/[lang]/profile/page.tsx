@@ -127,22 +127,55 @@ function ProfileContent() {
     role: user?.role || 'customer'
   });
 
-  // Update profile data when user data changes
+  // Load profile data from API when component mounts
+  useEffect(() => {
+    const loadProfile = async () => {
+      try {
+        const response = await fetch('/api/user/profile', {
+          credentials: 'include',
+        });
+        if (response.ok) {
+          const data = await response.json();
+          setProfileData(prev => ({
+            ...prev,
+            firstName: data.firstName || '',
+            lastName: data.lastName || '',
+            email: data.email || '',
+            phone: data.phone || '',
+            role: data.role || 'customer'
+          }));
+          setTempData(prev => ({
+            ...prev,
+            firstName: data.firstName || '',
+            lastName: data.lastName || '',
+            email: data.email || '',
+            phone: data.phone || '',
+            role: data.role || 'customer'
+          }));
+        }
+      } catch (error) {
+        console.error('Failed to load profile:', error);
+      }
+    };
+    loadProfile();
+  }, []);
+
+  // Update profile data when user data changes (fallback)
   useEffect(() => {
     if (user) {
       setProfileData(prev => ({
         ...prev,
-        firstName: user.firstName || '',
-        lastName: user.lastName || '',
-        email: user.email || '',
-        role: user.role || 'customer'
+        firstName: user.firstName || prev.firstName || '',
+        lastName: user.lastName || prev.lastName || '',
+        email: user.email || prev.email || '',
+        role: user.role || prev.role || 'customer'
       }));
       setTempData(prev => ({
         ...prev,
-        firstName: user.firstName || '',
-        lastName: user.lastName || '',
-        email: user.email || '',
-        role: user.role || 'customer'
+        firstName: user.firstName || prev.firstName || '',
+        lastName: user.lastName || prev.lastName || '',
+        email: user.email || prev.email || '',
+        role: user.role || prev.role || 'customer'
       }));
     }
   }, [user]);
@@ -175,9 +208,56 @@ function ProfileContent() {
     }
   }, [sessions]);
 
-  const handleSave = () => {
-    setProfileData(tempData);
-    setIsEditing(false);
+  const handleSave = async () => {
+    try {
+      // Call API to update profile
+      const response = await fetch('/api/user/profile', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({
+          firstName: tempData.firstName,
+          lastName: tempData.lastName,
+          phone: tempData.phone,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to update profile');
+      }
+
+      // Update local state
+      setProfileData(tempData);
+      setIsEditing(false);
+      
+      // Update user in AuthContext if available
+      if (user && window.location) {
+        // Reload user data from API
+        const userResponse = await fetch('/api/user/profile', {
+          credentials: 'include',
+        });
+        if (userResponse.ok) {
+          const userData = await userResponse.json();
+          // Update localStorage if it exists
+          const storedUser = localStorage.getItem('feinraum_user');
+          if (storedUser) {
+            const parsedUser = JSON.parse(storedUser);
+            parsedUser.firstName = userData.firstName;
+            parsedUser.lastName = userData.lastName;
+            parsedUser.phone = userData.phone;
+            localStorage.setItem('feinraum_user', JSON.stringify(parsedUser));
+          }
+        }
+      }
+
+      alert('Profile updated successfully');
+    } catch (error: any) {
+      alert(error.message || 'Failed to update profile');
+    }
   };
 
   const handleCancel = () => {
@@ -339,26 +419,26 @@ function ProfileContent() {
     alert('Default payment method updated');
   };
 
+  const [showEditBilling, setShowEditBilling] = useState(false);
+  const [editBillingForm, setEditBillingForm] = useState(billingAddress);
+
   const handleEditBillingAddress = () => {
-    const newAddress = prompt('Enter new billing address (format: Name, Street, City, State, ZIP, Country)', 
-      `${billingAddress.name}, ${billingAddress.street}, ${billingAddress.city}, ${billingAddress.state}, ${billingAddress.zipCode}, ${billingAddress.country}`);
-    
-    if (newAddress) {
-      const parts = newAddress.split(', ');
-      if (parts.length >= 6) {
-        setBillingAddress({
-          name: parts[0],
-          street: parts[1],
-          city: parts[2],
-          state: parts[3],
-          zipCode: parts[4],
-          country: parts[5]
-        });
-        alert('Billing address updated successfully');
-      } else {
-        alert('Please enter the address in the correct format');
-      }
-    }
+    setEditBillingForm(billingAddress);
+    setShowEditBilling(true);
+  };
+
+  const handleBillingFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setBillingAddress(editBillingForm);
+    setShowEditBilling(false);
+    alert('Billing address updated successfully');
+  };
+
+  const handleBillingFormChange = (field: string, value: string) => {
+    setEditBillingForm(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
   if (!user) {
@@ -437,33 +517,49 @@ function ProfileContent() {
               <div className="bg-white rounded-lg shadow-sm">
                 <div className="px-6 py-4 border-b border-gray-200">
                   <div className="flex items-center justify-between">
-                  <h2 className="text-xl font-semibold text-gray-900">{translate('personalInformation')}</h2>
-                  {!isEditing ? (
-                      <button
-                        onClick={() => setIsEditing(true)}
-                        className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turquoise-500 flex items-center space-x-2"
-                      >
-                        <Edit className="w-4 h-4" />
-                        <span>{translate('edit')}</span>
-                      </button>
-                    ) : (
-                      <div className="flex space-x-2">
+                    <h2 className="text-xl font-semibold text-gray-900">{translate('personalInformation')}</h2>
+                    <div className="flex items-center space-x-2">
+                      {!isEditing ? (
                         <button
-                          onClick={handleSave}
-                          className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-turquoise-600 hover:bg-turquoise-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turquoise-500 flex items-center space-x-2"
+                          onClick={() => {
+                            console.log('Edit clicked, setting isEditing to true');
+                            setIsEditing(true);
+                          }}
+                          className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 flex items-center space-x-2"
                         >
-                          <Save className="w-4 h-4" />
-                          <span>{translate('save')}</span>
+                          <Edit className="w-4 h-4" />
+                          <span>{translate('edit')}</span>
                         </button>
-                        <button
-                          onClick={handleCancel}
-                          className="px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turquoise-500 flex items-center space-x-2"
-                        >
-                          <X className="w-4 h-4" />
-                          <span>{translate('cancel')}</span>
-                        </button>
-                      </div>
-                    )}
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            onClick={handleSave}
+                            className="inline-flex items-center justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white transition-colors"
+                            style={{ 
+                              backgroundColor: '#a97f57', 
+                              minWidth: '100px',
+                              display: 'inline-flex',
+                              visibility: 'visible',
+                              opacity: 1
+                            }}
+                            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#8e6a49'}
+                            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#a97f57'}
+                          >
+                            <Save className="w-4 h-4 mr-2" />
+                            <span>{translate('save')}</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={handleCancel}
+                            className="inline-flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500 transition-colors"
+                          >
+                            <X className="w-4 h-4 mr-2" />
+                            <span>{translate('cancel')}</span>
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </div>
                 </div>
                 
@@ -480,9 +576,9 @@ function ProfileContent() {
                               type="text"
                               name="first-name"
                               id="first-name"
-                              value={tempData.firstName}
+                              value={tempData.firstName || ''}
                               onChange={(e) => handleInputChange('firstName', e.target.value)}
-                              className="shadow-sm focus:ring-turquoise-500 focus:border-turquoise-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                              className="shadow-sm focus:ring-turquoise-500 focus:border-turquoise-500 block w-full sm:text-sm border border-gray-300 rounded-md px-3 py-2"
                             />
                           </div>
                         </div>
@@ -496,9 +592,9 @@ function ProfileContent() {
                               type="text"
                               name="last-name"
                               id="last-name"
-                              value={tempData.lastName}
+                              value={tempData.lastName || ''}
                               onChange={(e) => handleInputChange('lastName', e.target.value)}
-                              className="shadow-sm focus:ring-turquoise-500 focus:border-turquoise-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                              className="shadow-sm focus:ring-turquoise-500 focus:border-turquoise-500 block w-full sm:text-sm border border-gray-300 rounded-md px-3 py-2"
                             />
                           </div>
                         </div>
@@ -512,10 +608,12 @@ function ProfileContent() {
                               type="email"
                               name="email"
                               id="email"
-                              value={tempData.email}
-                              onChange={(e) => handleInputChange('email', e.target.value)}
-                              className="shadow-sm focus:ring-turquoise-500 focus:border-turquoise-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                              value={tempData.email || ''}
+                              readOnly
+                              disabled
+                              className="shadow-sm focus:ring-turquoise-500 focus:border-turquoise-500 block w-full sm:text-sm border border-gray-300 rounded-md px-3 py-2 bg-gray-50 cursor-not-allowed"
                             />
+                            <p className="mt-1 text-xs text-gray-500">Email cannot be changed</p>
                           </div>
                         </div>
 
@@ -528,9 +626,9 @@ function ProfileContent() {
                               type="tel"
                               name="phone"
                               id="phone"
-                              value={tempData.phone}
+                              value={tempData.phone || ''}
                               onChange={(e) => handleInputChange('phone', e.target.value)}
-                              className="shadow-sm focus:ring-turquoise-500 focus:border-turquoise-500 block w-full sm:text-sm border-gray-300 rounded-md"
+                              className="shadow-sm focus:ring-turquoise-500 focus:border-turquoise-500 block w-full sm:text-sm border border-gray-300 rounded-md px-3 py-2"
                             />
                           </div>
                         </div>
@@ -602,7 +700,7 @@ function ProfileContent() {
                             onChange={(e) => handlePasswordChange('newPassword', e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-turquoise-500 focus:border-turquoise-500"
                             required
-                            minLength={8}
+                            minLength={6}
                           />
                         </div>
                         <div>
@@ -613,7 +711,7 @@ function ProfileContent() {
                             onChange={(e) => handlePasswordChange('confirmPassword', e.target.value)}
                             className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-turquoise-500 focus:border-turquoise-500"
                             required
-                            minLength={8}
+                            minLength={6}
                           />
                         </div>
                         <div className="flex space-x-2">
@@ -719,7 +817,7 @@ function ProfileContent() {
                         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                           <div className="sm:col-span-2">
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Cardholder Name
+                              {translate('cardholderName')}
                             </label>
                             <input
                               type="text"
@@ -733,7 +831,7 @@ function ProfileContent() {
                           
                           <div className="sm:col-span-2">
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Card Number
+                              {translate('cardNumber')}
                             </label>
                             <input
                               type="text"
@@ -748,7 +846,7 @@ function ProfileContent() {
                           
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                              Expiry Date
+                              {translate('expiryDate')}
                             </label>
                             <input
                               type="text"
@@ -769,7 +867,7 @@ function ProfileContent() {
                           
                           <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                              CVV
+                              {translate('cvv')}
                             </label>
                             <input
                               type="text"
@@ -789,7 +887,7 @@ function ProfileContent() {
                             className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-turquoise-600 hover:bg-turquoise-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turquoise-500"
                           >
                             <CreditCard className="w-4 h-4 mr-2" />
-                            Add Card
+                            {translate('addCard')}
                           </button>
                           <button
                             type="button"
@@ -845,16 +943,16 @@ function ProfileContent() {
                               <span className="text-xs text-green-600 font-medium">{translate('default')}</span>
                             )}
                             {!payment.default && (
-                              <button 
+                              <button
                                 onClick={() => handleSetDefaultPayment(payment.id)}
-                                className="text-xs text-gray-500 hover:text-gray-700"
+                                className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
                               >
-                                Set as Default
+                                {translate('setAsDefault')}
                               </button>
                             )}
-                            <button 
+                            <button
                               onClick={() => handleRemovePaymentMethod(payment.id)}
-                              className="text-xs text-red-600 hover:text-red-800"
+                              className="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
                             >
                               {translate('remove')}
                             </button>
@@ -867,19 +965,159 @@ function ProfileContent() {
                   {/* Billing Address */}
                   <div className="bg-gray-50 p-4 rounded-lg">
                     <h3 className="text-sm font-medium text-gray-900 mb-2">{translate('billingAddress')}</h3>
-                    <div className="text-sm text-gray-600 mb-4">
-                      <p>{billingAddress.name}</p>
-                      <p>{billingAddress.street}</p>
-                      <p>{billingAddress.city}, {billingAddress.state} {billingAddress.zipCode}</p>
-                      <p>{billingAddress.country}</p>
+
+                    {!showEditBilling ? (
+                      <>
+                        <div className="text-sm text-gray-600 mb-4">
+                          <p>{billingAddress.name}</p>
+                          <p>{billingAddress.street}</p>
+                          <p>{billingAddress.city}, {billingAddress.state} {billingAddress.zipCode}</p>
+                          <p>{billingAddress.country}</p>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={handleEditBillingAddress}
+                          className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turquoise-500"
+                        >
+                          {translate('editAddress')}
+                        </button>
+                      </>
+                    ) : (
+                      <form onSubmit={handleBillingFormSubmit} className="space-y-3">
+                        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                          <div className="sm:col-span-2">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              {translate('fullName')}
+                            </label>
+                            <input
+                              type="text"
+                              value={editBillingForm.name}
+                              onChange={(e) => handleBillingFormChange('name', e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-turquoise-500 focus:border-turquoise-500"
+                              required
+                            />
+                          </div>
+
+                          <div className="sm:col-span-2">
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              {translate('streetAddress')}
+                            </label>
+                            <input
+                              type="text"
+                              value={editBillingForm.street}
+                              onChange={(e) => handleBillingFormChange('street', e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-turquoise-500 focus:border-turquoise-500"
+                              required
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              {translate('city')}
+                            </label>
+                            <input
+                              type="text"
+                              value={editBillingForm.city}
+                              onChange={(e) => handleBillingFormChange('city', e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-turquoise-500 focus:border-turquoise-500"
+                              required
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              {translate('state')}
+                            </label>
+                            <input
+                              type="text"
+                              value={editBillingForm.state}
+                              onChange={(e) => handleBillingFormChange('state', e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-turquoise-500 focus:border-turquoise-500"
+                              required
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              {translate('zipCode')}
+                            </label>
+                            <input
+                              type="text"
+                              value={editBillingForm.zipCode}
+                              onChange={(e) => handleBillingFormChange('zipCode', e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-turquoise-500 focus:border-turquoise-500"
+                              required
+                            />
+                          </div>
+
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                              {translate('country')}
+                            </label>
+                            <input
+                              type="text"
+                              value={editBillingForm.country}
+                              onChange={(e) => handleBillingFormChange('country', e.target.value)}
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-turquoise-500 focus:border-turquoise-500"
+                              required
+                            />
+                          </div>
+                        </div>
+
+                        <div className="flex space-x-2 pt-2">
+                          <button
+                            type="submit"
+                            className="px-4 py-2 bg-turquoise-600 text-white rounded-md hover:bg-turquoise-700 focus:outline-none focus:ring-2 focus:ring-turquoise-500"
+                          >
+                            {translate('saveAddress')}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setShowEditBilling(false)}
+                            className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-gray-500"
+                          >
+                            {translate('cancel')}
+                          </button>
+                        </div>
+                      </form>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Become a Merchant Section - Only show for non-merchants */}
+            {user.role !== 'merchant' && user.role !== 'admin' && (
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6">
+                <div className="flex items-start space-x-4">
+                  <div className="flex-shrink-0">
+                    <Store className="w-8 h-8 text-blue-600" />
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-blue-900 mb-2">
+                      Become a Merchant
+                    </h3>
+                    <p className="text-blue-700 mb-4">
+                      Start selling your products on Feinraum marketplace. Create your online store and reach thousands of customers.
+                    </p>
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        No setup fees
+                      </span>
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        Secure payments
+                      </span>
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        Customer management
+                      </span>
                     </div>
-                    <button
-                      type="button"
-                      onClick={handleEditBillingAddress}
-                      className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turquoise-500"
+                    <Link
+                      href="/merchant/register"
+                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                     >
-                      {translate('editAddress')}
-                    </button>
+                      <Store className="w-4 h-4 mr-2" />
+                      Register as Merchant
+                    </Link>
                   </div>
                 </div>
               </div>
