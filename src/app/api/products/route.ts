@@ -313,7 +313,7 @@ export async function POST(request: NextRequest) {
         imageUrl: imageUrl || undefined,
         categoryId: categoryId,
         merchantId: targetMerchantId,
-        status: productStatus
+        status: productStatus as any
       },
       include: {
         merchant: {

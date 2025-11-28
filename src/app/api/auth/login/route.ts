@@ -49,8 +49,8 @@ export async function POST(request: NextRequest) {
     if (process.env.SMTP_HOST || process.env.NODE_ENV === 'production') {
       sendLoginNotificationEmail(user.email, user.name, {
         loginTime: new Date().toISOString(),
-        ipAddress: req.headers.get('x-forwarded-for') || req.headers.get('x-real-ip') || 'Unknown',
-        userAgent: req.headers.get('user-agent') || 'Unknown',
+        ipAddress: request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'Unknown',
+        userAgent: request.headers.get('user-agent') || 'Unknown',
       }).catch((error) => {
         console.error('Failed to send login notification email:', error);
         // Don't fail the login if email fails

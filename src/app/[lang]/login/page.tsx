@@ -140,6 +140,7 @@ export default function LoginPage() {
       firstName: '',
       lastName: '',
       email: '',
+      phone: '',
       password: '',
       confirmPassword: '',
       role: 'customer',

@@ -5,6 +5,7 @@ import { useAuth } from '../../../context/AuthContext';
 import ProtectedRoute from '../../../components/ProtectedRoute';
 import { useTranslation } from '../../../i18n/TranslationProvider';
 import { usePathname } from 'next/navigation';
+import Link from 'next/link';
 import {
   User,
   Mail,
@@ -435,7 +436,7 @@ function ProfileContent() {
   };
 
   const handleBillingFormChange = (field: string, value: string) => {
-    setEditBillingForm(prev => ({
+    setEditBillingForm((prev: { name: string; street: string; city: string; state: string; zipCode: string; country: string }) => ({
       ...prev,
       [field]: value
     }));

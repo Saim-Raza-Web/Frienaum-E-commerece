@@ -364,7 +364,7 @@ function MerchantDashboard() {
       );
 
       // Update the selected order
-      setSelectedOrder((prev) => prev ? { ...prev, status: orderStatusDraft } : null);
+      setSelectedOrder((prev: any | null) => prev ? { ...prev, status: orderStatusDraft } : null);
       await fetchStats(); // <-- immediately refresh stats on status update
       alert(translate('merchant.orderStatusUpdatedSuccess'));
     } catch (err) {
@@ -679,35 +679,37 @@ function MerchantDashboard() {
     fetchAnalytics();
   }, [user, activeTab]);
 
+  // Fetch payouts function
+  const fetchPayouts = async () => {
+    try {
+      setPayoutsLoading(true);
+      setPayoutsError(null);
+      if (!user) {
+        setPayoutsError('Please log in to access merchant dashboard');
+        return;
+      }
+      const response = await fetch('/api/merchant/payouts', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include'
+      });
+      if (!response.ok) {
+        if (response.status === 401) throw new Error('Please log in to view payouts');
+        throw new Error(`Failed to fetch payouts: ${response.statusText}`);
+      }
+      const data = await response.json();
+      setPayouts(data);
+    } catch (err) {
+      console.error('Error fetching payouts:', err);
+      setPayoutsError(err instanceof Error ? err.message : 'Failed to load payouts');
+    } finally {
+      setPayoutsLoading(false);
+    }
+  };
+
   // Fetch payouts on tab switch to payouts
   useEffect(() => {
     if (activeTab !== 'payouts') return;
-    const fetchPayouts = async () => {
-      try {
-        setPayoutsLoading(true);
-        setPayoutsError(null);
-        if (!user) {
-          setPayoutsError('Please log in to access merchant dashboard');
-          return;
-        }
-        const response = await fetch('/api/merchant/payouts', {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include'
-        });
-        if (!response.ok) {
-          if (response.status === 401) throw new Error('Please log in to view payouts');
-          throw new Error(`Failed to fetch payouts: ${response.statusText}`);
-        }
-        const data = await response.json();
-        setPayouts(data);
-      } catch (err) {
-        console.error('Error fetching payouts:', err);
-        setPayoutsError(err instanceof Error ? err.message : 'Failed to load payouts');
-      } finally {
-        setPayoutsLoading(false);
-      }
-    };
     fetchPayouts();
   }, [user, activeTab]);
 

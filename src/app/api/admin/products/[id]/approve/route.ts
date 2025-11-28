@@ -7,9 +7,9 @@ function getUserFromNextRequest(req: NextRequest) {
   return getUserFromReq({ headers: { cookie: cookieHeader } } as any);
 }
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id: productId } = params;
+    const { id: productId } = await params;
     
     if (!productId) {
       return NextResponse.json({ error: 'Product ID is required' }, { status: 400 });

@@ -159,12 +159,25 @@ export async function POST(req: NextRequest) {
         include: {
           subOrders: {
             include: {
-              items: true,
+              items: {
+                include: {
+                  product: true,
+                },
+              },
+              merchant: {
+                include: {
+                  user: true,
+                },
+              },
             },
           },
         },
       });
     });
+
+    if (!result) {
+      throw new Error('Failed to create order');
+    }
 
     // Send order confirmation emails asynchronously (don't block response)
     try {

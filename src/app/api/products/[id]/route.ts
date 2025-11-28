@@ -131,8 +131,8 @@ function getUserFromNextRequest(req: NextRequest) {
 }
 
 // GET product by id
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
-  const { id: productId } = params;
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id: productId } = await params;
   if (!productId) {
     return NextResponse.json({ message: 'Invalid id' }, { status: 400 });
   }
@@ -173,8 +173,8 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
 }
 
 // PUT update product
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
-  const { id: productId } = params;
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id: productId } = await params;
   if (!productId) {
     return NextResponse.json({ message: 'Invalid id' }, { status: 400 });
   }

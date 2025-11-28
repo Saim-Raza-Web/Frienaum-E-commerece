@@ -279,12 +279,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     dispatch({ type: 'CLEAR_ERROR' });
   }, []);
 
+  const updateUser = useCallback((updatedUser: User) => {
+    dispatch({ type: 'SET_USER', payload: updatedUser });
+    // Also update localStorage
+    localStorage.setItem('feinraum_user', JSON.stringify(updatedUser));
+  }, []);
+
   const value: AuthContextType = {
     ...state,
     login,
     register,
     logout,
-    clearError
+    clearError,
+    updateUser
   };
 
   return (
