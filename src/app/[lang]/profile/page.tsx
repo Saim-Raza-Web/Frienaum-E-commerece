@@ -295,11 +295,11 @@ function ProfileContent() {
   const handlePasswordSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      alert('Passwords do not match');
+      alert(translate('passwordsDoNotMatch'));
       return;
     }
     if (passwordForm.newPassword.length < 6) {
-      alert('Password must be at least 6 characters long');
+      alert(translate('passwordTooShort'));
       return;
     }
     
@@ -319,14 +319,14 @@ function ProfileContent() {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to change password');
+        throw new Error(data.error || translate('failedToChangePassword'));
       }
 
-      alert('Password changed successfully');
+      alert(translate('passwordChangedSuccessfully'));
       setPasswordForm({ currentPassword: '', newPassword: '', confirmPassword: '' });
       setShowPasswordForm(false);
     } catch (error: any) {
-      alert(error.message || 'Failed to change password');
+      alert(error.message || translate('failedToChangePassword'));
     }
   };
 
@@ -684,7 +684,7 @@ function ProfileContent() {
                     ) : (
                       <form onSubmit={handlePasswordSubmit} className="space-y-4">
                           <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Current Password</label>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">{translate('currentPasswordLabel')}</label>
                           <input
                             type="password"
                             value={passwordForm.currentPassword}
@@ -694,7 +694,7 @@ function ProfileContent() {
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">New Password</label>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">{translate('newPasswordLabel')}</label>
                           <input
                             type="password"
                             value={passwordForm.newPassword}
@@ -705,7 +705,7 @@ function ProfileContent() {
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">Confirm New Password</label>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">{translate('confirmNewPasswordLabel')}</label>
                           <input
                             type="password"
                             value={passwordForm.confirmPassword}
@@ -730,7 +730,7 @@ function ProfileContent() {
                               cursor: 'pointer'
                             }}
                           >
-                            Update Password
+                            {translate('updatePassword')}
                           </button>
                           <button
                             type="button"
@@ -740,7 +740,7 @@ function ProfileContent() {
                             }}
                             className="inline-flex items-center px-3 py-2 border border-gray-300 text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turquoise-500"
                           >
-                            Cancel
+                            {translate('cancel')}
                           </button>
                         </div>
                       </form>

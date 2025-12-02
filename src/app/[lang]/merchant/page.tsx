@@ -970,6 +970,12 @@ function MerchantDashboard() {
     e.preventDefault();
     if (!selectedProduct) return;
 
+    // Validate German description is required
+    if (!editingProduct.desc_de || !editingProduct.desc_de.trim()) {
+      alert(translate('admin.germanDescriptionRequired') || 'German description is required.');
+      return;
+    }
+
     setUpdating(true);
     setError('');
 
@@ -1035,6 +1041,13 @@ function MerchantDashboard() {
       alert(translate('merchant.waitForImageUploadProduct'));
       return;
     }
+    
+    // Validate German description is required
+    if (!newProduct.desc_de || !newProduct.desc_de.trim()) {
+      alert(translate('admin.germanDescriptionRequired') || 'German description is required.');
+      return;
+    }
+    
     setCreating(true);
     setError('');
     try {
@@ -1143,12 +1156,11 @@ function MerchantDashboard() {
                 </div>
                 <div className="ml-3">
                   <h3 className="text-sm font-medium text-yellow-800">
-                    Store Under Review
+                    {translate('merchant.storeUnderReviewTitle') || 'Store Under Review'}
                   </h3>
                   <div className="mt-2 text-sm text-yellow-700">
                     <p>
-                      Your merchant application is being reviewed by our team. You'll receive an email notification once your store is approved and goes live.
-                      This usually takes 24-48 hours.
+                      {translate('merchant.storeUnderReviewMessage') || "Your merchant application is being reviewed by our team. You'll receive an email notification once your store is approved and goes live. This usually takes 24-48 hours."}
                     </p>
                   </div>
                 </div>
@@ -1166,11 +1178,11 @@ function MerchantDashboard() {
                 </div>
                 <div className="ml-3">
                   <h3 className="text-sm font-medium text-green-800">
-                    Welcome to Feinraum!
+                    {translate('merchant.welcomeTitle') || 'Welcome to Feinraum!'}
                   </h3>
                   <div className="mt-2 text-sm text-green-700">
                     <p>
-                      Your store is now live and ready to accept orders. Start by adding your first products to attract customers.
+                      {translate('merchant.welcomeMessage') || 'Your store is now live and ready to accept orders. Start by adding your first products to attract customers.'}
                     </p>
                   </div>
                 </div>
@@ -1941,7 +1953,7 @@ function MerchantDashboard() {
                     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                       <div className="flex items-center justify-center py-12">
                         <Loader2 className="w-6 h-6 animate-spin text-turquoise-600 mr-2" />
-                        <span className="text-gray-600">Loading analytics...</span>
+                        <span className="text-gray-600">{translate('merchant.loadingAnalytics')}</span>
                       </div>
                     </div>
                   )}
@@ -1957,7 +1969,7 @@ function MerchantDashboard() {
                             </svg>
                           </div>
                           <div className="ml-3">
-                            <h3 className="text-sm font-medium text-red-800">Error Loading Analytics</h3>
+                            <h3 className="text-sm font-medium text-red-800">{translate('merchant.errorLoadingAnalytics')}</h3>
                             <div className="mt-2 text-sm text-red-700">
                               <p>{analyticsError}</p>
                             </div>
@@ -1971,108 +1983,88 @@ function MerchantDashboard() {
                   {!analyticsLoading && !analyticsError && analytics && (
                     <div className="space-y-6">
                       {/* Key Metrics Grid */}
-                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                         {/* Revenue Metrics */}
-                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="text-sm font-medium text-gray-500">Total Revenue</p>
-                              <p className="text-2xl font-semibold text-gray-900">
-                                {formatCurrency(analytics.revenue?.total ?? 0)}
-                              </p>
-                              <p className="text-sm text-gray-600">
-                                This month: {formatCurrency(analytics.revenue?.monthly ?? 0)}
-                              </p>
-                            </div>
-                            <div className="p-3 rounded-full bg-green-100">
-                              <DollarSign className="w-6 h-6 text-green-600" />
-                            </div>
+                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
+                          <div className="mb-3">
+                            <p className="text-sm font-medium text-gray-500 mb-1">{translate('merchant.totalRevenue')}</p>
+                            <p className="text-xl md:text-2xl font-semibold text-gray-900">
+                              {formatCurrency(analytics.revenue?.total ?? 0)}
+                            </p>
+                            <p className="text-sm text-gray-600 mt-1">
+                              {translate('merchant.thisMonth')}: {formatCurrency(analytics.revenue?.monthly ?? 0)}
+                            </p>
                           </div>
                           {analytics.revenue?.monthlyGrowth !== undefined && (
                             <div className="mt-2">
                               <span className={`text-sm font-medium ${
                                 analytics.revenue.monthlyGrowth >= 0 ? 'text-green-600' : 'text-red-600'
                               }`}>
-                                {analytics.revenue.monthlyGrowth >= 0 ? '+' : ''}{analytics.revenue.monthlyGrowth.toFixed(1)}% vs last month
+                                {analytics.revenue.monthlyGrowth >= 0 ? '+' : ''}{analytics.revenue.monthlyGrowth.toFixed(1)}% {translate('merchant.vsLastMonth')}
                               </span>
                             </div>
                           )}
                         </div>
 
                         {/* Orders Metrics */}
-                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="text-sm font-medium text-gray-500">Total Orders</p>
-                              <p className="text-2xl font-semibold text-gray-900">
-                                {analytics.orders?.total || 0}
-                              </p>
-                              <p className="text-sm text-gray-600">
-                                This month: {analytics.orders?.monthly || 0}
-                              </p>
-                            </div>
-                            <div className="p-3 rounded-full bg-blue-100">
-                              <ShoppingBag className="w-6 h-6 text-blue-600" />
-                            </div>
+                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
+                          <div className="mb-3">
+                            <p className="text-sm font-medium text-gray-500 mb-1">{translate('merchant.totalOrders')}</p>
+                            <p className="text-xl md:text-2xl font-semibold text-gray-900">
+                              {analytics.orders?.total || 0}
+                            </p>
+                            <p className="text-sm text-gray-600 mt-1">
+                              {translate('merchant.thisMonth')}: {analytics.orders?.monthly || 0}
+                            </p>
                           </div>
                           {analytics.orders?.growth !== undefined && (
                             <div className="mt-2">
                               <span className={`text-sm font-medium ${
                                 analytics.orders.growth >= 0 ? 'text-green-600' : 'text-red-600'
                               }`}>
-                                {analytics.orders.growth >= 0 ? '+' : ''}{analytics.orders.growth.toFixed(1)}% vs last month
+                                {analytics.orders.growth >= 0 ? '+' : ''}{analytics.orders.growth.toFixed(1)}% {translate('merchant.vsLastMonth')}
                               </span>
                             </div>
                           )}
                         </div>
 
                         {/* Customers Metrics */}
-                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="text-sm font-medium text-gray-500">Total Customers</p>
-                              <p className="text-2xl font-semibold text-gray-900">
-                                {analytics.customers?.total || 0}
-                              </p>
-                              <p className="text-sm text-gray-600">
-                                Active: {analytics.customers?.active || 0}
-                              </p>
-                            </div>
-                            <div className="p-3 rounded-full bg-purple-100">
-                              <Users className="w-6 h-6 text-purple-600" />
-                            </div>
+                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
+                          <div className="mb-3">
+                            <p className="text-sm font-medium text-gray-500 mb-1">{translate('merchant.totalCustomers')}</p>
+                            <p className="text-xl md:text-2xl font-semibold text-gray-900">
+                              {analytics.customers?.total || 0}
+                            </p>
+                            <p className="text-sm text-gray-600 mt-1">
+                              {translate('merchant.active')}: {analytics.customers?.active || 0}
+                            </p>
                           </div>
                           {analytics.customers?.growth !== undefined && (
                             <div className="mt-2">
                               <span className={`text-sm font-medium ${
                                 analytics.customers.growth >= 0 ? 'text-green-600' : 'text-red-600'
                               }`}>
-                                {analytics.customers.growth >= 0 ? '+' : ''}{analytics.customers.growth.toFixed(1)}% vs last month
+                                {analytics.customers.growth >= 0 ? '+' : ''}{analytics.customers.growth.toFixed(1)}% {translate('merchant.vsLastMonth')}
                               </span>
                             </div>
                           )}
                         </div>
 
                         {/* Products Metrics */}
-                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                          <div className="flex items-center justify-between">
-                            <div>
-                              <p className="text-sm font-medium text-gray-500">Products</p>
-                              <p className="text-2xl font-semibold text-gray-900">
-                                {analytics.products?.total || 0}
-                              </p>
-                              <p className="text-sm text-gray-600">
-                                Low stock: {analytics.products?.lowStock || 0}
-                              </p>
-                            </div>
-                            <div className="p-3 rounded-full bg-orange-100">
-                              <Package className="w-6 h-6 text-orange-600" />
-                            </div>
+                        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 md:p-6">
+                          <div className="mb-3">
+                            <p className="text-sm font-medium text-gray-500 mb-1">{translate('merchant.products')}</p>
+                            <p className="text-xl md:text-2xl font-semibold text-gray-900">
+                              {analytics.products?.total || 0}
+                            </p>
+                            <p className="text-sm text-gray-600 mt-1">
+                              {translate('merchant.lowStock')}: {analytics.products?.lowStock || 0}
+                            </p>
                           </div>
                           {analytics.products?.outOfStock > 0 && (
                             <div className="mt-2">
                               <span className="text-sm font-medium text-red-600">
-                                {analytics.products.outOfStock} out of stock
+                                {analytics.products.outOfStock} {translate('merchant.outOfStock')}
                               </span>
                             </div>
                           )}
@@ -2083,68 +2075,68 @@ function MerchantDashboard() {
                       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                         {/* Top Customers */}
                         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-                          <div className="px-6 py-4 border-b border-gray-200">
-                            <h3 className="text-lg font-semibold text-gray-900">Top Customers</h3>
+                          <div className="px-4 md:px-6 py-4 border-b border-gray-200">
+                            <h3 className="text-lg font-semibold text-gray-900">{translate('merchant.topCustomers')}</h3>
                           </div>
-                          <div className="p-6">
+                          <div className="p-4 md:p-6">
                             {analytics.customers?.topCustomers?.length > 0 ? (
-                              <div className="space-y-4">
+                              <div className="space-y-3 md:space-y-4">
                                 {analytics.customers.topCustomers.map((customer: any, index: number) => (
                                   <div key={customer.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                                    <div className="flex items-center space-x-3">
-                                      <div className="w-8 h-8 bg-turquoise-100 rounded-full flex items-center justify-center">
+                                    <div className="flex items-center space-x-2 md:space-x-3 flex-1 min-w-0">
+                                      <div className="w-8 h-8 bg-turquoise-100 rounded-full flex items-center justify-center flex-shrink-0">
                                         <span className="text-sm font-medium text-turquoise-700">
                                           {index + 1}
                                         </span>
                                       </div>
-                                      <div>
-                                        <p className="font-medium text-gray-900">{customer.name || 'Unknown'}</p>
-                                        <p className="text-sm text-gray-500">{customer.email}</p>
+                                      <div className="min-w-0 flex-1">
+                                        <p className="font-medium text-gray-900 truncate">{customer.name || 'Unknown'}</p>
+                                        <p className="text-sm text-gray-500 truncate">{customer.email}</p>
                                       </div>
                                     </div>
-                                    <div className="text-right">
+                                    <div className="text-right flex-shrink-0 ml-2">
                                       <p className="font-semibold text-gray-900">{formatCurrency(customer.totalSpent)}</p>
-                                      <p className="text-sm text-gray-500">{customer.totalOrders} orders</p>
+                                      <p className="text-sm text-gray-500">{customer.totalOrders} {translate('merchant.orders')}</p>
                                     </div>
                                   </div>
                                 ))}
                               </div>
                             ) : (
-                              <p className="text-gray-500 text-center py-4">No customer data available</p>
+                              <p className="text-gray-500 text-center py-4">{translate('merchant.noCustomerDataAvailable')}</p>
                             )}
                           </div>
                         </div>
 
                         {/* Top Products */}
                         <div className="bg-white rounded-lg shadow-sm border border-gray-200">
-                          <div className="px-6 py-4 border-b border-gray-200">
-                            <h3 className="text-lg font-semibold text-gray-900">Top Products</h3>
+                          <div className="px-4 md:px-6 py-4 border-b border-gray-200">
+                            <h3 className="text-lg font-semibold text-gray-900">{translate('merchant.topProducts')}</h3>
                           </div>
-                          <div className="p-6">
+                          <div className="p-4 md:p-6">
                             {analytics.products?.topProducts?.length > 0 ? (
-                              <div className="space-y-4">
+                              <div className="space-y-3 md:space-y-4">
                                 {analytics.products.topProducts.map((product: any, index: number) => (
                                   <div key={product.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-                                    <div className="flex items-center space-x-3">
-                                      <div className="w-8 h-8 bg-turquoise-100 rounded-full flex items-center justify-center">
+                                    <div className="flex items-center space-x-2 md:space-x-3 flex-1 min-w-0">
+                                      <div className="w-8 h-8 bg-turquoise-100 rounded-full flex items-center justify-center flex-shrink-0">
                                         <span className="text-sm font-medium text-turquoise-700">
                                           {index + 1}
                                         </span>
                                       </div>
-                                      <div>
-                                        <p className="font-medium text-gray-900">{product.title}</p>
+                                      <div className="min-w-0 flex-1">
+                                        <p className="font-medium text-gray-900 truncate">{product.title}</p>
                                         <p className="text-sm text-gray-500">{formatCurrency(product.price)}</p>
                                       </div>
                                     </div>
-                                    <div className="text-right">
-                                      <p className="font-semibold text-gray-900">{product.totalSold || 0} sold</p>
+                                    <div className="text-right flex-shrink-0 ml-2">
+                                      <p className="font-semibold text-gray-900">{product.totalSold || 0} {translate('merchant.sold')}</p>
                                       <p className="text-sm text-gray-500">{formatCurrency(product.revenue)}</p>
                                     </div>
                                   </div>
                                 ))}
                               </div>
                             ) : (
-                              <p className="text-gray-500 text-center py-4">No product data available</p>
+                              <p className="text-gray-500 text-center py-4">{translate('merchant.noProductDataAvailable')}</p>
                             )}
                           </div>
                         </div>
@@ -2158,8 +2150,8 @@ function MerchantDashboard() {
                     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                       <div className="text-center py-12">
                         <TrendingUp className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                        <h3 className="text-lg font-medium text-gray-900 mb-2">No Analytics Data</h3>
-                        <p className="text-gray-600">Start making sales to see your business analytics</p>
+                        <h3 className="text-lg font-medium text-gray-900 mb-2">{translate('merchant.noAnalyticsData')}</h3>
+                        <p className="text-gray-600">{translate('merchant.startMakingSales')}</p>
                       </div>
                     </div>
                   )}
@@ -2626,7 +2618,9 @@ function MerchantDashboard() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">{translate('Description (EN)')}</label>
+                <label className="block text-sm font-medium text-gray-700">
+                  {translate('admin.englishDescription')} <span className="text-gray-400 text-xs">({translate('admin.optional') || 'optional'})</span>
+                </label>
                 <textarea
                   rows={4}
                   value={editingProduct.desc_en}
@@ -2636,9 +2630,12 @@ function MerchantDashboard() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">{translate('Description (DE)')}</label>
+                <label className="block text-sm font-medium text-gray-700">
+                  {translate('admin.germanDescription')} <span className="text-red-500">*</span>
+                </label>
                 <textarea
                   rows={4}
+                  required
                   value={editingProduct.desc_de}
                   onChange={e => setEditingProduct(p => ({ ...p, desc_de: e.target.value }))}
                   className="input-field min-h-28 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors"
@@ -2760,12 +2757,16 @@ function MerchantDashboard() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">{translate('admin.englishDescription')}</label>
+                <label className="block text-sm font-medium text-gray-700">
+                  {translate('admin.englishDescription')} <span className="text-gray-400 text-xs">({translate('admin.optional') || 'optional'})</span>
+                </label>
                 <textarea rows={4} value={newProduct.desc_en} onChange={e=>setNewProduct(p=>({...p, desc_en: e.target.value}))} className="input-field min-h-28 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors" placeholder={translate('merchant.shortDescriptionEn')} />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700">{translate('admin.germanDescription')}</label>
-                <textarea rows={4} value={newProduct.desc_de} onChange={e=>setNewProduct(p=>({...p, desc_de: e.target.value}))} className="input-field min-h-28 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors" placeholder={translate('merchant.shortDescriptionDe')} />
+                <label className="block text-sm font-medium text-gray-700">
+                  {translate('admin.germanDescription')} <span className="text-red-500">*</span>
+                </label>
+                <textarea rows={4} required value={newProduct.desc_de} onChange={e=>setNewProduct(p=>({...p, desc_de: e.target.value}))} className="input-field min-h-28 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors" placeholder={translate('merchant.shortDescriptionDe')} />
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-2">
@@ -2796,11 +2797,15 @@ function MerchantDashboard() {
               </div>
             )}
             <div className="px-6 py-4 border-b border-gray-200">
-              <h3 className="text-lg font-semibold text-gray-900">Add New Category</h3>
+              <h3 className="text-lg font-semibold text-gray-900">
+                {translate('admin.addNewCategory')}
+              </h3>
             </div>
             <form onSubmit={(e) => { e.preventDefault(); createCategory(); }} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Category Name</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {translate('admin.categoryName')}
+                </label>
                 <input
                   type="text"
                   value={newCategory.name}
@@ -2811,7 +2816,9 @@ function MerchantDashboard() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">{translate('admin.description')}</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {translate('admin.description')}
+                </label>
                 <textarea
                   value={newCategory.description}
                   onChange={(e) => setNewCategory(prev => ({ ...prev, description: e.target.value }))}
@@ -2821,7 +2828,9 @@ function MerchantDashboard() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">{translate('admin.categoryImage')}</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  {translate('admin.productImage')}
+                </label>
                 <ImageUpload
                   onImageUpload={handleCategoryImageUpload}
                   onUploadStart={() => setIsCategoryImageUploading(true)}

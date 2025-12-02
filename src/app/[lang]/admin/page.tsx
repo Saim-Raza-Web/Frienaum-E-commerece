@@ -566,6 +566,13 @@ function AdminDashboard() {
       alert('Please wait for the product image upload to finish before saving.');
       return;
     }
+    
+    // Validate German description is required
+    if (!form.desc_de || !form.desc_de.trim()) {
+      alert(translate('admin.germanDescriptionRequired') || 'German description is required.');
+      return;
+    }
+    
     setLoading(true);
 
     try {
@@ -1433,7 +1440,9 @@ function AdminDashboard() {
                           </div>
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">{translate('admin.englishDescription')}:</label>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            {translate('admin.englishDescription')} <span className="text-gray-400 text-xs">({translate('admin.optional') || 'optional'})</span>:
+                          </label>
                           <textarea
                             rows={3}
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent"
@@ -1443,9 +1452,12 @@ function AdminDashboard() {
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">{translate('admin.germanDescription')}:</label>
+                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                            {translate('admin.germanDescription')} <span className="text-red-500">*</span>:
+                          </label>
                           <textarea
                             rows={3}
+                            required
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent"
                             value={form.desc_de}
                             onChange={e=>setForm({...form, desc_de:e.target.value})}
@@ -1673,28 +1685,28 @@ function AdminDashboard() {
               className="p-6 space-y-4 max-h-[calc(100vh-200px)] overflow-y-auto"
             >
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">{translate('admin.categoryName')}:</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{translate('admin.categoryName') || 'Category Name'}:</label>
                 <input
                   type="text"
                   value={newCategory.name}
                   onChange={(e) => setNewCategory(prev => ({ ...prev, name: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent"
-                  placeholder="Enter category name"
+                  placeholder={translate('admin.categoryName') || 'Enter category name'}
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">{translate('admin.description')}:</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{translate('admin.description') || 'Description'}:</label>
                 <textarea
                   value={newCategory.description}
                   onChange={(e) => setNewCategory(prev => ({ ...prev, description: e.target.value }))}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent"
-                  placeholder="Enter category description"
+                  placeholder={translate('admin.description') || 'Enter category description'}
                   rows={3}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">{translate('admin.categoryImage')}:</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{translate('admin.productImage') || 'Category Image'}:</label>
                 <ImageUpload
                   onImageUpload={handleCategoryImageUpload}
                   onUploadStart={handleImageUploadStart}
@@ -1702,6 +1714,13 @@ function AdminDashboard() {
                   currentImageUrl={newCategory.imageUrl}
                   className="mb-2"
                   disabled={creatingCategory}
+                />
+                <input
+                  type="text"
+                  value={newCategory.imageUrl}
+                  onChange={(e) => setNewCategory(prev => ({ ...prev, imageUrl: e.target.value }))}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent"
+                  placeholder={translate('admin.imageUrl') || 'Image URL'}
                 />
               </div>
               <div className="flex items-center justify-end gap-3 pt-4">
