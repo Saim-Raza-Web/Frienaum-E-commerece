@@ -560,7 +560,10 @@
     "orderId": "Order ID",
     "customer": "Customer",
     "createdAt": "Created At",
-    "viewDetails": "View Details"
+    "viewDetails": "View Details",
+    "productApproved": "Product approved successfully",
+    "errorApprovingProduct": "Error approving product",
+    "productSubmittedForApproval": "Product submitted for approval successfully"
   },
   "table": {
     "orderId": "Order ID",
@@ -707,9 +710,6 @@
     "shortDescriptionDe": "Kurze Beschreibung auf Deutsch (optional)",
     "slugDescription": "Used in the URL, lowercase and hyphenated (e.g. my-awesome-product).",
     "noDescription": "No description",
-    "statusPublished": "Published",
-    "statusPending": "Pending Approval",
-    "statusDraft": "Draft",
     "submitForApproval": "Submit for Approval",
     "productSubmittedForApproval": "Product submitted for approval successfully",
     "viewOrder": "View",
@@ -830,7 +830,10 @@
     "shipped": "Shipped",
     "processing": "Processing",
     "cancelled": "Cancelled",
-    "outOfStock": "Out of Stock"
+    "outOfStock": "Out of Stock",
+    "pending": "Pending",
+    "published": "Published",
+    "draft": "Draft"
   },
   "table": {
     "user": "User",

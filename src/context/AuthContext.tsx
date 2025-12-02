@@ -121,10 +121,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Check for existing session on mount
   useEffect(() => {
+    let isMounted = true;
+
     const checkAuthStatus = () => {
       // First, try to get user from localStorage
       const storedUser = localStorage.getItem('feinraum_user');
-      if (storedUser) {
+      if (storedUser && isMounted) {
         try {
           const userFromStorage = JSON.parse(storedUser);
           dispatch({ type: 'SET_USER', payload: userFromStorage });
@@ -134,40 +136,54 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             method: 'GET',
             credentials: 'include',
           }).then(response => {
-            if (response.ok) {
+            if (response.ok && isMounted) {
               return response.json();
             } else {
               throw new Error('Token invalid');
             }
           }).then(data => {
-            // Update user data if token is still valid
-            const user: User = {
-              id: data.id.toString(),
-              email: data.email,
-              firstName: data.name || 'User',
-              lastName: '',
-              role: data.role === 'ADMIN' ? 'admin' : data.role === 'MERCHANT' ? 'merchant' : 'customer',
-              avatar: '/api/placeholder/100/100',
-              createdAt: new Date().toISOString(),
-              lastLogin: new Date().toISOString()
-            };
-            localStorage.setItem('feinraum_user', JSON.stringify(user));
-            dispatch({ type: 'SET_USER', payload: user });
+            if (isMounted) {
+              // Update user data if token is still valid
+              const user: User = {
+                id: data.id.toString(),
+                email: data.email,
+                firstName: data.name || 'User',
+                lastName: '',
+                role: data.role === 'ADMIN' ? 'admin' : data.role === 'MERCHANT' ? 'merchant' : 'customer',
+                avatar: '/api/placeholder/100/100',
+                createdAt: new Date().toISOString(),
+                lastLogin: new Date().toISOString()
+              };
+
+              // Only update if the role from token is different from current role
+              // This prevents unnecessary updates and role confusion
+              const currentUser = JSON.parse(localStorage.getItem('feinraum_user') || '{}');
+              if (currentUser.role !== user.role || currentUser.email !== user.email) {
+                localStorage.setItem('feinraum_user', JSON.stringify(user));
+                dispatch({ type: 'SET_USER', payload: user });
+              }
+            }
           }).catch(() => {
             // Token is invalid, but keep the user in localStorage for now
             // They can continue using the app until they try to access protected resources
           });
         } catch (e) {
           // Invalid localStorage data, remove it
-          localStorage.removeItem('feinraum_user');
-          dispatch({ type: 'SET_USER', payload: null });
+          if (isMounted) {
+            localStorage.removeItem('feinraum_user');
+            dispatch({ type: 'SET_USER', payload: null });
+          }
         }
-      } else {
+      } else if (isMounted) {
         dispatch({ type: 'SET_USER', payload: null });
       }
     };
 
     checkAuthStatus();
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   const login = useCallback(async (credentials: LoginCredentials): Promise<void> => {

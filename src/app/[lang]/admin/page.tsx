@@ -57,6 +57,27 @@ function AdminDashboard() {
   const { translate } = useTranslation();
   const { user } = useAuth();
 
+  // Status labels that get updated when translations load
+  const [statusLabels, setStatusLabels] = useState({
+    published: 'Published',
+    pending: 'Pending Approval',
+    draft: 'Draft'
+  });
+
+  // Update status labels when translations are available
+  useEffect(() => {
+    const publishedLabel = translate('status.published');
+    const pendingLabel = translate('status.pending');
+    const draftLabel = translate('status.draft');
+
+    setStatusLabels({
+      // Only use translated value if it is different from the key
+      published: publishedLabel && publishedLabel !== 'status.published' ? publishedLabel : 'Published',
+      pending: pendingLabel && pendingLabel !== 'status.pending' ? pendingLabel : 'Pending Approval',
+      draft: draftLabel && draftLabel !== 'status.draft' ? draftLabel : 'Draft'
+    });
+  }, [translate]);
+
   // Product management state
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
@@ -443,15 +464,28 @@ function AdminDashboard() {
     }
   };
 
-  const tabs = [
-    { id: 'overview', label: translate('admin.overview'), icon: BarChart3 },
-    { id: 'users', label: translate('admin.userManagement'), icon: Users },
-    { id: 'orders', label: translate('admin.orderManagement'), icon: ShoppingBag },
-    { id: 'products', label: translate('admin.productManagement'), icon: Package },
-    { id: 'categories', label: translate('admin.categories'), icon: Package },
-    { id: 'analytics', label: translate('admin.analyticsDashboard'), icon: TrendingUp },
-    { id: 'settings', label: translate('admin.systemSettings'), icon: Settings },
-  ];
+  const [tabs, setTabs] = useState([
+    { id: 'overview', label: 'Overview', icon: BarChart3 },
+    { id: 'users', label: 'Users', icon: Users },
+    { id: 'orders', label: 'Orders', icon: ShoppingBag },
+    { id: 'products', label: 'Products', icon: Package },
+    { id: 'categories', label: 'Categories', icon: Package },
+    { id: 'analytics', label: 'Analytics', icon: TrendingUp },
+    { id: 'settings', label: 'Settings', icon: Settings },
+  ]);
+
+  // Update tabs labels when translations are available
+  useEffect(() => {
+    setTabs([
+      { id: 'overview', label: translate('admin.overview') || 'Overview', icon: BarChart3 },
+      { id: 'users', label: translate('admin.userManagement') || 'Users', icon: Users },
+      { id: 'orders', label: translate('admin.orderManagement') || 'Orders', icon: ShoppingBag },
+      { id: 'products', label: translate('admin.productManagement') || 'Products', icon: Package },
+      { id: 'categories', label: translate('admin.categories') || 'Categories', icon: Package },
+      { id: 'analytics', label: translate('admin.analyticsDashboard') || 'Analytics', icon: TrendingUp },
+      { id: 'settings', label: translate('admin.systemSettings') || 'Settings', icon: Settings },
+    ]);
+  }, [translate]);
 
   // Product management functions
   const loadProducts = async () => {
@@ -1220,13 +1254,13 @@ function AdminDashboard() {
                                   p.status === 'PUBLISHED' ? 'bg-blue-100 text-blue-800' :
                                   p.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
                                   'bg-gray-100 text-gray-800'}`}>{
-                                  p.status === 'PUBLISHED' ? `${translate('admin.statusPublished')}` :
-                                  p.status === 'PENDING' ? `${translate('admin.statusPending')}` :
-                                  translate('admin.statusDraft')
+                                  p.status === 'PUBLISHED' ? statusLabels.published :
+                                  p.status === 'PENDING' ? statusLabels.pending :
+                                  statusLabels.draft
                                 }</span>
                                 {p.status === 'PENDING' && (
                                   <button
-                                    className="ml-2 px-4 py-1 text-xs rounded bg-green-600 text-white hover:bg-green-700"
+                                    className="px-3 py-1 text-xs rounded bg-green-600 text-white hover:bg-green-700 whitespace-nowrap"
                                     onClick={async () => {
                                       try {
                                         const res = await fetch(`/api/admin/products/${p.id}/approve`, { method: 'POST', credentials: 'include' });
@@ -1237,7 +1271,7 @@ function AdminDashboard() {
                                         alert(translate('admin.errorApprovingProduct'));
                                       }
                                     }}
-                                  >{translate('admin.approve')}</button>
+                                  >{translate('action.approve')}</button>
                                 )}
                               </div>
                             </div>

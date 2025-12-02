@@ -545,7 +545,10 @@
     "orderId": "Bestellnummer",
     "customer": "Kunde",
     "createdAt": "Erstellt am",
-    "viewDetails": "Details anzeigen"
+    "viewDetails": "Details anzeigen",
+    "productApproved": "Produkt erfolgreich genehmigt",
+    "errorApprovingProduct": "Fehler beim Genehmigen des Produkts",
+    "productSubmittedForApproval": "Produkt zur Genehmigung eingereicht"
   },
   "table": {
     "orderId": "Bestellnummer",
@@ -600,7 +603,10 @@
     "shipped": "Versandt",
     "processing": "In Bearbeitung",
     "cancelled": "Storniert",
-    "outOfStock": "Nicht auf Lager"
+    "outOfStock": "Nicht auf Lager",
+    "pending": "Ausstehend",
+    "published": "Veröffentlicht",
+    "draft": "Entwurf"
   },
   "merchant": {
     "dashboard": "Händler-Dashboard",
@@ -737,9 +743,6 @@
     "shortDescriptionDe": "Kurze Beschreibung auf Deutsch (optional)",
     "slugDescription": "Wird in der URL verwendet, Kleinbuchstaben und mit Bindestrichen (z.B. mein-tolles-produkt).",
     "noDescription": "Keine Beschreibung",
-    "statusPublished": "Veröffentlicht",
-    "statusPending": "Ausstehende Genehmigung",
-    "statusDraft": "Entwurf",
     "submitForApproval": "Zur Genehmigung einreichen",
     "productSubmittedForApproval": "Produkt erfolgreich zur Genehmigung eingereicht",
     "viewOrder": "Anzeigen",

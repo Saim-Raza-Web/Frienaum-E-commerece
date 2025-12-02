@@ -718,7 +718,17 @@ function ProfileContent() {
                         <div className="flex space-x-2">
                           <button
                             type="submit"
-                            className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white bg-turquoise-600 hover:bg-turquoise-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turquoise-500"
+                            className="inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2"
+                            style={{
+                              backgroundColor: '#2563eb',
+                              color: 'white',
+                              border: 'none',
+                              padding: '8px 12px',
+                              borderRadius: '6px',
+                              fontSize: '14px',
+                              fontWeight: '500',
+                              cursor: 'pointer'
+                            }}
                           >
                             Update Password
                           </button>
@@ -808,10 +818,23 @@ function ProfileContent() {
                       <button
                         type="button"
                         onClick={handleAddPaymentMethod}
-                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-turquoise-600 hover:bg-turquoise-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turquoise-500"
+                        className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2"
+                        style={{
+                          backgroundColor: '#2563eb',
+                          color: 'white',
+                          border: 'none',
+                          padding: '8px 16px',
+                          borderRadius: '6px',
+                          fontSize: '14px',
+                          fontWeight: '500',
+                          cursor: 'pointer',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '8px'
+                        }}
                       >
-                        <CreditCard className="w-4 h-4 mr-2" />
-                        {translate('addCard')}
+                        <CreditCard className="w-4 h-4" />
+                        {translate('addCard') || 'Add Card'}
                       </button>
                     ) : (
                       <form onSubmit={handlePaymentFormSubmit} className="space-y-4">
@@ -885,15 +908,38 @@ function ProfileContent() {
                         <div className="flex space-x-2">
                           <button
                             type="submit"
-                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-turquoise-600 hover:bg-turquoise-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turquoise-500"
+                            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white focus:outline-none focus:ring-2 focus:ring-offset-2"
+                            style={{
+                              backgroundColor: '#2563eb',
+                              color: 'white',
+                              border: 'none',
+                              padding: '8px 16px',
+                              borderRadius: '6px',
+                              fontSize: '14px',
+                              fontWeight: '500',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '8px'
+                            }}
                           >
-                            <CreditCard className="w-4 h-4 mr-2" />
-                            {translate('addCard')}
+                            <CreditCard className="w-4 h-4" />
+                            {translate('addCard') || 'Add Card'}
                           </button>
                           <button
                             type="button"
                             onClick={handleCancelAddPayment}
-                            className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turquoise-500"
+                            className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2"
+                            style={{
+                              backgroundColor: 'white',
+                              color: '#374151',
+                              border: '1px solid #d1d5db',
+                              padding: '8px 16px',
+                              borderRadius: '6px',
+                              fontSize: '14px',
+                              fontWeight: '500',
+                              cursor: 'pointer'
+                            }}
                           >
                             Cancel
                           </button>
@@ -947,15 +993,34 @@ function ProfileContent() {
                               <button
                                 onClick={() => handleSetDefaultPayment(payment.id)}
                                 className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
+                                style={{
+                                  backgroundColor: '#2563eb',
+                                  color: 'white',
+                                  border: 'none',
+                                  padding: '4px 12px',
+                                  borderRadius: '4px',
+                                  fontSize: '14px',
+                                  cursor: 'pointer',
+                                  marginRight: '8px'
+                                }}
                               >
-                                {translate('setAsDefault')}
+                                {translate('setAsDefault') || 'Set as Default'}
                               </button>
                             )}
                             <button
                               onClick={() => handleRemovePaymentMethod(payment.id)}
                               className="px-3 py-1 text-sm bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                              style={{
+                                backgroundColor: '#dc2626',
+                                color: 'white',
+                                border: 'none',
+                                padding: '4px 12px',
+                                borderRadius: '4px',
+                                fontSize: '14px',
+                                cursor: 'pointer'
+                              }}
                             >
-                              {translate('remove')}
+                              {translate('remove') || 'Remove'}
                             </button>
                           </div>
                         </div>
@@ -1068,9 +1133,18 @@ function ProfileContent() {
                         <div className="flex space-x-2 pt-2">
                           <button
                             type="submit"
-                            className="px-4 py-2 bg-turquoise-600 text-white rounded-md hover:bg-turquoise-700 focus:outline-none focus:ring-2 focus:ring-turquoise-500"
+                            className="px-4 py-2 text-white rounded-md focus:outline-none focus:ring-2"
+                            style={{
+                              backgroundColor: '#2563eb',
+                              color: 'white',
+                              border: 'none',
+                              padding: '8px 16px',
+                              borderRadius: '6px',
+                              fontSize: '14px',
+                              cursor: 'pointer'
+                            }}
                           >
-                            {translate('saveAddress')}
+                            {translate('saveAddress') || 'Save Address'}
                           </button>
                           <button
                             type="button"

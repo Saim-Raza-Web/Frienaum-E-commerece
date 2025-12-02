@@ -39,15 +39,27 @@ export async function POST(req: NextRequest) {
 
     // Create user with requested role (default to CUSTOMER)
     const isMerchant = role === 'merchant' || role === 'MERCHANT';
+    const phoneValue = phone && phone.trim() ? phone.trim() : null;
+
     const createdUser = await prisma.user.create({
       data: {
         email,
         password: hashed,
         name,
-        phone: phone || null,
+        phone: phoneValue, // Keep in User for backward compatibility
         role: isMerchant ? 'MERCHANT' : 'CUSTOMER',
       },
     });
+
+    // Create CustomerProfile if phone is provided
+    if (phoneValue) {
+      await prisma.customerProfile.create({
+        data: {
+          userId: createdUser.id,
+          phone: phoneValue,
+        },
+      });
+    }
 
     // If merchant, create Merchant profile
     if (isMerchant) {

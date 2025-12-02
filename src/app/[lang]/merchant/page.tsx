@@ -262,11 +262,21 @@ function MerchantDashboard() {
 
   // Initialize stats with loading state
   const [stats, setStats] = useState([
-    { label: translate('merchant.totalSales'), value: translate('merchant.loading'), change: '', icon: DollarSign, color: 'text-green-600' },
-    { label: translate('merchant.orders'), value: translate('merchant.loading'), change: '', icon: ShoppingBag, color: 'text-blue-600' },
-    { label: translate('merchant.customers'), value: translate('merchant.loading'), change: '', icon: Users, color: 'text-purple-600' },
-    { label: translate('merchant.products'), value: translate('merchant.loading'), change: '', icon: Package, color: 'text-orange-600' }
+    { label: 'Total Sales', value: 'Loading...', change: '', icon: DollarSign, color: 'text-green-600' },
+    { label: 'Orders', value: 'Loading...', change: '', icon: ShoppingBag, color: 'text-blue-600' },
+    { label: 'Customers', value: 'Loading...', change: '', icon: Users, color: 'text-purple-600' },
+    { label: 'Products', value: 'Loading...', change: '', icon: Package, color: 'text-orange-600' }
   ]);
+
+  // Update stats labels when translations are available
+  useEffect(() => {
+    setStats(prevStats => [
+      { ...prevStats[0], label: translate('merchant.totalSales') || 'Total Sales' },
+      { ...prevStats[1], label: translate('merchant.orders') || 'Orders' },
+      { ...prevStats[2], label: translate('merchant.customers') || 'Customers' },
+      { ...prevStats[3], label: translate('merchant.products') || 'Products' }
+    ]);
+  }, [translate]);
 
   // Fetch stats data
   const fetchStats = async (setLoadingStats: ((v: boolean) => void) | undefined = undefined) => {
@@ -1071,14 +1081,26 @@ function MerchantDashboard() {
     }
   };
 
-  const tabs = [
-    { id: 'overview', label: translate('merchant.overview'), icon: TrendingUp },
-    { id: 'orders', label: translate('merchant.orders'), icon: ShoppingBag },
-    { id: 'products', label: translate('merchant.products'), icon: Package },
-    { id: 'customers', label: translate('merchant.customerManagement'), icon: Users },
-    { id: 'analytics', label: translate('merchant.businessAnalytics'), icon: TrendingUp },
-    { id: 'payouts', label: translate('merchant.payouts') || 'Payouts', icon: CreditCard }
-  ];
+  const [tabs, setTabs] = useState([
+    { id: 'overview', label: 'Overview', icon: TrendingUp },
+    { id: 'orders', label: 'Orders', icon: ShoppingBag },
+    { id: 'products', label: 'Products', icon: Package },
+    { id: 'customers', label: 'Customers', icon: Users },
+    { id: 'analytics', label: 'Analytics', icon: TrendingUp },
+    { id: 'payouts', label: 'Payouts', icon: CreditCard }
+  ]);
+
+  // Update tabs labels when translations are available
+  useEffect(() => {
+    setTabs([
+      { id: 'overview', label: translate('merchant.overview') || 'Overview', icon: TrendingUp },
+      { id: 'orders', label: translate('merchant.orders') || 'Orders', icon: ShoppingBag },
+      { id: 'products', label: translate('merchant.products') || 'Products', icon: Package },
+      { id: 'customers', label: translate('merchant.customerManagement') || 'Customers', icon: Users },
+      { id: 'analytics', label: translate('merchant.businessAnalytics') || 'Analytics', icon: TrendingUp },
+      { id: 'payouts', label: translate('merchant.payouts') || 'Payouts', icon: CreditCard }
+    ]);
+  }, [translate]);
 
   return (
     <ProtectedRoute requiredRole="merchant">

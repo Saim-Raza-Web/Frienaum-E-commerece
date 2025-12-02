@@ -61,7 +61,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     });
 
     const addresses = await prisma.address.findMany({ where: { userId: customerId } });
-    const profile = await prisma.customerProfile.findUnique({ where: { userId: customerId }, include: { defaultAddress: true } });
+    // Fetch basic customer profile (phone, defaultAddressId, etc.)
+    const profile = await prisma.customerProfile.findUnique({ where: { userId: customerId } });
 
     if (!result) return NextResponse.json({ error: 'Customer not found for this merchant' }, { status: 404 });
 

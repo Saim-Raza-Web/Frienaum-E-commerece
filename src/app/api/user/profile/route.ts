@@ -30,23 +30,50 @@ export async function PATCH(req: NextRequest) {
     // Combine firstName and lastName into name
     const name = `${firstName} ${lastName}`.trim();
 
-    // Update user name
+    // Prepare phone value
+    const phoneValue = phone !== undefined && phone && phone.trim() ? phone.trim() : null;
+
+    // Update user name and phone
     const updatedUser = await prisma.user.update({
       where: { id: userId },
-      data: { name },
-      select: { id: true, email: true, name: true, role: true }
+      data: {
+        name,
+        phone: phoneValue
+      },
+      select: { id: true, email: true, name: true, role: true, phone: true }
     });
 
-    // Update or create customer profile for phone
+    // Update or create customer profile for phone (for backward compatibility and additional profile data)
     if (phone !== undefined) {
-      await prisma.customerProfile.upsert({
-        where: { userId },
-        update: { phone: phone || null },
-        create: {
-          userId,
-          phone: phone || null
-        }
+      const existingProfile = await prisma.customerProfile.findUnique({
+        where: { userId }
       });
+
+      if (existingProfile) {
+        // Update existing profile
+        if (phoneValue) {
+          // If there's phone data, update it
+          await prisma.customerProfile.update({
+            where: { userId },
+            data: { phone: phoneValue }
+          });
+        } else {
+          // If phone is empty/null, check if profile has other data
+          // For now, just update to null (we can delete later if needed)
+          await prisma.customerProfile.update({
+            where: { userId },
+            data: { phone: null }
+          });
+        }
+      } else if (phoneValue) {
+        // Only create profile if there's actual phone data
+        await prisma.customerProfile.create({
+          data: {
+            userId,
+            phone: phoneValue
+          }
+        });
+      }
     }
 
     // Get customer profile to return phone
@@ -86,7 +113,7 @@ export async function GET(req: NextRequest) {
 
     const userId = payload.id;
 
-    // Get user with customer profile
+    // Get user with phone from User model
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: {
@@ -94,11 +121,7 @@ export async function GET(req: NextRequest) {
         email: true,
         name: true,
         role: true,
-        customerProfile: {
-          select: {
-            phone: true
-          }
-        }
+        phone: true
       }
     });
 
@@ -118,7 +141,7 @@ export async function GET(req: NextRequest) {
       lastName,
       name: user.name,
       role: user.role,
-      phone: user.customerProfile?.phone || null
+      phone: user.phone || null
     });
   } catch (error) {
     console.error('Get profile error:', error);

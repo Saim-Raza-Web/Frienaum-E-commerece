@@ -184,37 +184,40 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   }
 
-  const { slug, title_en, title_de, desc_en, desc_de, price, stock, imageUrl, category, status } = await request.json();
-  
-  // Find or create category
-  let categoryId = null;
-  if (category && category !== 'General') {
-    const existingCategory = await prisma.category.findUnique({ where: { name: category } });
-    if (existingCategory) {
-      categoryId = existingCategory.id;
-    } else {
-      const newCategory = await prisma.category.create({
-        data: { name: category, description: `Products in ${category} category` }
-      });
-      categoryId = newCategory.id;
+  const body = await request.json();
+  const { slug, title_en, title_de, desc_en, desc_de, price, stock, imageUrl, category, status } = body;
+
+  // Build update data object - only include fields that are provided
+  const updateData: any = {};
+
+  // Handle category first
+  if (category !== undefined) {
+    let categoryId = null;
+    if (category && category !== 'General') {
+      const existingCategory = await prisma.category.findUnique({ where: { name: category } });
+      if (existingCategory) {
+        categoryId = existingCategory.id;
+      } else {
+        const newCategory = await prisma.category.create({
+          data: { name: category, description: `Products in ${category} category` }
+        });
+        categoryId = newCategory.id;
+      }
     }
+    updateData.categoryId = categoryId;
   }
 
-  // Build update data object
-  const updateData: any = { 
-    slug, 
-    title_en, 
-    title_de, 
-    desc_en, 
-    desc_de, 
-    price: Number(price), 
-    stock: Number(stock), 
-    imageUrl: imageUrl || undefined,
-    categoryId
-  };
+  // Add other fields if they are provided (not undefined)
+  if (slug !== undefined) updateData.slug = slug;
+  if (title_en !== undefined) updateData.title_en = title_en;
+  if (title_de !== undefined) updateData.title_de = title_de;
+  if (desc_en !== undefined) updateData.desc_en = desc_en;
+  if (desc_de !== undefined) updateData.desc_de = desc_de;
+  if (price !== undefined) updateData.price = Number(price);
+  if (stock !== undefined) updateData.stock = Number(stock);
+  if (imageUrl !== undefined) updateData.imageUrl = imageUrl || undefined;
 
-  // Allow merchants to update status to PENDING (submit for approval), but not to PUBLISHED
-  // Only admins can set status to PUBLISHED
+  // Handle status separately with role-based permissions
   if (status !== undefined) {
     if (user.role === 'ADMIN') {
       updateData.status = status;
@@ -222,6 +225,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       // Merchants can only submit for approval (set to PENDING)
       updateData.status = 'PENDING';
     }
+    // Ignore other status changes from merchants
   }
 
   const updated = await prisma.product.update({

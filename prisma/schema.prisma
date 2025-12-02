@@ -275,7 +275,6 @@ model Address {
   user        User     @relation(fields: [userId], references: [id])
   // Back-relations
   shippingOrders    Order[]            @relation("OrderShippingAddress")
-  defaultForProfile CustomerProfile?   @relation("DefaultAddressProfile")
 
   @@index([userId])
 }
@@ -285,12 +284,13 @@ model CustomerProfile {
   id               String   @id @default(auto()) @map("_id") @db.ObjectId
   userId           String   @unique @db.ObjectId
   phone            String?
-  defaultAddressId String?  @unique @db.ObjectId
+  defaultAddressId String?  @db.ObjectId
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
-  user             User     @relation(fields: [userId], references: [id])
-  defaultAddress   Address? @relation("DefaultAddressProfile", fields: [defaultAddressId], references: [id])
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([defaultAddressId])
 }
 
 // Join model to represent a merchant's customers with per-merchant stats
