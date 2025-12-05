@@ -36,6 +36,13 @@ const ImageUpload = dynamic(() => import('@/components/ImageUpload'), {
   )
 });
 
+const MultipleImageUpload = dynamic(() => import('@/components/MultipleImageUpload'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full rounded-xl border border-dashed border-gray-300 bg-gray-50 p-10 animate-pulse" />
+  )
+});
+
 type Product = {
   id: number;
   slug: string;
@@ -104,7 +111,7 @@ function AdminDashboard() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [form, setForm] = useState<any>({
     slug:"", title_en:"", title_de:"", desc_en:"", desc_de:"",
-    price:"0", stock:"0", imageUrl:"", category: translate('admin.generalCategory') || 'General'
+    price:"0", stock:"0", imageUrl:"", images: [], category: translate('admin.generalCategory') || 'General'
   });
   const [isProductImageUploading, setIsProductImageUploading] = useState(false);
   // Admin-only: selected merchant for new product
@@ -560,6 +567,10 @@ function AdminDashboard() {
   const handleProductImageUploadStart = () => setIsProductImageUploading(true);
   const handleProductImageUploadEnd = () => setIsProductImageUploading(false);
 
+  const handleProductImagesChange = (urls: string[]) => {
+    setForm((prev: any) => ({ ...prev, images: urls }));
+  };
+
   const [isImageUploading, setIsImageUploading] = useState(false);
 
   const handleCategoryImageUpload = (url: string) => {
@@ -618,7 +629,7 @@ function AdminDashboard() {
       });
 
       if (res.ok) {
-        setForm({ slug:"", title_en:"", title_de:"", desc_en:"", desc_de:"", price:"0", stock:"0", imageUrl:"", category: "General" });
+        setForm({ slug:"", title_en:"", title_de:"", desc_en:"", desc_de:"", price:"0", stock:"0", imageUrl:"", images: [], category: "General" });
         setShowForm(false);
         setEditingProduct(null);
         setSelectedMerchantId('');
@@ -660,6 +671,7 @@ function AdminDashboard() {
       price: product.price.toString(),
       stock: product.stock.toString(),
       imageUrl: product.imageUrl || "",
+      images: (product as any).images || [],
       category: product.category || "General"
     });
     setShowForm(true);
@@ -672,7 +684,7 @@ function AdminDashboard() {
   );
 
   const resetForm = () => {
-    setForm({ slug:"", title_en:"", title_de:"", desc_en:"", desc_de:"", price:"0", stock:"0", imageUrl:"", category: "General" });
+    setForm({ slug:"", title_en:"", title_de:"", desc_en:"", desc_de:"", price:"0", stock:"0", imageUrl:"", images: [], category: "General" });
     setEditingProduct(null);
     setShowForm(false);
     setIsProductImageUploading(false);
@@ -1164,9 +1176,9 @@ function AdminDashboard() {
                     </div>
                     <button
                       onClick={() => setShowForm(true)}
-                      className="btn-primary"
+                      className="bg-primary-warm text-white px-2 py-1.5 rounded-md text-xs font-medium hover:bg-primary-warm-hover transition-colors flex items-center gap-1.5 sm:px-4 sm:py-3 sm:text-base sm:rounded-lg"
                     >
-                      <Plus className="w-5 h-5 mr-2" />
+                      <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                       {translate('admin.addProduct')}
                     </button>
                   </div>
@@ -1433,7 +1445,7 @@ function AdminDashboard() {
                               <button
                                 type="button"
                                 onClick={() => setShowNewCategoryModal(true)}
-                                className="btn-primary text-sm"
+                                className="bg-primary-warm text-white px-2 py-1.5 rounded-md text-xs font-medium hover:bg-primary-warm-hover transition-colors sm:px-3 sm:py-2 sm:text-sm sm:rounded-lg"
                                 title={translate('admin.addNewCategory')}
                               >
                                 +
@@ -1441,19 +1453,20 @@ function AdminDashboard() {
                             </div>
                           </div>
                           <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">{translate('admin.productImage')}:</label>
-                            <ImageUpload
-                              onImageUpload={handleProductImageUpload}
+                            <label className="block text-sm font-medium text-gray-700 mb-2">{translate('admin.productImage')} ({translate('merchant.multipleImages') || 'Multiple images allowed'})</label>
+                            <MultipleImageUpload
+                              onImagesChange={handleProductImagesChange}
+                              currentImages={form.images}
                               onUploadStart={handleProductImageUploadStart}
                               onUploadEnd={handleProductImageUploadEnd}
-                              currentImageUrl={form.imageUrl}
                               className="mb-2"
+                              maxImages={10}
                               disabled={loading}
                             />
-                            
-                            {/* Alternative: Manual URL Input */}
+
+                            {/* Alternative: Manual URL Input for backward compatibility */}
                             <div className="mt-2">
-                              <label className="block text-xs font-medium text-gray-600 mb-1">{translate('admin.enterImageURLManually')}:</label>
+                              <label className="block text-xs font-medium text-gray-600 mb-1">{translate('admin.enterImageURLManually')} ({translate('admin.optional') || 'optional'}):</label>
                               <input
                                 type="text"
                                 value={form.imageUrl}
@@ -1496,7 +1509,7 @@ function AdminDashboard() {
                               onClick={resetForm}
                               className="btn-secondary focus:outline-none w-full sm:w-auto"
                             >
-                              {isProductImageUploading ? translate('admin.cancelUpload') : translate('admin.cancel')}
+                              {isProductImageUploading ? translate('admin.cancelUpload') : translate('cancel')}
                             </button>
                             <button
                               type="submit"
@@ -1571,9 +1584,9 @@ function AdminDashboard() {
                       resetCategoryForm();
                       setShowNewCategoryModal(true);
                     }}
-                    className="btn-primary flex items-center gap-2"
+                    className="bg-primary-warm text-white px-2 py-1.5 rounded-md text-xs font-medium hover:bg-primary-warm-hover transition-colors flex items-center gap-1.5 sm:px-4 sm:py-3 sm:text-base sm:rounded-lg sm:gap-2"
                   >
-                    <Plus size={16} />
+                    <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     {translate('admin.addNewCategory')}
                   </button>
                 </div>
@@ -1758,7 +1771,7 @@ function AdminDashboard() {
                     className="btn-secondary focus:outline-none w-full sm:w-auto"
                     disabled={creatingCategory}
                   >
-                    {translate('admin.cancel')}
+                    {translate('cancel')}
                   </button>
                   <button
                     type="submit"
