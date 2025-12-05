@@ -243,8 +243,37 @@ export async function POST(request: NextRequest) {
       price,
       stock,
       imageUrl,
+      images,
       category
     } = productData;
+
+    // Handle images: prefer images array, fallback to imageUrl for backward compatibility
+    // Step 1: Images are already uploaded to Cloudinary and URLs are received
+    // Step 2: Validate that we have valid URLs (Cloudinary URLs or valid HTTP/HTTPS URLs)
+    let productImages: string[] = [];
+    if (images && Array.isArray(images) && images.length > 0) {
+      // Validate all URLs are valid
+      productImages = images.filter((url: string) => {
+        if (!url || typeof url !== 'string') return false;
+        try {
+          const urlObj = new URL(url);
+          return urlObj.protocol === 'http:' || urlObj.protocol === 'https:';
+        } catch {
+          return false;
+        }
+      });
+    } else if (imageUrl) {
+      // Validate single imageUrl
+      try {
+        const urlObj = new URL(imageUrl);
+        if (urlObj.protocol === 'http:' || urlObj.protocol === 'https:') {
+          productImages = [imageUrl];
+        }
+      } catch {
+        // Invalid URL, skip
+        productImages = [];
+      }
+    }
 
     // Resolve the merchant entity
     let targetMerchantId: string | null = null;
@@ -310,7 +339,8 @@ export async function POST(request: NextRequest) {
         desc_de,
         price: Number(price),
         stock: Number(stock),
-        imageUrl: imageUrl || undefined,
+        imageUrl: productImages[0] || undefined, // Keep first image in imageUrl for backward compatibility
+        images: productImages,
         categoryId: categoryId,
         merchantId: targetMerchantId,
         status: productStatus as any

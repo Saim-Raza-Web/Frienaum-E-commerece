@@ -41,14 +41,18 @@ export const TranslationProvider = ({ children, initialLocale }: TranslationProv
     const loadTranslations = async () => {
       try {
         const messages = await import(`@/i18n/locales/${currentLocale}/common.json`);
-        if (mounted) setTranslations(messages.default);
+        if (mounted && messages.default) {
+          setTranslations(messages.default);
+        }
       } catch (error) {
         console.error(`Failed to load translations for locale: ${currentLocale}`, error);
         // Fallback to German
         if (currentLocale !== DEFAULT_LOCALE && mounted) {
           try {
             const fallbackMessages = await import(`@/i18n/locales/${DEFAULT_LOCALE}/common.json`);
-            setTranslations(fallbackMessages.default);
+            if (mounted && fallbackMessages.default) {
+              setTranslations(fallbackMessages.default);
+            }
           } catch (fallbackError) {
             console.error('Failed to load fallback translations', fallbackError);
           }

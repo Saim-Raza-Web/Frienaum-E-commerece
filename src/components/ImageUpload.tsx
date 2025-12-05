@@ -2,6 +2,7 @@
 
 import React, { useState, useRef } from 'react';
 import { Upload, X, Loader2 } from 'lucide-react';
+import { useTranslation } from '@/i18n/TranslationProvider';
 
 interface ImageUploadProps {
   onImageUpload: (url: string) => void;
@@ -20,6 +21,7 @@ export default function ImageUpload({
   className = '',
   disabled = false 
 }: ImageUploadProps) {
+  const { translate } = useTranslation();
   const [isUploading, setIsUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(currentImageUrl || null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -152,16 +154,16 @@ export default function ImageUpload({
           {isUploading ? (
             <>
               <Loader2 className="w-8 h-8 text-gray-400 animate-spin" />
-              <p className="mt-2 text-sm text-gray-500">Uploading...</p>
+              <p className="mt-2 text-sm text-gray-500">{translate('merchant.uploading') || 'Uploading...'}</p>
             </>
           ) : (
             <>
               <Upload className="w-8 h-8 text-gray-400" />
               <p className="mt-2 text-sm text-gray-500">
-                Click to upload image
+                {translate('merchant.clickToUploadImage') || 'Click to upload image'}
               </p>
               <p className="text-xs text-gray-400">
-                PNG, JPG, GIF up to 5MB
+                {translate('merchant.imageUploadFormat') || 'PNG, JPG, GIF up to 5MB'}
               </p>
             </>
           )}

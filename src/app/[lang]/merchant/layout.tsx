@@ -126,10 +126,10 @@ export default function MerchantLayout({
       <div className="flex flex-1 flex-col overflow-hidden">
         <div className="flex flex-1 flex-col overflow-hidden">
           {/* Top navigation */}
-          <div className="relative z-10 flex h-16 flex-shrink-0 bg-white shadow-sm">
+          <div className="relative z-10 flex h-16 flex-shrink-0 bg-white shadow-sm sticky top-0">
             <button
               type="button"
-              className="border-r border-gray-200 px-4 text-gray-500 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 lg:hidden"
+              className="border-r border-gray-200 px-4 text-gray-700 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500 lg:hidden"
               onClick={() => setSidebarOpen(true)}
             >
               <span className="sr-only">Open sidebar</span>
@@ -138,7 +138,7 @@ export default function MerchantLayout({
             <div className="flex-1" />
           </div>
 
-          <main className="flex-1 overflow-y-auto bg-gray-50 p-4 sm:p-6 lg:p-8">
+          <main className="flex-1 overflow-y-auto bg-gray-50 p-4 sm:p-6 lg:p-8 pt-6">
             {children}
           </main>
         </div>

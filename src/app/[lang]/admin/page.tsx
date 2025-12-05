@@ -57,11 +57,30 @@ function AdminDashboard() {
   const { translate } = useTranslation();
   const { user } = useAuth();
 
+  // Helper function to translate roles
+  const translateRole = (role: string) => {
+    const roleKey = `role.${role}`;
+    const translated = translate(roleKey);
+    return translated !== roleKey ? translated : role;
+  };
+
+  // Helper function to translate merchant status
+  const translateMerchantStatus = (status: string | null | undefined) => {
+    if (!status) return translate('admin.notAvailable');
+    // Try uppercase first (as it comes from DB), then lowercase
+    const statusKeyUpper = `status.${status}`;
+    const statusKeyLower = `status.${status.toLowerCase()}`;
+    const translatedUpper = translate(statusKeyUpper);
+    if (translatedUpper !== statusKeyUpper) return translatedUpper;
+    const translatedLower = translate(statusKeyLower);
+    return translatedLower !== statusKeyLower ? translatedLower : status;
+  };
+
   // Status labels that get updated when translations load
   const [statusLabels, setStatusLabels] = useState({
-    published: 'Published',
-    pending: 'Pending Approval',
-    draft: 'Draft'
+    published: '',
+    pending: '',
+    draft: ''
   });
 
   // Update status labels when translations are available
@@ -71,10 +90,9 @@ function AdminDashboard() {
     const draftLabel = translate('status.draft');
 
     setStatusLabels({
-      // Only use translated value if it is different from the key
-      published: publishedLabel && publishedLabel !== 'status.published' ? publishedLabel : 'Published',
-      pending: pendingLabel && pendingLabel !== 'status.pending' ? pendingLabel : 'Pending Approval',
-      draft: draftLabel && draftLabel !== 'status.draft' ? draftLabel : 'Draft'
+      published: publishedLabel !== 'status.published' ? publishedLabel : '',
+      pending: pendingLabel !== 'status.pending' ? pendingLabel : '',
+      draft: draftLabel !== 'status.draft' ? draftLabel : ''
     });
   }, [translate]);
 
@@ -86,7 +104,7 @@ function AdminDashboard() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [form, setForm] = useState<any>({
     slug:"", title_en:"", title_de:"", desc_en:"", desc_de:"",
-    price:"0", stock:"0", imageUrl:"", category: "General"
+    price:"0", stock:"0", imageUrl:"", category: translate('admin.generalCategory') || 'General'
   });
   const [isProductImageUploading, setIsProductImageUploading] = useState(false);
   // Admin-only: selected merchant for new product
@@ -155,11 +173,11 @@ function AdminDashboard() {
       setStatsLoading(true);
       setStatsError('');
       const res = await fetch('/api/admin/stats', { credentials: 'include' });
-      if (!res.ok) throw new Error('Failed to fetch stats');
+      if (!res.ok) throw new Error(translate('admin.failedToFetchStats'));
       const data = await res.json();
       setStats(data);
     } catch (e: any) {
-      setStatsError(e?.message || 'Failed to load stats');
+      setStatsError(e?.message || translate('admin.failedToFetchStats'));
     } finally {
       setStatsLoading(false);
     }
@@ -175,14 +193,14 @@ function AdminDashboard() {
         credentials: 'include'
       });
       if (!response.ok) {
-        throw new Error('Failed to fetch categories');
+        throw new Error(translate('admin.failedToLoadCategories'));
       }
       const data = await response.json();
       setCategories(data);
       return data;
     } catch (error) {
       console.error('Error fetching categories:', error);
-      setCategoriesError(error instanceof Error ? error.message : 'Failed to load categories');
+      setCategoriesError(error instanceof Error ? error.message : translate('admin.failedToLoadCategories'));
       return [];
     } finally {
       setCategoriesLoading(false);
@@ -192,13 +210,13 @@ function AdminDashboard() {
   // Create or update category
   const saveCategory = async () => {
     if (!newCategory.name.trim()) {
-      alert('Category name is required');
+      alert(translate('admin.categoryNameRequired'));
       return;
     }
 
     // Prevent submission while image is uploading
     if (isImageUploading) {
-      alert('Please wait for the image upload to complete');
+      alert(translate('admin.waitForImageUpload'));
       return;
     }
 
@@ -247,10 +265,11 @@ function AdminDashboard() {
       
       // Reset the form and close the modal
       resetCategoryForm();
-      alert(`Category ${isEditing ? 'updated' : 'created'} successfully!`);
+      alert(isEditing ? translate('admin.categoryUpdated') : translate('admin.categoryCreated'));
     } catch (error) {
-      console.error(`Error ${editingCategoryId ? 'updating' : 'creating'} category:`, error);
-      alert(error instanceof Error ? error.message : `Failed to ${editingCategoryId ? 'update' : 'create'} category`);
+      const isEditing = !!editingCategoryId;
+      console.error(`Error ${isEditing ? 'updating' : 'creating'} category:`, error);
+      alert(error instanceof Error ? error.message : (isEditing ? translate('admin.failedToUpdateCategory') : translate('admin.failedToCreateCategory')));
     } finally {
       setCreatingCategory(false);
     }
@@ -275,17 +294,17 @@ function AdminDashboard() {
   };
 
   const deleteUser = async (userId: string) => {
-    if (!confirm('This will permanently delete the user and all their data (including merchant profile, products, orders). Continue?')) return;
+    if (!confirm(translate('admin.confirmDeleteUser'))) return;
     try {
       const res = await fetch(`/api/admin/users/${userId}`, { method: 'DELETE', credentials: 'include' });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || 'Delete user failed');
+        throw new Error(data.error || translate('admin.failedToDeleteUser'));
       }
       await Promise.all([loadUsers(), loadStats()]);
-      alert('User deleted successfully');
+      alert(translate('admin.userDeleted'));
     } catch (e: any) {
-      alert(e?.message || 'Failed to delete user');
+      alert(e?.message || translate('admin.failedToDeleteUser'));
     }
   };
 
@@ -679,12 +698,12 @@ function AdminDashboard() {
       
       // Refresh the categories list from the server to ensure consistency
       await fetchCategories();
-      alert('Category deleted successfully');
+      alert(translate('admin.categoryDeleted') || 'Category deleted successfully');
     } catch (error) {
       console.error('Error deleting category:', error);
       // If deletion failed, refresh from server to restore correct state
       await fetchCategories();
-      alert(error instanceof Error ? error.message : 'Failed to delete category');
+      alert(error instanceof Error ? error.message : translate('admin.failedToDeleteCategory') || 'Failed to delete category');
     }
   };
 
@@ -805,52 +824,52 @@ function AdminDashboard() {
               <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
                 <div className="bg-white rounded-lg shadow-xl w-full max-w-3xl max-h-[90vh] overflow-y-auto">
                   <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-                    <h3 className="text-lg font-montserrat font-semibold text-primary-800">Merchant Details</h3>
+                    <h3 className="text-lg font-montserrat font-semibold text-primary-800">{translate('admin.merchantDetails')}</h3>
                     <button onClick={closeViewMerchant} className="text-primary-500 hover:text-primary-700 focus:outline-none">✕</button>
                   </div>
                   <div className="p-6 space-y-4">
                     {viewing.loading ? (
-                      <div className="text-center text-gray-500 py-10">Loading...</div>
+                      <div className="text-center text-gray-500 py-10">{translate('admin.loading')}</div>
                     ) : viewing.error ? (
                       <div className="text-center text-red-600 py-10">{viewing.error}</div>
                     ) : viewing.data ? (
                       <div className="space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                           <div>
-                            <p className="text-sm text-gray-500">Store Name</p>
+                            <p className="text-sm text-gray-500">{translate('admin.storeName')}</p>
                             <p className="text-base font-montserrat font-medium text-primary-800">{viewing.data.storeName}</p>
                           </div>
                           <div>
-                            <p className="text-sm text-gray-500">Status</p>
+                            <p className="text-sm text-gray-500">{translate('admin.status')}</p>
                             <p className="text-base font-montserrat font-medium text-primary-800">{viewing.data.status}</p>
                           </div>
                           <div>
-                            <p className="text-sm text-gray-500">User</p>
+                            <p className="text-sm text-gray-500">{translate('admin.user')}</p>
                             <p className="text-base font-montserrat font-medium text-primary-800">{viewing.data.user?.name} ({viewing.data.user?.email})</p>
                           </div>
                           <div>
-                            <p className="text-sm text-gray-500">Created</p>
+                            <p className="text-sm text-gray-500">{translate('admin.created')}</p>
                             <p className="text-base font-montserrat font-medium text-primary-800">{new Date(viewing.data.createdAt).toLocaleString()}</p>
                           </div>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                           <div className="bg-gray-50 rounded-lg p-4">
-                            <p className="text-sm text-gray-500">Products</p>
+                            <p className="text-sm text-gray-500">{translate('admin.products')}</p>
                             <p className="text-xl font-semibold">{viewing.data.stats.productCount}</p>
                           </div>
                           <div className="bg-gray-50 rounded-lg p-4">
-                            <p className="text-sm text-gray-500">Orders</p>
+                            <p className="text-sm text-gray-500">{translate('admin.orders')}</p>
                             <p className="text-xl font-semibold">{viewing.data.stats.orderCount}</p>
                           </div>
                           <div className="bg-gray-50 rounded-lg p-4">
-                            <p className="text-sm text-gray-500">Revenue</p>
+                            <p className="text-sm text-gray-500">{translate('admin.revenue')}</p>
                             <p className="text-xl font-semibold">{formatCurrency(Number(viewing.data.stats.revenue || 0))}</p>
                           </div>
                         </div>
 
                         <div>
-                          <h4 className="text-sm font-montserrat font-semibold text-primary-800 mb-2">Latest Products</h4>
+                          <h4 className="text-sm font-montserrat font-semibold text-primary-800 mb-2">{translate('admin.products')}</h4>
                           {viewing.data.latestProducts?.length ? (
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                               {viewing.data.latestProducts.map((p: any) => (
@@ -858,18 +877,18 @@ function AdminDashboard() {
                                   {p.imageUrl && <img src={p.imageUrl} alt={p.slug} className="w-12 h-12 object-cover rounded" />}
                                   <div className="flex-1">
                                     <p className="font-medium text-sm">{p.title_en}</p>
-                                    <p className="text-xs text-gray-500">{formatCurrency(p.price)} • Stock: {p.stock}</p>
+                                    <p className="text-xs text-gray-500">{formatCurrency(p.price)} • {translate('admin.stock')}: {p.stock}</p>
                                   </div>
                                 </div>
                               ))}
                             </div>
                           ) : (
-                            <p className="text-sm text-gray-500">No products</p>
+                            <p className="text-sm text-gray-500">{translate('admin.noProducts')}</p>
                           )}
                         </div>
 
                         <div>
-                          <h4 className="text-sm font-montserrat font-semibold text-primary-800 mb-2">Latest Orders</h4>
+                          <h4 className="text-sm font-montserrat font-semibold text-primary-800 mb-2">{translate('admin.orders')}</h4>
                           {viewing.data.latestOrders?.length ? (
                             <div className="space-y-2">
                               {viewing.data.latestOrders.map((o: any) => (
@@ -881,20 +900,22 @@ function AdminDashboard() {
                               ))}
                             </div>
                           ) : (
-                            <p className="text-sm text-gray-500">No orders</p>
+                            <p className="text-sm text-gray-500">{translate('admin.noOrders')}</p>
                           )}
                         </div>
 
-                        <div className="flex justify-end gap-2 pt-2">
-                          {viewing.data?.id && (
-                            <button
-                              className="px-3 py-2 rounded-md border border-red-300 text-red-700 hover:bg-red-50"
-                              onClick={() => deleteMerchant(viewing.data.id)}
-                            >
-                              Delete Merchant
-                            </button>
-                          )}
-                          <button className="btn-secondary" onClick={closeViewMerchant}>Close</button>
+                        <div className="flex flex-col sm:flex-row justify-end gap-2 pt-2">
+                          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                            {viewing.data?.id && (
+                              <button
+                                className="px-3 py-2 rounded-md border border-red-300 text-red-700 hover:bg-red-50 w-full sm:w-auto"
+                                onClick={() => deleteMerchant(viewing.data.id)}
+                              >
+                                {translate('admin.deleteMerchant')}
+                              </button>
+                            )}
+                            <button className="btn-secondary w-full sm:w-auto" onClick={closeViewMerchant}>{translate('admin.close')}</button>
+                          </div>
                         </div>
                       </div>
                     ) : null}
@@ -912,7 +933,7 @@ function AdminDashboard() {
                 <div className="p-6">
                   <div className="overflow-x-auto">
                     {usersLoading ? (
-                      <div className="py-8 text-center text-gray-500">Loading users...</div>
+                      <div className="py-8 text-center text-gray-500">{translate('admin.loadingUsers')}</div>
                     ) : usersError ? (
                       <div className="py-8 text-center text-red-600">{usersError}</div>
                     ) : (
@@ -921,7 +942,7 @@ function AdminDashboard() {
                           <tr>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('admin.user')}</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('admin.role')}</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Merchant</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('admin.merchant')}</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('admin.status')}</th>
                             <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('admin.actions')}</th>
                           </tr>
@@ -942,11 +963,11 @@ function AdminDashboard() {
                                     u.role === 'MERCHANT' ? 'bg-blue-100 text-blue-800' :
                                     'bg-gray-100 text-gray-800'
                                   }`}>
-                                    {u.role}
+                                    {translateRole(u.role)}
                                   </span>
                                   {u.isDeleted && (
-                                    <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-200 text-gray-700" title="User is deleted/disabled">
-                                      Deleted
+                                    <span className="inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-gray-200 text-gray-700" title={translate('admin.deleted')}>
+                                      {translate('admin.deleted')}
                                     </span>
                                   )}
                                 </div>
@@ -954,8 +975,8 @@ function AdminDashboard() {
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                                 {u.merchantId ? (
                                   <span>
-                                    {(u.storeName || 'Merchant')}
-                                    {u.isDeleted && <span className="ml-2 text-xs text-gray-500">(disabled)</span>}
+                                    {(u.storeName || translate('admin.merchant'))}
+                                    {u.isDeleted && <span className="ml-2 text-xs text-gray-500">{translate('admin.disabled')}</span>}
                                   </span>
                                 ) : '—'}
                               </td>
@@ -966,67 +987,71 @@ function AdminDashboard() {
                                     u.merchantStatus === 'SUSPENDED' ? 'bg-red-100 text-red-800' :
                                     'bg-yellow-100 text-yellow-800'
                                   }`}>
-                                    {u.isDeleted ? 'DELETED' : u.merchantStatus}
+                                    {u.isDeleted ? translate('admin.deleted').toUpperCase() : translateMerchantStatus(u.merchantStatus)}
                                   </span>
                                 ) : (
-                                  <span className="text-xs text-gray-500">N/A</span>
+                                  <span className="text-xs text-gray-500">{translate('admin.notAvailable')}</span>
                                 )}
                               </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                              <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm font-medium">
                                 {u.merchantId ? (
-                                  <div className="flex items-center gap-2">
-                                    <button
-                                      className="px-3 py-1 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50"
-                                      onClick={() => setMerchantStatus(u.merchantId!, 'PENDING')}
-                                      disabled={u.merchantStatus === 'PENDING' || u.isDeleted}
-                                    >
-                                      Set Pending
-                                    </button>
-                                    <button
-                                      className="px-3 py-1 rounded-md bg-green-600 text-white hover:bg-green-700 disabled:opacity-50"
-                                      onClick={() => setMerchantStatus(u.merchantId!, 'ACTIVE')}
-                                      disabled={u.merchantStatus === 'ACTIVE' || u.isDeleted}
-                                    >
-                                      Approve
-                                    </button>
-                                    <button
-                                      className="px-3 py-1 rounded-md border border-orange-300 text-orange-700 hover:bg-orange-50 disabled:opacity-50"
-                                      onClick={() => setMerchantStatus(u.merchantId!, 'SUSPENDED')}
-                                      disabled={u.merchantStatus === 'SUSPENDED' || u.isDeleted}
-                                    >
-                                      Suspend
-                                    </button>
-                                    <button
-                                      className="px-3 py-1 rounded-md border border-blue-300 text-blue-700 hover:bg-blue-50"
-                                      onClick={() => openViewMerchant(u.merchantId!)}
-                                      disabled={u.isDeleted}
-                                    >
-                                      View
-                                    </button>
-                                    <button
-                                      className="px-3 py-1 rounded-md border border-red-300 text-red-700 hover:bg-red-50"
-                                      onClick={() => deleteMerchant(u.merchantId!)}
-                                      disabled={u.isDeleted}
-                                    >
-                                      Delete
-                                    </button>
-                                    <button
-                                      className="px-3 py-1 rounded-md border border-red-400 text-red-800 hover:bg-red-50"
-                                      onClick={() => deleteUser(u.id)}
-                                      title="Delete user and all related data"
-                                    >
-                                      Delete User
-                                    </button>
+                                  <div className="flex flex-col sm:flex-row gap-2 sm:gap-2">
+                                    <div className="flex flex-col sm:flex-row gap-2">
+                                      <button
+                                        className="px-3 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50 btn-touch text-left sm:text-center"
+                                        onClick={() => setMerchantStatus(u.merchantId!, 'PENDING')}
+                                        disabled={u.merchantStatus === 'PENDING' || u.isDeleted}
+                                      >
+                                        {translate('admin.setPending')}
+                                      </button>
+                                      <button
+                                        className="px-3 py-2 rounded-md bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 btn-touch text-left sm:text-center"
+                                        onClick={() => setMerchantStatus(u.merchantId!, 'ACTIVE')}
+                                        disabled={u.merchantStatus === 'ACTIVE' || u.isDeleted}
+                                      >
+                                        {translate('admin.approve')}
+                                      </button>
+                                      <button
+                                        className="px-3 py-2 rounded-md border border-orange-300 text-orange-700 hover:bg-orange-50 disabled:opacity-50 btn-touch text-left sm:text-center"
+                                        onClick={() => setMerchantStatus(u.merchantId!, 'SUSPENDED')}
+                                        disabled={u.merchantStatus === 'SUSPENDED' || u.isDeleted}
+                                      >
+                                        {translate('admin.suspend')}
+                                      </button>
+                                    </div>
+                                    <div className="flex flex-col sm:flex-row gap-2">
+                                      <button
+                                        className="px-3 py-2 rounded-md border border-blue-300 text-blue-700 hover:bg-blue-50 btn-touch text-left sm:text-center"
+                                        onClick={() => openViewMerchant(u.merchantId!)}
+                                        disabled={u.isDeleted}
+                                      >
+                                        {translate('admin.view')}
+                                      </button>
+                                      <button
+                                        className="px-3 py-2 rounded-md border border-red-300 text-red-700 hover:bg-red-50 btn-touch text-left sm:text-center"
+                                        onClick={() => deleteMerchant(u.merchantId!)}
+                                        disabled={u.isDeleted}
+                                      >
+                                        {translate('admin.delete')}
+                                      </button>
+                                      <button
+                                        className="px-3 py-2 rounded-md border border-red-400 text-red-800 hover:bg-red-50 btn-touch text-left sm:text-center"
+                                        onClick={() => deleteUser(u.id)}
+                                        title={translate('admin.deleteUserAndData')}
+                                      >
+                                        {translate('admin.deleteUser')}
+                                      </button>
+                                    </div>
                                   </div>
                                 ) : (
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-xs text-gray-400 mr-2">No merchant profile</span>
+                                  <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1 sm:gap-2">
+                                    <span className="text-xs text-gray-400">{translate('admin.noMerchantProfile')}</span>
                                     <button
-                                      className="px-3 py-1 rounded-md border border-red-400 text-red-800 hover:bg-red-50"
+                                      className="px-3 py-2 rounded-md border border-red-400 text-red-800 hover:bg-red-50 btn-touch text-left sm:text-center"
                                       onClick={() => deleteUser(u.id)}
-                                      title="Delete user"
+                                      title={translate('admin.deleteUser')}
                                     >
-                                      Delete User
+                                      {translate('admin.deleteUser')}
                                     </button>
                                   </div>
                                 )}
@@ -1154,7 +1179,7 @@ function AdminDashboard() {
                       <div className="relative">
                         <input
                           type="text"
-                          placeholder="Search products..."
+                          placeholder={translate('admin.searchProducts')}
                           value={searchTerm}
                           onChange={(e) => setSearchTerm(e.target.value)}
                           className="w-full pl-3 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent"
@@ -1218,10 +1243,10 @@ function AdminDashboard() {
                                   <p className="text-xs text-primary-600 mb-2 line-clamp-2" title={p.title_de}>{p.title_de}</p>
                                   <p className="text-xs text-primary-500 truncate">Slug: {p.slug}</p>
                                 </div>
-                                <div className="flex space-x-2 flex-shrink-0 relative z-10">
+                                <div className="flex flex-col sm:flex-row gap-1 sm:gap-2 flex-shrink-0 relative z-10">
                                   <button
                                     onClick={() => editProduct(p)}
-                                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                    className="p-2 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors btn-touch"
                                     title="Edit product"
                                     aria-label="Edit product"
                                   >
@@ -1229,7 +1254,7 @@ function AdminDashboard() {
                                   </button>
                                   <button
                                     onClick={() => deleteProduct(p.id)}
-                                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                                    className="p-2 text-red-600 hover:bg-red-50 rounded-lg transition-colors btn-touch"
                                     title="Delete product"
                                     aria-label="Delete product"
                                   >
@@ -1324,7 +1349,7 @@ function AdminDashboard() {
                               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent"
                               value={form.slug}
                               onChange={e=>setForm({...form, slug:e.target.value})}
-                              placeholder="unique-product-slug"
+                              placeholder={translate('admin.productSlugPlaceholder')}
                             />
                           </div>
                           {/* Admin-only merchant selector when creating new product */}
@@ -1354,7 +1379,7 @@ function AdminDashboard() {
                               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent"
                               value={form.title_en}
                               onChange={e=>setForm({...form, title_en:e.target.value})}
-                              placeholder="Product Title (English)"
+                              placeholder={translate('admin.productTitleEnPlaceholder')}
                             />
                           </div>
                           <div>
@@ -1364,7 +1389,7 @@ function AdminDashboard() {
                               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent"
                               value={form.title_de}
                               onChange={e=>setForm({...form, title_de:e.target.value})}
-                              placeholder="Produkttitel (Deutsch)"
+                              placeholder={translate('admin.productTitleDePlaceholder')}
                             />
                           </div>
                           <div>
@@ -1376,7 +1401,7 @@ function AdminDashboard() {
                               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent"
                               value={form.price}
                               onChange={e=>setForm({...form, price:e.target.value})}
-                              placeholder="29.99"
+                              placeholder={translate('admin.pricePlaceholder')}
                             />
                           </div>
                           <div>
@@ -1387,7 +1412,7 @@ function AdminDashboard() {
                               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent"
                               value={form.stock}
                               onChange={e=>setForm({...form, stock:e.target.value})}
-                              placeholder="100"
+                              placeholder={translate('admin.stockPlaceholder')}
                             />
                           </div>
                           <div>
@@ -1434,7 +1459,7 @@ function AdminDashboard() {
                                 value={form.imageUrl}
                                 onChange={e => setForm({ ...form, imageUrl: e.target.value })}
                                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                                placeholder="https://.../image.jpg"
+                                placeholder={translate('admin.imageUrlPlaceholder')}
                               />
                             </div>
                           </div>
@@ -1448,7 +1473,7 @@ function AdminDashboard() {
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent"
                             value={form.desc_en}
                             onChange={e=>setForm({...form, desc_en:e.target.value})}
-                            placeholder="Product description in English"
+                            placeholder={translate('admin.descriptionEnPlaceholder')}
                           />
                         </div>
                         <div>
@@ -1461,22 +1486,23 @@ function AdminDashboard() {
                             className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent"
                             value={form.desc_de}
                             onChange={e=>setForm({...form, desc_de:e.target.value})}
-                            placeholder="Produktbeschreibung auf Deutsch"
+                            placeholder={translate('admin.descriptionDePlaceholder')}
                           />
                         </div>
-                        <div className="flex justify-end space-x-3 pt-4 border-t">
-                          <button
-                            type="button"
-                            onClick={resetForm}
-                            className="btn-secondary focus:outline-none"
-                          >
-                            {isProductImageUploading ? translate('admin.cancelUpload') : translate('admin.cancel')}
-                          </button>
-                          <button
-                            type="submit"
-                            disabled={loading || isProductImageUploading}
-                            className="btn-primary disabled:opacity-50 flex items-center focus:outline-none"
-                          >
+                        <div className="flex flex-col sm:flex-row justify-end gap-3 pt-4 border-t">
+                          <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                            <button
+                              type="button"
+                              onClick={resetForm}
+                              className="btn-secondary focus:outline-none w-full sm:w-auto"
+                            >
+                              {isProductImageUploading ? translate('admin.cancelUpload') : translate('admin.cancel')}
+                            </button>
+                            <button
+                              type="submit"
+                              disabled={loading || isProductImageUploading}
+                              className="btn-primary disabled:opacity-50 flex items-center focus:outline-none w-full sm:w-auto"
+                            >
                             <Save className="w-4 h-4 mr-2" />
                             {loading
                               ? translate('admin.saving')
@@ -1484,6 +1510,7 @@ function AdminDashboard() {
                                 ? translate('admin.waitingForImageUpload')
                                 : (editingProduct ? translate('admin.updateProduct') : translate('admin.addProduct'))}
                           </button>
+                        </div>
                         </div>
                       </form>
                     </div>
@@ -1521,7 +1548,7 @@ function AdminDashboard() {
                           {p.imageUrl && <img src={p.imageUrl} alt={p.slug} className="w-10 h-10 object-cover rounded" />}
                           <div className="flex-1 min-w-0">
                             <div className="text-sm font-medium text-gray-900 truncate" title={p.title_en}>{p.title_en}</div>
-                            <div className="text-xs text-gray-500 truncate">{formatCurrency(p.price)} • {p.stock} in stock</div>
+                            <div className="text-xs text-gray-500 truncate">{formatCurrency(p.price)} • {p.stock} {translate('admin.inStock')}</div>
                           </div>
                         </div>
                       ))}
@@ -1627,7 +1654,7 @@ function AdminDashboard() {
                               <button
                                 onClick={async (e) => {
                                   e.stopPropagation();
-                                  if (window.confirm(`Are you sure you want to delete "${category.name}"?`)) {
+                                  if (window.confirm(translate('admin.confirmDeleteCategory', { name: category.name }))) {
                                     await handleDeleteCategory(category.id);
                                   }
                                 }}
@@ -1723,26 +1750,28 @@ function AdminDashboard() {
                   placeholder={translate('admin.imageUrl') || 'Image URL'}
                 />
               </div>
-              <div className="flex items-center justify-end gap-3 pt-4">
-                <button
-                  type="button"
-                  onClick={resetCategoryForm}
-                  className="btn-secondary focus:outline-none"
-                  disabled={creatingCategory}
-                >
-                  {translate('admin.cancel')}
-                </button>
-                <button
-                  type="submit"
-                  disabled={creatingCategory || isImageUploading}
-                  className="btn-primary disabled:opacity-50 focus:outline-none"
-                >
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 pt-4">
+                <div className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                  <button
+                    type="button"
+                    onClick={resetCategoryForm}
+                    className="btn-secondary focus:outline-none w-full sm:w-auto"
+                    disabled={creatingCategory}
+                  >
+                    {translate('admin.cancel')}
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={creatingCategory || isImageUploading}
+                    className="btn-primary disabled:opacity-50 focus:outline-none w-full sm:w-auto"
+                  >
                   {creatingCategory || isImageUploading
                     ? (isImageUploading ? translate('admin.uploadingImage') : translate('admin.saving'))
                     : editingCategoryId
                       ? translate('admin.updateCategory')
                       : translate('admin.createCategory')}
                 </button>
+              </div>
               </div>
             </form>
           </div>
@@ -1929,7 +1958,7 @@ function SettingsForm() {
               className="w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent bg-white text-gray-900 placeholder-gray-400"
               value={form.storeName}
               onChange={(e)=>setForm({ ...form, storeName: e.target.value })}
-              placeholder="Fienraum"
+              placeholder={translate('admin.storeNamePlaceholder')}
             />
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

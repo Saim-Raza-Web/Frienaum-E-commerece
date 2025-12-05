@@ -176,7 +176,8 @@ model Product {
   desc_de    String
   price      Float
   stock      Int
-  imageUrl   String?
+  imageUrl   String?    // Kept for backward compatibility
+  images     String[]   @default([]) // Array of image URLs
   categoryId String?    @db.ObjectId
   status     ProductStatus @default(PENDING)
 

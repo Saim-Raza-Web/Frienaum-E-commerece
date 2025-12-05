@@ -26,6 +26,13 @@ const ImageUpload = dynamic(() => import('@/components/ImageUpload'), {
   )
 });
 
+const MultipleImageUpload = dynamic(() => import('@/components/MultipleImageUpload'), {
+  ssr: false,
+  loading: () => (
+    <div className="w-full rounded-xl border border-dashed border-gray-300 bg-gray-50 p-10 animate-pulse" />
+  )
+});
+
 function MerchantDashboard() {
   const { translate } = useTranslation();
   const { user } = useAuth();
@@ -100,8 +107,9 @@ function MerchantDashboard() {
     desc_de: '',
     price: '',
     stock: '',
-    imageUrl: '',
-    category: 'General'
+    imageUrl: '', // Kept for backward compatibility
+    images: [] as string[], // New: array of image URLs
+    category: translate('admin.generalCategory') || 'General'
   });
   const [showViewModal, setShowViewModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
@@ -115,8 +123,9 @@ function MerchantDashboard() {
     desc_de: '',
     price: '',
     stock: '',
-    imageUrl: '',
-    category: 'General'
+    imageUrl: '', // Kept for backward compatibility
+    images: [] as string[], // New: array of image URLs
+    category: translate('admin.generalCategory') || 'General'
   });
   // State for orders
   const [orders, setOrders] = useState<any[]>([]);
@@ -262,19 +271,19 @@ function MerchantDashboard() {
 
   // Initialize stats with loading state
   const [stats, setStats] = useState([
-    { label: 'Total Sales', value: 'Loading...', change: '', icon: DollarSign, color: 'text-green-600' },
-    { label: 'Orders', value: 'Loading...', change: '', icon: ShoppingBag, color: 'text-blue-600' },
-    { label: 'Customers', value: 'Loading...', change: '', icon: Users, color: 'text-purple-600' },
-    { label: 'Products', value: 'Loading...', change: '', icon: Package, color: 'text-orange-600' }
+    { label: '', value: translate('merchant.loading') || '', change: '', icon: DollarSign, color: 'text-green-600' },
+    { label: '', value: translate('merchant.loading') || '', change: '', icon: ShoppingBag, color: 'text-blue-600' },
+    { label: '', value: translate('merchant.loading') || '', change: '', icon: Users, color: 'text-purple-600' },
+    { label: '', value: translate('merchant.loading') || '', change: '', icon: Package, color: 'text-orange-600' }
   ]);
 
   // Update stats labels when translations are available
   useEffect(() => {
     setStats(prevStats => [
-      { ...prevStats[0], label: translate('merchant.totalSales') || 'Total Sales' },
-      { ...prevStats[1], label: translate('merchant.orders') || 'Orders' },
-      { ...prevStats[2], label: translate('merchant.customers') || 'Customers' },
-      { ...prevStats[3], label: translate('merchant.products') || 'Products' }
+      { ...prevStats[0], label: translate('merchant.totalSales') },
+      { ...prevStats[1], label: translate('merchant.orders') },
+      { ...prevStats[2], label: translate('merchant.customers') },
+      { ...prevStats[3], label: translate('merchant.products') }
     ]);
   }, [translate]);
 
@@ -284,7 +293,7 @@ function MerchantDashboard() {
       if (setLoadingStats) setLoadingStats(true);
       setError(null);
       if (!user) {
-        setError('Please log in to access merchant dashboard');
+        setError(translate('merchant.pleaseLogIn') || 'Bitte melden Sie sich an, um auf das Händler-Dashboard zuzugreifen');
         return;
       }
       const response = await fetch('/api/merchant/stats', {
@@ -295,7 +304,7 @@ function MerchantDashboard() {
       });
       if (!response.ok) {
         if (response.status === 401) {
-          throw new Error('Please log in to view merchant statistics');
+          throw new Error(translate('merchant.pleaseLogIn') || 'Bitte melden Sie sich an');
         }
         throw new Error(`Failed to fetch stats: ${response.statusText}`);
       }
@@ -310,7 +319,7 @@ function MerchantDashboard() {
       }
     } catch (error) {
       console.error('Error fetching stats:', error);
-      setError(error instanceof Error ? error.message : 'Failed to load stats');
+      setError(error instanceof Error ? error.message : translate('merchant.error') || 'Fehler beim Laden');
     } finally {
       if (setLoadingStats) setLoadingStats(false);
     }
@@ -352,7 +361,7 @@ function MerchantDashboard() {
 
       if (!response.ok) {
         if (response.status === 401) {
-          throw new Error('Please log in to update order status');
+          throw new Error(translate('merchant.pleaseLogIn') || 'Bitte melden Sie sich an');
         }
         let errorMessage = 'Failed to update order status';
         try {
@@ -410,7 +419,7 @@ function MerchantDashboard() {
 
       if (!response.ok) {
         if (response.status === 401) {
-          throw new Error('Please log in to update order items');
+          throw new Error(translate('merchant.pleaseLogIn') || 'Bitte melden Sie sich an');
         }
         let errorMessage = 'Failed to update order items';
         try {
@@ -455,7 +464,7 @@ function MerchantDashboard() {
 
       if (!response.ok) {
         if (response.status === 401) {
-          throw new Error('Please log in to delete orders');
+          throw new Error(translate('merchant.pleaseLogIn') || 'Bitte melden Sie sich an');
         }
         let errorMessage = 'Failed to delete order';
         try {
@@ -488,7 +497,7 @@ function MerchantDashboard() {
       setShowCustomerModal(true);
       // Detail
       const detailRes = await fetch(`/api/merchant/customers/${customerId}`, { credentials: 'include' });
-      if (!detailRes.ok) throw new Error('Failed to load customer');
+      if (!detailRes.ok) throw new Error(translate('merchant.failedToLoadCustomer') || 'Fehler beim Laden des Kunden');
       const detail = await detailRes.json();
       setCustomerDetail(detail);
       setCustomerNotes(detail?.notes || '');
@@ -592,7 +601,7 @@ function MerchantDashboard() {
 
         // Check if user is authenticated first
         if (!user) {
-          setError('Please log in to access merchant dashboard');
+          setError(translate('merchant.pleaseLogIn') || 'Bitte melden Sie sich an, um auf das Händler-Dashboard zuzugreifen');
           return;
         }
 
@@ -607,7 +616,7 @@ function MerchantDashboard() {
 
         if (!response.ok) {
           if (response.status === 401) {
-            throw new Error('Please log in to view merchant products');
+            throw new Error(translate('merchant.pleaseLogIn') || 'Bitte melden Sie sich an');
           }
           throw new Error(`Failed to fetch products: ${response.statusText}`);
         }
@@ -616,7 +625,7 @@ function MerchantDashboard() {
         setProducts(data);
       } catch (err) {
         console.error('Error fetching products:', err);
-        setError(err instanceof Error ? err.message : 'Failed to load products');
+        setError(err instanceof Error ? err.message : translate('merchant.error') || 'Fehler beim Laden der Produkte');
       } finally {
         setLoading(false);
       }
@@ -633,7 +642,7 @@ function MerchantDashboard() {
         setCustomersLoading(true);
         setCustomersError(null);
         if (!user) {
-          setCustomersError('Please log in to access merchant dashboard');
+          setCustomersError(translate('merchant.pleaseLogIn') || 'Bitte melden Sie sich an');
           return;
         }
         const response = await fetch('/api/merchant/customers', {
@@ -642,14 +651,14 @@ function MerchantDashboard() {
           credentials: 'include'
         });
         if (!response.ok) {
-          if (response.status === 401) throw new Error('Please log in to view customers');
+          if (response.status === 401) throw new Error(translate('merchant.pleaseLogIn') || 'Bitte melden Sie sich an');
           throw new Error(`Failed to fetch customers: ${response.statusText}`);
         }
         const data = await response.json();
         setCustomers(data);
       } catch (err) {
         console.error('Error fetching customers:', err);
-        setCustomersError(err instanceof Error ? err.message : 'Failed to load customers');
+        setCustomersError(err instanceof Error ? err.message : translate('merchant.error') || 'Fehler beim Laden der Kunden');
       } finally {
         setCustomersLoading(false);
       }
@@ -665,7 +674,7 @@ function MerchantDashboard() {
         setAnalyticsLoading(true);
         setAnalyticsError(null);
         if (!user) {
-          setAnalyticsError('Please log in to access merchant dashboard');
+          setAnalyticsError(translate('merchant.pleaseLogIn') || 'Bitte melden Sie sich an');
           return;
         }
         const response = await fetch('/api/merchant/analytics', {
@@ -674,14 +683,14 @@ function MerchantDashboard() {
           credentials: 'include'
         });
         if (!response.ok) {
-          if (response.status === 401) throw new Error('Please log in to view analytics');
+          if (response.status === 401) throw new Error(translate('merchant.pleaseLogIn') || 'Bitte melden Sie sich an');
           throw new Error(`Failed to fetch analytics: ${response.statusText}`);
         }
         const data = await response.json();
         setAnalytics(data);
       } catch (err) {
         console.error('Error fetching analytics:', err);
-        setAnalyticsError(err instanceof Error ? err.message : 'Failed to load analytics');
+        setAnalyticsError(err instanceof Error ? err.message : translate('merchant.errorLoadingAnalytics') || 'Fehler beim Laden der Analytik');
       } finally {
         setAnalyticsLoading(false);
       }
@@ -695,7 +704,7 @@ function MerchantDashboard() {
       setPayoutsLoading(true);
       setPayoutsError(null);
       if (!user) {
-        setPayoutsError('Please log in to access merchant dashboard');
+        setPayoutsError(translate('merchant.pleaseLogIn') || 'Bitte melden Sie sich an');
         return;
       }
       const response = await fetch('/api/merchant/payouts', {
@@ -704,14 +713,14 @@ function MerchantDashboard() {
         credentials: 'include'
       });
       if (!response.ok) {
-        if (response.status === 401) throw new Error('Please log in to view payouts');
+        if (response.status === 401) throw new Error(translate('merchant.pleaseLogIn') || 'Bitte melden Sie sich an');
         throw new Error(`Failed to fetch payouts: ${response.statusText}`);
       }
       const data = await response.json();
       setPayouts(data);
     } catch (err) {
       console.error('Error fetching payouts:', err);
-      setPayoutsError(err instanceof Error ? err.message : 'Failed to load payouts');
+      setPayoutsError(err instanceof Error ? err.message : translate('merchant.error') || 'Fehler beim Laden der Auszahlungen');
     } finally {
       setPayoutsLoading(false);
     }
@@ -771,7 +780,7 @@ function MerchantDashboard() {
       setOrdersLoading(true);
       setOrdersError(null);
       if (!user) {
-        setOrdersError('Please log in to access merchant dashboard');
+        setOrdersError(translate('merchant.pleaseLogIn') || 'Bitte melden Sie sich an');
         return;
       }
       const response = await fetch('/api/merchant/orders', {
@@ -780,14 +789,14 @@ function MerchantDashboard() {
         credentials: 'include'
       });
       if (!response.ok) {
-        if (response.status === 401) throw new Error('Please log in to view orders');
+        if (response.status === 401) throw new Error(translate('merchant.pleaseLogIn') || 'Bitte melden Sie sich an');
         throw new Error(`Failed to fetch orders: ${response.statusText}`);
       }
       const data = await response.json();
       setOrders(data);
     } catch (err) {
       console.error('Error fetching orders:', err);
-      setOrdersError(err instanceof Error ? err.message : 'Failed to load orders');
+      setOrdersError(err instanceof Error ? err.message : translate('merchant.error') || 'Fehler beim Laden der Bestellungen');
     } finally {
       setOrdersLoading(false);
     }
@@ -811,10 +820,10 @@ function MerchantDashboard() {
 
       if (!response.ok) {
         if (response.status === 401) {
-          throw new Error('Please log in to submit products for approval');
+          throw new Error(translate('merchant.pleaseLogIn') || 'Bitte melden Sie sich an');
         }
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || 'Failed to submit product for approval');
+        throw new Error(errorData.error || translate('merchant.failedToSubmitForApproval') || 'Failed to submit product for approval');
       }
 
       // Refresh products list
@@ -826,8 +835,9 @@ function MerchantDashboard() {
       setProducts(items);
       alert(translate('merchant.productSubmittedForApproval'));
     } catch (err: any) {
-      setError(err?.message || 'Failed to submit product for approval');
-      alert(err?.message || 'Failed to submit product for approval');
+      const errorMsg = err?.message || translate('merchant.failedToSubmitForApproval') || 'Failed to submit product for approval';
+      setError(errorMsg);
+      alert(errorMsg);
     }
   };
 
@@ -843,9 +853,9 @@ function MerchantDashboard() {
 
       if (!response.ok) {
         if (response.status === 401) {
-          throw new Error('Please log in to delete products');
+          throw new Error(translate('merchant.pleaseLogIn') || 'Bitte melden Sie sich an');
         }
-        throw new Error('Failed to delete product');
+        throw new Error(translate('merchant.error') || 'Fehler beim Löschen des Produkts');
       }
 
       // Refresh list from server to avoid stale state
@@ -871,14 +881,14 @@ function MerchantDashboard() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch product details');
+        throw new Error(translate('merchant.failedToFetchProduct') || 'Failed to fetch product details');
       }
 
       const product = await response.json();
       setSelectedProduct(product);
       setShowViewModal(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load product details');
+      setError(err instanceof Error ? err.message : translate('merchant.error') || 'Fehler beim Laden der Produktdetails');
     }
   };
 
@@ -890,11 +900,15 @@ function MerchantDashboard() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to fetch product details');
+        throw new Error(translate('merchant.failedToFetchProduct') || 'Failed to fetch product details');
       }
 
       const product = await response.json();
       setSelectedProduct(product);
+      // Handle images: prefer images array, fallback to imageUrl for backward compatibility
+      const productImages = (product.images && Array.isArray(product.images) && product.images.length > 0) 
+        ? product.images 
+        : (product.imageUrl ? [product.imageUrl] : []);
       setEditingProduct({
         slug: product.slug || '',
         title_en: product.title_en || '',
@@ -903,13 +917,14 @@ function MerchantDashboard() {
         desc_de: product.desc_de || '',
         price: product.price?.toString() || '',
         stock: product.stock?.toString() || '',
-        imageUrl: product.imageUrl || '',
+        imageUrl: productImages[0] || product.imageUrl || '',
+        images: productImages,
         category: product.category || 'General'
       });
       // Set image preview for existing image
       setShowEditModal(true);
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load product for editing');
+      setError(err instanceof Error ? err.message : translate('merchant.error') || 'Fehler beim Laden des Produkts zum Bearbeiten');
     }
   };
 
@@ -929,16 +944,41 @@ function MerchantDashboard() {
       price: '',
       stock: '',
       imageUrl: '',
-      category: 'General'
+      images: [],
+      category: translate('admin.generalCategory') || 'General'
     });
     // Clear image upload state
   };
 
   const handleProductImageUpload = (url: string) => {
-    setNewProduct(prev => ({ ...prev, imageUrl: url }));
+    // Legacy single image upload - add to images array
+    setNewProduct(prev => ({ 
+      ...prev, 
+      imageUrl: url,
+      images: url ? [url] : []
+    }));
   };
   const handleEditImageUpload = (url: string) => {
-    setEditingProduct(prev => ({ ...prev, imageUrl: url }));
+    // Legacy single image upload - add to images array
+    setEditingProduct(prev => ({ 
+      ...prev, 
+      imageUrl: url,
+      images: url ? [url] : []
+    }));
+  };
+  const handleProductImagesChange = (urls: string[]) => {
+    setNewProduct(prev => ({ 
+      ...prev, 
+      images: urls,
+      imageUrl: urls[0] || '' // Keep first image in imageUrl for backward compatibility
+    }));
+  };
+  const handleEditImagesChange = (urls: string[]) => {
+    setEditingProduct(prev => ({ 
+      ...prev, 
+      images: urls,
+      imageUrl: urls[0] || '' // Keep first image in imageUrl for backward compatibility
+    }));
   };
 
   const handleCategoryImageUpload = (url: string) => {
@@ -960,7 +1000,8 @@ function MerchantDashboard() {
       price: '',
       stock: '',
       imageUrl: '',
-      category: 'General'
+      images: [],
+      category: translate('admin.generalCategory') || 'General'
     });
     setUpdating(false);
     // Clear edit image upload state
@@ -969,6 +1010,12 @@ function MerchantDashboard() {
   const updateProduct = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedProduct) return;
+
+    // Validate German title is required
+    if (!editingProduct.title_de || !editingProduct.title_de.trim()) {
+      alert(translate('admin.germanTitleRequired') || 'German title is required.');
+      return;
+    }
 
     // Validate German description is required
     if (!editingProduct.desc_de || !editingProduct.desc_de.trim()) {
@@ -988,7 +1035,8 @@ function MerchantDashboard() {
         desc_de: editingProduct.desc_de,
         price: Number(editingProduct.price || 0),
         stock: Number(editingProduct.stock || 0),
-        imageUrl: editingProduct.imageUrl || undefined,
+        images: editingProduct.images && editingProduct.images.length > 0 ? editingProduct.images : (editingProduct.imageUrl ? [editingProduct.imageUrl] : []),
+        imageUrl: editingProduct.images?.[0] || editingProduct.imageUrl || undefined, // Keep for backward compatibility
         category: editingProduct.category || 'General',
       };
 
@@ -1001,10 +1049,10 @@ function MerchantDashboard() {
 
       if (!res.ok) {
         if (res.status === 401) {
-          throw new Error('Please log in to update products');
+          throw new Error(translate('merchant.pleaseLogIn') || 'Bitte melden Sie sich an');
         }
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.message || 'Failed to update product');
+        throw new Error(data.message || translate('merchant.error') || 'Fehler beim Aktualisieren des Produkts');
       }
 
       // Refresh the products list
@@ -1015,7 +1063,7 @@ function MerchantDashboard() {
       setProducts(items);
       closeEditModal();
     } catch (err: any) {
-      setError(err?.message || 'Failed to update product');
+      setError(err?.message || translate('merchant.error') || 'Fehler beim Aktualisieren des Produkts');
     } finally {
       setUpdating(false);
     }
@@ -1042,6 +1090,12 @@ function MerchantDashboard() {
       return;
     }
     
+    // Validate German title is required
+    if (!newProduct.title_de || !newProduct.title_de.trim()) {
+      alert(translate('admin.germanTitleRequired') || 'German title is required.');
+      return;
+    }
+    
     // Validate German description is required
     if (!newProduct.desc_de || !newProduct.desc_de.trim()) {
       alert(translate('admin.germanDescriptionRequired') || 'German description is required.');
@@ -1059,7 +1113,8 @@ function MerchantDashboard() {
         desc_de: newProduct.desc_de,
         price: Number(newProduct.price || 0),
         stock: Number(newProduct.stock || 0),
-        imageUrl: newProduct.imageUrl || undefined,
+        images: newProduct.images && newProduct.images.length > 0 ? newProduct.images : (newProduct.imageUrl ? [newProduct.imageUrl] : []),
+        imageUrl: newProduct.images?.[0] || newProduct.imageUrl || undefined, // Keep for backward compatibility
         category: newProduct.category || 'General',
       };
 
@@ -1072,10 +1127,10 @@ function MerchantDashboard() {
 
       if (!res.ok) {
         if (res.status === 401) {
-          throw new Error('Please log in to create products');
+          throw new Error(translate('merchant.pleaseLogIn') || 'Bitte melden Sie sich an');
         }
         const data = await res.json().catch(() => ({}));
-        throw new Error(data.error || 'Failed to create product');
+        throw new Error(data.error || translate('merchant.error') || 'Fehler beim Erstellen des Produkts');
       }
 
       // refresh list
@@ -1088,30 +1143,30 @@ function MerchantDashboard() {
       await fetchStats(); // <--- ADD THIS LINE to update stats after product creation
       closeAddModal();
     } catch (err: any) {
-      setError(err?.message || 'Failed to create product');
+      setError(err?.message || translate('merchant.error') || 'Fehler beim Erstellen des Produkts');
     } finally {
       setCreating(false);
     }
   };
 
   const [tabs, setTabs] = useState([
-    { id: 'overview', label: 'Overview', icon: TrendingUp },
-    { id: 'orders', label: 'Orders', icon: ShoppingBag },
-    { id: 'products', label: 'Products', icon: Package },
-    { id: 'customers', label: 'Customers', icon: Users },
-    { id: 'analytics', label: 'Analytics', icon: TrendingUp },
-    { id: 'payouts', label: 'Payouts', icon: CreditCard }
+    { id: 'overview', label: translate('merchant.overview') || 'Übersicht', icon: TrendingUp },
+    { id: 'orders', label: translate('merchant.orders') || 'Bestellungen', icon: ShoppingBag },
+    { id: 'products', label: translate('merchant.products') || 'Produkte', icon: Package },
+    { id: 'customers', label: translate('merchant.customerManagement') || 'Kunden', icon: Users },
+    { id: 'analytics', label: translate('merchant.businessAnalytics') || 'Analytik', icon: TrendingUp },
+    { id: 'payouts', label: translate('merchant.payouts') || 'Auszahlungen', icon: CreditCard }
   ]);
 
   // Update tabs labels when translations are available
   useEffect(() => {
     setTabs([
-      { id: 'overview', label: translate('merchant.overview') || 'Overview', icon: TrendingUp },
-      { id: 'orders', label: translate('merchant.orders') || 'Orders', icon: ShoppingBag },
-      { id: 'products', label: translate('merchant.products') || 'Products', icon: Package },
-      { id: 'customers', label: translate('merchant.customerManagement') || 'Customers', icon: Users },
-      { id: 'analytics', label: translate('merchant.businessAnalytics') || 'Analytics', icon: TrendingUp },
-      { id: 'payouts', label: translate('merchant.payouts') || 'Payouts', icon: CreditCard }
+      { id: 'overview', label: translate('merchant.overview') || 'Übersicht', icon: TrendingUp },
+      { id: 'orders', label: translate('merchant.orders') || 'Bestellungen', icon: ShoppingBag },
+      { id: 'products', label: translate('merchant.products') || 'Produkte', icon: Package },
+      { id: 'customers', label: translate('merchant.customerManagement') || 'Kunden', icon: Users },
+      { id: 'analytics', label: translate('merchant.businessAnalytics') || 'Analytik', icon: TrendingUp },
+      { id: 'payouts', label: translate('merchant.payouts') || 'Auszahlungen', icon: CreditCard }
     ]);
   }, [translate]);
 
@@ -1241,25 +1296,25 @@ function MerchantDashboard() {
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6 lg:gap-8">
             {/* Sidebar Navigation - Responsive design */}
             <div className="lg:col-span-1">
-              <nav className="merchant-sidebar space-y-1 sm:space-y-2 bg-white/95 border border-gray-200 rounded-lg p-2 sm:p-3 shadow-sm text-gray-700">
+              <nav className="merchant-sidebar space-y-1 sm:space-y-2 bg-white/95 border border-gray-200 rounded-lg p-2 sm:p-3 shadow-sm">
                 {tabs.map((tab) => (
                   <button
                     key={tab.id}
                     onClick={() => setActiveTab(tab.id)}
-                    className={`w-full flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-3 text-left rounded-lg transition-colors focus:outline-none text-sm sm:text-base text-gray-700 ${
+                    className={`w-full flex items-center space-x-2 sm:space-x-3 px-3 sm:px-4 py-2 sm:py-3 text-left rounded-lg transition-colors focus:outline-none text-sm sm:text-base ${
                       activeTab === tab.id
-                        ? 'profile-sidebar-active'
-                        : 'profile-sidebar-inactive'
+                        ? 'profile-sidebar-active text-gray-900 font-semibold'
+                        : 'profile-sidebar-inactive text-gray-800 font-medium'
                     }`}
                     style={activeTab === tab.id ? {
                       backgroundColor: 'var(--color-primary-100)',
                       color: 'var(--color-primary-800)',
                       borderRight: '2px solid var(--color-primary-600)',
                       fontWeight: '600'
-                    } : {}}
+                    } : { color: '#1f2937' }}
                   >
                     <tab.icon className="w-4 h-4 sm:w-5 sm:h-5" />
-                    <span className="font-medium">{tab.label}</span>
+                    <span className="font-semibold">{tab.label}</span>
                   </button>
                 ))}
               </nav>
@@ -1320,10 +1375,10 @@ function MerchantDashboard() {
                   </div>
                 </div>
               )}
-      
-      {/* Order Modal */}
-      {showOrderModal && selectedOrder && (
-        <div className="modal fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+
+              {/* Order Modal */}
+              {showOrderModal && selectedOrder && (
+                <div className="modal fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-2xl bg-white rounded-lg shadow-lg max-h-[85vh] flex flex-col">
             <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white rounded-t-lg">
               <h3 className="text-lg font-semibold text-gray-900">{translate('merchant.order')} #{selectedOrder.id?.slice(-8)}</h3>
@@ -1352,9 +1407,9 @@ function MerchantDashboard() {
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('merchant.product')}</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('merchant.quantityShort')}</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('merchant.price')}</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-900 uppercase tracking-wider font-semibold">{translate('merchant.product')}</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-900 uppercase tracking-wider font-semibold">{translate('merchant.quantityShort')}</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-900 uppercase tracking-wider font-semibold">{translate('merchant.price')}</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
@@ -1370,125 +1425,129 @@ function MerchantDashboard() {
                 </div>
               </div>
             </div>
-            <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-end gap-3">
-              <button onClick={() => {
-                setEditingOrder(selectedOrder);
-                setEditingOrderItems(selectedOrder.items || []);
-                setShowEditOrderModal(true);
-                setShowOrderModal(false);
-              }} className="btn-secondary">
-                {translate('merchant.editItems')}
-              </button>
-              <button onClick={closeOrderModal} className="btn-secondary">{translate('merchant.close')}</button>
-              <button onClick={saveOrderStatus} disabled={updatingOrderStatus} className="btn-primary focus:outline-none">
+            <div className="px-4 sm:px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 sm:gap-3">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
+                <button onClick={() => {
+                  setEditingOrder(selectedOrder);
+                  setEditingOrderItems(selectedOrder.items || []);
+                  setShowEditOrderModal(true);
+                  setShowOrderModal(false);
+                }} className="btn-secondary w-full sm:w-auto">
+                  {translate('merchant.editItems')}
+                </button>
+                <button onClick={closeOrderModal} className="btn-secondary w-full sm:w-auto">{translate('merchant.close')}</button>
+              </div>
+              <button onClick={saveOrderStatus} disabled={updatingOrderStatus} className="btn-primary focus:outline-none w-full sm:w-auto">
                 {updatingOrderStatus ? translate('merchant.saving') : translate('merchant.save')}
               </button>
             </div>
           </div>
         </div>
-      )}
+              )}
 
-      {/* Edit Order Items Modal */}
-      {showEditOrderModal && editingOrder && (
-        <div className="modal fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-4xl bg-white rounded-lg shadow-lg max-h-[85vh] flex flex-col">
-            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white rounded-t-lg">
-              <h3 className="text-lg font-semibold text-gray-900">Edit Order Items - #{editingOrder.id?.slice(-8)}</h3>
-              <button onClick={() => {
-                setShowEditOrderModal(false);
-                setEditingOrder(null);
-                setEditingOrderItems([]);
-                setShowOrderModal(true);
-              }} className="text-gray-500 hover:text-gray-700 focus:outline-none">✕</button>
-            </div>
-            <div className="p-6 overflow-y-auto">
-              <div className="space-y-4">
-                {editingOrderItems.map((item: any, index: number) => (
-                  <div key={item.id} className="border rounded-lg p-4">
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">Product</label>
-                        <p className="mt-1 text-sm text-gray-900 bg-gray-50 p-2 rounded">
-                          {item.product?.title_en || item.nameSnapshot || 'Item'}
-                        </p>
+              {/* Edit Order Items Modal */}
+              {showEditOrderModal && editingOrder && (
+                <div className="modal fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+                  <div className="w-full max-w-4xl bg-white rounded-lg shadow-lg max-h-[85vh] flex flex-col">
+                    <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white rounded-t-lg">
+                      <h3 className="text-lg font-semibold text-gray-900">{translate('merchant.editItems')} - #{editingOrder.id?.slice(-8)}</h3>
+                      <button onClick={() => {
+                        setShowEditOrderModal(false);
+                        setEditingOrder(null);
+                        setEditingOrderItems([]);
+                        setShowOrderModal(true);
+                      }} className="text-gray-500 hover:text-gray-700 focus:outline-none">✕</button>
+                    </div>
+                    <div className="p-6 overflow-y-auto">
+                      <div className="space-y-4">
+                        {editingOrderItems.map((item: any, index: number) => (
+                          <div key={item.id} className="border rounded-lg p-4">
+                            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700">{translate('merchant.product')}</label>
+                                <p className="mt-1 text-sm text-gray-900 bg-gray-50 p-2 rounded">
+                                  {item.product?.title_en || item.nameSnapshot || translate('merchant.items')}
+                                </p>
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700">{translate('merchant.quantityShort')}</label>
+                                <input
+                                  type="number"
+                                  min="1"
+                                  value={item.quantity}
+                                  onChange={(e) => {
+                                    const newItems = [...editingOrderItems];
+                                    newItems[index] = { ...item, quantity: parseInt(e.target.value) || 1 };
+                                    setEditingOrderItems(newItems);
+                                  }}
+                                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-turquoise-500 focus:border-turquoise-500"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700">{translate('merchant.price')}</label>
+                                <input
+                                  type="number"
+                                  min="0"
+                                  step="0.01"
+                                  value={item.price}
+                                  onChange={(e) => {
+                                    const newItems = [...editingOrderItems];
+                                    newItems[index] = { ...item, price: parseFloat(e.target.value) || 0 };
+                                    setEditingOrderItems(newItems);
+                                  }}
+                                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-turquoise-500 focus:border-turquoise-500"
+                                />
+                              </div>
+                              <div>
+                                <label className="block text-sm font-medium text-gray-700">{translate('merchant.viewProductImage')}</label>
+                                <div className="mt-1">
+                                  {item.product?.imageUrl && (
+                                    <img
+                                      src={item.product.imageUrl}
+                                      alt={item.product?.title_en}
+                                      className="w-24 h-24 object-cover rounded border shadow-sm"
+                                    />
+                                  )}
+                                  <input
+                                    type="url"
+                                    value={item.imageUrl || ''}
+                                    onChange={(e) => {
+                                      const newItems = [...editingOrderItems];
+                                      newItems[index] = { ...item, imageUrl: e.target.value };
+                                      setEditingOrderItems(newItems);
+                                    }}
+                                    placeholder={translate('merchant.imageUrl')}
+                                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-turquoise-500 focus:border-turquoise-500 text-sm"
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">{translate('merchant.quantityShort')}</label>
-                        <input
-                          type="number"
-                          min="1"
-                          value={item.quantity}
-                          onChange={(e) => {
-                            const newItems = [...editingOrderItems];
-                            newItems[index] = { ...item, quantity: parseInt(e.target.value) || 1 };
-                            setEditingOrderItems(newItems);
-                          }}
-                          className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-turquoise-500 focus:border-turquoise-500"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">{translate('merchant.price')}</label>
-                        <input
-                          type="number"
-                          min="0"
-                          step="0.01"
-                          value={item.price}
-                          onChange={(e) => {
-                            const newItems = [...editingOrderItems];
-                            newItems[index] = { ...item, price: parseFloat(e.target.value) || 0 };
-                            setEditingOrderItems(newItems);
-                          }}
-                          className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-turquoise-500 focus:border-turquoise-500"
-                        />
-                      </div>
-                      <div>
-                        <label className="block text-sm font-medium text-gray-700">{translate('merchant.viewProductImage')}</label>
-                        <div className="mt-1">
-                          {item.product?.imageUrl && (
-                            <img
-                              src={item.product.imageUrl}
-                              alt={item.product?.title_en}
-                              className="w-16 h-16 object-cover rounded"
-                            />
-                          )}
-                          <input
-                            type="url"
-                            value={item.imageUrl || ''}
-                            onChange={(e) => {
-                              const newItems = [...editingOrderItems];
-                              newItems[index] = { ...item, imageUrl: e.target.value };
-                              setEditingOrderItems(newItems);
-                            }}
-                            placeholder={translate('merchant.imageUrl')}
-                            className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-turquoise-500 focus:border-turquoise-500 text-sm"
-                          />
-                        </div>
+                    </div>
+                    <div className="px-4 sm:px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 sm:gap-3">
+                      <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
+                        <button onClick={() => {
+                          setShowEditOrderModal(false);
+                          setEditingOrder(null);
+                          setEditingOrderItems([]);
+                          setShowOrderModal(true);
+                        }} className="btn-secondary w-full sm:w-auto">
+                          {translate('merchant.cancel')}
+                        </button>
+                        <button onClick={saveOrderItems} disabled={updatingOrderItems} className="btn-primary focus:outline-none w-full sm:w-auto">
+                          {updatingOrderItems ? translate('merchant.saving') : translate('merchant.saveChanges')}
+                        </button>
                       </div>
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
-            <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-end gap-3">
-              <button onClick={() => {
-                setShowEditOrderModal(false);
-                setEditingOrder(null);
-                setEditingOrderItems([]);
-                setShowOrderModal(true);
-              }} className="btn-secondary">
-                {translate('merchant.cancel')}
-              </button>
-              <button onClick={saveOrderItems} disabled={updatingOrderItems} className="btn-primary focus:outline-none">
-                {updatingOrderItems ? translate('merchant.saving') : translate('merchant.saveChanges')}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+                </div>
+              )}
 
-      {/* Customer Modal */}
-      {showCustomerModal && customerDetail && (
-        <div className="modal fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+              {/* Customer Modal */}
+              {showCustomerModal && customerDetail && (
+                <div className="modal fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-3xl bg-white rounded-lg shadow-lg max-h-[85vh] flex flex-col">
             <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white rounded-t-lg">
               <h3 className="text-lg font-semibold text-gray-900">{translate('merchant.customer')} {customerDetail.name || customerDetail.email}</h3>
@@ -1519,9 +1578,9 @@ function MerchantDashboard() {
                   <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                       <tr>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('merchant.order')}</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('merchant.date')}</th>
-                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('merchant.orderTotal')}</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-900 uppercase tracking-wider font-semibold">{translate('merchant.order')}</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-900 uppercase tracking-wider font-semibold">{translate('merchant.date')}</th>
+                        <th className="px-4 py-2 text-left text-xs font-medium text-gray-900 uppercase tracking-wider font-semibold">{translate('merchant.orderTotal')}</th>
                       </tr>
                     </thead>
                     <tbody className="bg-white divide-y divide-gray-200">
@@ -1542,19 +1601,19 @@ function MerchantDashboard() {
                 </div>
               </div>
             </div>
-            <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between gap-3">
-              <button onClick={() => removeCustomerLink(selectedCustomerId)} className="text-red-600 hover:text-red-800 focus:outline-none">{translate('merchant.removeCustomer')}</button>
-              <div className="flex items-center gap-2">
-                <button onClick={closeCustomerModal} className="btn-secondary">{translate('merchant.close')}</button>
-                <button onClick={saveCustomerDetail} disabled={customerSaving} className="btn-primary focus:outline-none">{customerSaving ? translate('merchant.saving') : translate('merchant.save')}</button>
+            <div className="px-4 sm:px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 sm:gap-3">
+              <button onClick={() => removeCustomerLink(selectedCustomerId)} className="text-red-600 hover:text-red-800 focus:outline-none w-full sm:w-auto text-left sm:text-center">{translate('merchant.removeCustomer')}</button>
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
+                <button onClick={closeCustomerModal} className="btn-secondary w-full sm:w-auto">{translate('merchant.close')}</button>
+                <button onClick={saveCustomerDetail} disabled={customerSaving} className="btn-primary focus:outline-none w-full sm:w-auto">{customerSaving ? translate('merchant.saving') : translate('merchant.save')}</button>
               </div>
             </div>
           </div>
         </div>
-      )}
+              )}
 
-      {/* Orders Tab */}
-      {activeTab === 'orders' && (
+              {/* Orders Tab */}
+              {activeTab === 'orders' && (
                 <div className="bg-white rounded-lg shadow-sm border border-gray-200">
                   <div className="px-6 py-4 border-b border-gray-200">
                     <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
@@ -1569,10 +1628,6 @@ function MerchantDashboard() {
                              className="px-3 sm:px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-turquoise-500 focus:border-transparent"
                            />
                         </div>
-                        <button className="btn-secondary flex items-center space-x-2">
-                          <Filter className="w-4 h-4" />
-                          <span>{translate('merchant.filter')}</span>
-                        </button>
                       </div>
                     </div>
                   </div>
@@ -1581,12 +1636,12 @@ function MerchantDashboard() {
                       <table className="min-w-full divide-y divide-gray-200">
                         <thead className="bg-gray-50">
                           <tr>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('merchant.orderId')}</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('merchant.customer')}</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('merchant.amount')}</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('merchant.status')}</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('merchant.date')}</th>
-                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('merchant.actions')}</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider font-semibold">{translate('merchant.orderId')}</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider font-semibold">{translate('merchant.customer')}</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider font-semibold">{translate('merchant.amount')}</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider font-semibold">{translate('merchant.status')}</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider font-semibold">{translate('merchant.date')}</th>
+                            <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider font-semibold">{translate('merchant.actions')}</th>
                           </tr>
                         </thead>
                         <tbody className="bg-white divide-y divide-gray-200">
@@ -1622,7 +1677,7 @@ function MerchantDashboard() {
                                   #{order.id.slice(-8)}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                  Customer ID: {order.customerId}
+                                  {translate('merchant.customerId') || 'Kunden-ID'}: {order.customerId}
                                 </td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                                   {formatCurrency(order.grandTotal)}
@@ -1637,16 +1692,18 @@ function MerchantDashboard() {
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                                   {new Date(order.createdAt).toLocaleDateString()}
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                  <button onClick={() => openOrderModal(order)} className="text-turquoise-600 hover:text-turquoise-900 mr-3">
-                                    {translate('merchant.view')}
-                                  </button>
-                                  <button onClick={() => openOrderModal(order)} className="text-primary-600 hover:text-primary-900 mr-3">
-                                    {translate('merchant.update')}
-                                  </button>
-                                  <button onClick={() => deleteOrder(order.id)} className="text-red-600 hover:text-red-900">
-                                    {translate('merchant.delete')}
-                                  </button>
+                                <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                  <div className="flex flex-col sm:flex-row gap-1 sm:gap-0">
+                                    <button onClick={() => openOrderModal(order)} className="text-turquoise-600 hover:text-turquoise-900 text-left sm:text-center sm:mr-3 py-1 sm:py-0 btn-touch">
+                                      {translate('merchant.view')}
+                                    </button>
+                                    <button onClick={() => openOrderModal(order)} className="text-primary-600 hover:text-primary-900 text-left sm:text-center sm:mr-3 py-1 sm:py-0 btn-touch">
+                                      {translate('merchant.update')}
+                                    </button>
+                                    <button onClick={() => deleteOrder(order.id)} className="text-red-600 hover:text-red-900 text-left sm:text-center py-1 sm:py-0 btn-touch">
+                                      {translate('merchant.delete')}
+                                    </button>
+                                  </div>
                                 </td>
                               </tr>
                             ))
@@ -1710,33 +1767,33 @@ function MerchantDashboard() {
                     )}
 
                     {!loading && !error && products.length > 0 && (
-                      <div className="overflow-x-auto">
+                      <div className="overflow-x-auto -mx-3 sm:mx-0">
                         <table className="min-w-full divide-y divide-gray-200">
                           <thead className="bg-gray-50">
                             <tr>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('merchant.product')}</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('merchant.price')}</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('merchant.stock')}</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('merchant.status')}</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('merchant.actions')}</th>
+                              <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">{translate('merchant.product')}</th>
+                              <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">{translate('merchant.price')}</th>
+                              <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">{translate('merchant.stock')}</th>
+                              <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">{translate('merchant.status')}</th>
+                              <th className="px-3 sm:px-6 py-3 text-left text-xs font-semibold text-gray-900 uppercase tracking-wider">{translate('merchant.actions')}</th>
                             </tr>
                           </thead>
                           <tbody className="bg-white divide-y divide-gray-200">
                             {products.map((product: any) => (
-                              <tr key={product.id}>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <div className="text-sm font-medium text-gray-900">{product.title_en}</div>
+                              <tr key={product.id} className="hover:bg-gray-50 transition-colors">
+                                <td className="px-3 sm:px-6 py-4">
+                                  <div className="text-sm font-medium text-gray-900 break-words">{product.title_en}</div>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatCurrency(product.price)}</td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{product.stock}</td>
-                                <td className="px-6 py-4 whitespace-nowrap">
-                                  <div className="flex flex-col gap-1">
-                                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                <td className="px-3 sm:px-6 py-4 text-sm text-gray-900">{formatCurrency(product.price)}</td>
+                                <td className="px-3 sm:px-6 py-4 text-sm text-gray-900">{product.stock}</td>
+                                <td className="px-3 sm:px-6 py-4">
+                                  <div className="flex flex-col gap-1.5">
+                                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full w-fit ${
                                       product.stock > 0 ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
                                     }`}>
                                       {product.stock > 0 ? translate('merchant.inStock') : translate('merchant.outOfStock')}
                                     </span>
-                                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full w-fit ${
                                       product.status === 'PUBLISHED' ? 'bg-blue-100 text-blue-800' :
                                       product.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
                                       'bg-gray-100 text-gray-800'
@@ -1747,24 +1804,27 @@ function MerchantDashboard() {
                                     </span>
                                   </div>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                  <div className="flex flex-col gap-1">
-                                    <div>
+                                <td className="px-2 sm:px-6 py-4 text-sm font-medium">
+                                  <div className="flex flex-col gap-2">
+                                    <div className="flex flex-col sm:flex-row gap-1.5 sm:gap-2">
                                       <button
                                         onClick={() => handleViewProduct(product.id)}
-                                        className="text-turquoise-600 hover:text-turquoise-900 mr-3"
+                                        className="text-turquoise-600 hover:text-turquoise-900 hover:bg-turquoise-50 text-left sm:text-center px-2 py-1.5 rounded transition-colors btn-touch text-sm font-medium min-h-[36px]"
+                                        title={translate('merchant.view')}
                                       >
                                         {translate('merchant.view')}
                                       </button>
                                       <button
                                         onClick={() => handleEditProduct(product.id)}
-                                        className="text-primary-600 hover:text-primary-900 mr-3"
+                                        className="text-primary-600 hover:text-primary-900 hover:bg-primary-50 text-left sm:text-center px-2 py-1.5 rounded transition-colors btn-touch text-sm font-medium min-h-[36px]"
+                                        title={translate('merchant.edit')}
                                       >
                                         {translate('merchant.edit')}
                                       </button>
                                       <button
                                         onClick={() => handleDeleteProduct(product.id)}
-                                        className="text-red-600 hover:text-red-900"
+                                        className="text-red-600 hover:text-red-900 hover:bg-red-50 font-semibold text-left sm:text-center px-2 py-1.5 rounded border border-red-300 transition-colors btn-touch text-sm min-h-[36px]"
+                                        title={translate('merchant.delete')}
                                       >
                                         {translate('merchant.delete')}
                                       </button>
@@ -1772,7 +1832,8 @@ function MerchantDashboard() {
                                     {(product.status === 'DRAFT' || product.status === 'PENDING') && (
                                       <button
                                         onClick={() => handleSubmitForApproval(product.id)}
-                                        className="text-sm text-blue-600 hover:text-blue-900 font-medium"
+                                        className="text-sm text-blue-600 hover:text-blue-900 hover:bg-blue-50 font-medium text-left px-2 py-1.5 rounded transition-colors btn-touch w-full sm:w-auto min-h-[36px]"
+                                        title={translate('merchant.submitForApproval')}
                                       >
                                         {translate('merchant.submitForApproval')}
                                       </button>
@@ -1797,13 +1858,12 @@ function MerchantDashboard() {
                       <h2 className="text-xl font-semibold text-gray-900">{translate('merchant.customerManagement')}</h2>
                       <div className="flex items-center space-x-3">
                         <div className="relative">
-                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                           <input
                             type="text"
                             placeholder={translate('merchant.searchCustomers')}
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-turquoise-500 focus:border-transparent"
+                            className="pl-4 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-turquoise-500 focus:border-transparent"
                           />
                         </div>
                         <button className="btn-secondary flex items-center space-x-2">
@@ -1857,14 +1917,14 @@ function MerchantDashboard() {
                         <table className="min-w-full divide-y divide-gray-200">
                           <thead className="bg-gray-50">
                             <tr>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('merchant.customer')}</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('merchant.email')}</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('merchant.phone')}</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('merchant.totalOrders')}</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('merchant.totalSpent')}</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('merchant.lastOrder')}</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('merchant.status')}</th>
-                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">{translate('merchant.actions')}</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider font-semibold">{translate('merchant.customer')}</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider font-semibold">{translate('merchant.email')}</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider font-semibold">{translate('merchant.phone')}</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider font-semibold">{translate('merchant.totalOrders')}</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider font-semibold">{translate('merchant.totalSpent')}</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider font-semibold">{translate('merchant.lastOrder')}</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider font-semibold">{translate('merchant.status')}</th>
+                              <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider font-semibold">{translate('merchant.actions')}</th>
                             </tr>
                           </thead>
                           <tbody className="bg-white divide-y divide-gray-200">
@@ -1916,16 +1976,18 @@ function MerchantDashboard() {
                                     {customer.status || translate('merchant.unknown')}
                                   </span>
                                 </td>
-                                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                  <button onClick={() => openCustomerModal(customer.id)} className="text-turquoise-600 hover:text-turquoise-900 mr-3">
-                                    {translate('merchant.view')}
-                                  </button>
-                                  <button onClick={() => openCustomerModal(customer.id)} className="text-primary-600 hover:text-primary-900 mr-3">
-                                    {translate('merchant.edit')}
-                                  </button>
-                                  <button onClick={() => removeCustomerLink(customer.id)} className="text-red-600 hover:text-red-900">
-                                    {translate('merchant.delete')}
-                                  </button>
+                                <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                  <div className="flex flex-col sm:flex-row gap-1 sm:gap-0">
+                                    <button onClick={() => openCustomerModal(customer.id)} className="text-turquoise-600 hover:text-turquoise-900 text-left sm:text-center sm:mr-3 py-1 sm:py-0 btn-touch">
+                                      {translate('merchant.view')}
+                                    </button>
+                                    <button onClick={() => openCustomerModal(customer.id)} className="text-primary-600 hover:text-primary-900 text-left sm:text-center sm:mr-3 py-1 sm:py-0 btn-touch">
+                                      {translate('merchant.edit')}
+                                    </button>
+                                    <button onClick={() => removeCustomerLink(customer.id)} className="text-red-600 hover:text-red-900 text-left sm:text-center py-1 sm:py-0 btn-touch">
+                                      {translate('merchant.delete')}
+                                    </button>
+                                  </div>
                                 </td>
                               </tr>
                             ))}
@@ -2164,8 +2226,8 @@ function MerchantDashboard() {
                   {/* Payouts Header */}
                   <div className="bg-white rounded-lg shadow-sm border border-gray-200">
                     <div className="px-6 py-4 border-b border-gray-200">
-                      <h2 className="text-xl font-semibold text-gray-900">{translate('merchant.payouts') || 'Payouts'}</h2>
-                      <p className="text-sm text-gray-600 mt-1">Manage your earnings and payout history</p>
+                      <h2 className="text-xl font-semibold text-gray-900">{translate('merchant.payouts') || 'Auszahlungen'}</h2>
+                      <p className="text-sm text-gray-600 mt-1">{translate('merchant.managePayouts')}</p>
                     </div>
                   </div>
 
@@ -2174,7 +2236,7 @@ function MerchantDashboard() {
                     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                       <div className="flex items-center justify-center py-12">
                         <Loader2 className="w-6 h-6 animate-spin text-turquoise-600 mr-2" />
-                        <span className="text-gray-600">Loading payouts...</span>
+                        <span className="text-gray-600">{translate('merchant.loading') || 'Wird geladen...'}</span>
                       </div>
                     </div>
                   )}
@@ -2190,7 +2252,7 @@ function MerchantDashboard() {
                             </svg>
                           </div>
                           <div className="ml-3">
-                            <h3 className="text-sm font-medium text-red-800">Error Loading Payouts</h3>
+                            <h3 className="text-sm font-medium text-red-800">{translate('merchant.error') || 'Fehler'}</h3>
                             <div className="mt-2 text-sm text-red-700">
                               <p>{payoutsError}</p>
                             </div>
@@ -2208,7 +2270,7 @@ function MerchantDashboard() {
                         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                           <div className="flex items-center justify-between">
                             <div>
-                              <p className="text-sm font-medium text-gray-500">Available Balance</p>
+                              <p className="text-sm font-semibold text-gray-900">{translate('merchant.availableBalance') || 'Verfügbares Guthaben'}</p>
                               <p className="text-2xl font-semibold text-green-600">
                                 {formatCurrency(payouts.balance?.available || 0)}
                               </p>
@@ -2222,7 +2284,7 @@ function MerchantDashboard() {
                         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                           <div className="flex items-center justify-between">
                             <div>
-                              <p className="text-sm font-medium text-gray-500">Pending Balance</p>
+                              <p className="text-sm font-semibold text-gray-900">{translate('merchant.pendingBalance') || 'Ausstehendes Guthaben'}</p>
                               <p className="text-2xl font-semibold text-yellow-600">
                                 {formatCurrency(payouts.balance?.pending || 0)}
                               </p>
@@ -2236,7 +2298,7 @@ function MerchantDashboard() {
                         <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                           <div className="flex items-center justify-between">
                             <div>
-                              <p className="text-sm font-medium text-gray-500">Total Earnings</p>
+                              <p className="text-sm font-semibold text-gray-900">{translate('merchant.totalEarnings') || 'Gesamteinnahmen'}</p>
                               <p className="text-2xl font-semibold text-blue-600">
                                 {formatCurrency(payouts.summary?.totalEarnings || 0)}
                               </p>
@@ -2250,18 +2312,18 @@ function MerchantDashboard() {
 
                       {/* Payout Request */}
                       <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-                        <div className="flex items-center justify-between mb-4">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
                           <div>
-                            <h3 className="text-lg font-semibold text-gray-900">Request Payout</h3>
-                            <p className="text-sm text-gray-600">Withdraw your available earnings</p>
+                            <h3 className="text-lg font-semibold text-gray-900">{translate('merchant.requestPayout')}</h3>
+                            <p className="text-sm text-gray-700 font-medium">{translate('merchant.withdrawEarnings')}</p>
                           </div>
                           <button
                             onClick={() => setShowPayoutRequest(!showPayoutRequest)}
                             disabled={(payouts?.balance?.available || 0) <= 0}
-                            className="px-4 py-2 font-semibold bg-turquoise-600 text-white text-base rounded-lg hover:bg-turquoise-700 focus:outline-none focus:ring-2 focus:ring-turquoise-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 mb-2 w-full max-w-xs mx-auto shadow"
+                            className="px-4 py-2 font-semibold bg-turquoise-600 text-white text-base rounded-lg hover:bg-turquoise-700 focus:outline-none focus:ring-2 focus:ring-turquoise-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 shadow w-full sm:w-auto"
                           >
                             <CreditCard className="w-5 h-5 mr-2" />
-                            <span>Request Payout</span>
+                            <span>{translate('merchant.requestPayout')}</span>
                           </button>
                         </div>
 
@@ -2270,7 +2332,7 @@ function MerchantDashboard() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                               <div>
                                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                                  Amount (Max: {formatCurrency(payouts?.balance?.available || 0)})
+                                  {translate('merchant.amountMax', { max: formatCurrency(payouts?.balance?.available || 0) })}
                                 </label>
                                 <input
                                   type="number"
@@ -2280,7 +2342,7 @@ function MerchantDashboard() {
                                   value={payoutAmount}
                                   onChange={(e) => setPayoutAmount(e.target.value)}
                                   className="w-full px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 text-base shadow"
-                                  placeholder="Enter amount"
+                                  placeholder={translate('merchant.amount') || 'Enter amount'}
                                 />
                               </div>
                               <div className="flex items-end gap-2">
@@ -2290,7 +2352,7 @@ function MerchantDashboard() {
                                   className="w-full px-4 py-2 font-semibold bg-green-600 text-white text-base rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
                                 >
                                   {payoutRequestLoading && <Loader2 className="w-5 h-5 animate-spin mr-2" />}
-                                  <span>Submit Request</span>
+                                  <span>{translate('merchant.submitRequest') || 'Anfrage senden'}</span>
                                 </button>
                                 <button
                                   onClick={() => {
@@ -2299,12 +2361,12 @@ function MerchantDashboard() {
                                   }}
                                   className="w-full px-4 py-2 font-semibold bg-gray-300 text-gray-700 text-base rounded-lg hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400"
                                 >
-                                  Cancel
+                                  {translate('merchant.cancel')}
                                 </button>
                               </div>
                             </div>
                             <div className="mt-3 text-xs text-gray-500">
-                              Payout requests are processed within 3-5 business days. You'll receive an email confirmation once processed.
+                              {translate('merchant.payoutProcessingInfo') || 'Auszahlungsanfragen werden innerhalb von 3-5 Werktagen bearbeitet. Sie erhalten eine E-Mail-Bestätigung, sobald die Bearbeitung abgeschlossen ist.'}
                             </div>
                           </div>
                         )}
@@ -2313,7 +2375,7 @@ function MerchantDashboard() {
                       {/* Transaction History */}
                       <div className="bg-white rounded-lg shadow-sm border border-gray-200">
                         <div className="px-6 py-4 border-b border-gray-200">
-                          <h3 className="text-lg font-semibold text-gray-900">Transaction History</h3>
+                          <h3 className="text-lg font-semibold text-gray-900">{translate('merchant.transactionHistory') || 'Transaktionsverlauf'}</h3>
                         </div>
                         <div className="p-6">
                           {payouts.transactions?.length > 0 ? (
@@ -2321,17 +2383,17 @@ function MerchantDashboard() {
                               <table className="min-w-full divide-y divide-gray-200">
                                 <thead className="bg-gray-50">
                                   <tr>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                      Date
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider font-semibold">
+                                      {translate('merchant.date')}
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                      Amount
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider font-semibold">
+                                      {translate('merchant.amount')}
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                      Status
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider font-semibold">
+                                      {translate('merchant.status')}
                                     </th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                                      Method
+                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-900 uppercase tracking-wider font-semibold">
+                                      {translate('merchant.method')}
                                     </th>
                                   </tr>
                                 </thead>
@@ -2350,7 +2412,7 @@ function MerchantDashboard() {
                                           transaction.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
                                           'bg-red-100 text-red-800'
                                         }`}>
-                                          {transaction.status}
+                                          {translate(`status.${transaction.status?.toLowerCase()}`) || transaction.status}
                                         </span>
                                       </td>
                                       <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
@@ -2364,8 +2426,8 @@ function MerchantDashboard() {
                           ) : (
                             <div className="text-center py-12">
                               <CreditCard className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                              <h3 className="text-lg font-medium text-gray-900 mb-2">No Transactions Yet</h3>
-                              <p className="text-gray-600">Your payout transactions will appear here once you start earning</p>
+                              <h3 className="text-lg font-semibold text-gray-900 mb-2">{translate('merchant.noTransactionsYet') || 'Noch keine Transaktionen'}</h3>
+                              <p className="text-gray-700 font-medium">{translate('merchant.transactionsWillAppear') || 'Ihre Auszahlungstransaktionen werden hier angezeigt, sobald Sie mit dem Verdienen beginnen'}</p>
                             </div>
                           )}
                         </div>
@@ -2378,8 +2440,8 @@ function MerchantDashboard() {
                     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
                       <div className="text-center py-12">
                         <CreditCard className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                        <h3 className="text-lg font-medium text-gray-900 mb-2">No Payout Data</h3>
-                        <p className="text-gray-600">Start making sales to see your payout information</p>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-2">{translate('merchant.noPayoutData') || 'Keine Auszahlungsdaten'}</h3>
+                        <p className="text-gray-700 font-medium">{translate('merchant.startMakingSales') || 'Beginnen Sie mit dem Verkauf, um Ihre Auszahlungsinformationen zu sehen'}</p>
                       </div>
                     </div>
                   )}
@@ -2388,12 +2450,12 @@ function MerchantDashboard() {
             </div>
           </div>
         </div>
-      </div>
-      {/* View Product Modal */}
-      {showViewModal && selectedProduct && (
-        <div className="modal fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-2xl bg-white rounded-lg shadow-lg max-h-[85vh] flex flex-col">
-            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white rounded-t-lg">
+
+        {/* View Product Modal */}
+        {showViewModal && selectedProduct && (
+          <div className="modal fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+            <div className="w-full max-w-2xl bg-white rounded-lg shadow-lg max-h-[85vh] flex flex-col">
+              <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white rounded-t-lg">
               <h3 className="text-lg font-semibold text-gray-900">{translate('merchant.viewProduct')}</h3>
               <button onClick={closeViewModal} className="text-gray-500 hover:text-gray-700 focus:outline-none">✕</button>
             </div>
@@ -2443,15 +2505,26 @@ function MerchantDashboard() {
                   </div>
                 </div>
 
-                {selectedProduct.imageUrl && (
+                {((selectedProduct.images && selectedProduct.images.length > 0) || selectedProduct.imageUrl) && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700">{translate('merchant.viewProductImage')}</label>
-                    <div className="mt-1">
-                      <img
-                        src={selectedProduct.imageUrl}
-                        alt={selectedProduct.title_en}
-                        className="w-32 h-32 object-cover rounded border"
-                      />
+                    <label className="block text-sm font-semibold text-gray-900 mb-1">{translate('merchant.viewProductImage')}</label>
+                    <div className="mt-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      {selectedProduct.images && selectedProduct.images.length > 0 ? (
+                        selectedProduct.images.map((imgUrl: string, index: number) => (
+                          <img
+                            key={index}
+                            src={imgUrl}
+                            alt={`${selectedProduct.title_en} - Bild ${index + 1}`}
+                            className="w-full h-64 object-cover rounded-lg border-2 border-gray-300 shadow-md"
+                          />
+                        ))
+                      ) : selectedProduct.imageUrl ? (
+                        <img
+                          src={selectedProduct.imageUrl}
+                          alt={selectedProduct.title_en}
+                          className="w-full h-64 object-cover rounded-lg border-2 border-gray-300 shadow-md"
+                        />
+                      ) : null}
                     </div>
                   </div>
                 )}
@@ -2480,61 +2553,63 @@ function MerchantDashboard() {
                 </div>
               </div>
             </div>
-            <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-end gap-3">
-              <button onClick={closeViewModal} className="btn-secondary">{translate('merchant.close')}</button>
-              <button
-                onClick={() => {
-                  closeViewModal();
-                  handleEditProduct(selectedProduct.id);
-                }}
-                className="btn-primary focus:outline-none"
-              >
-                {translate('merchant.edit')}
+            <div className="px-4 sm:px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-end gap-3 sm:gap-3">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3 w-full sm:w-auto">
+                <button onClick={closeViewModal} className="btn-secondary w-full sm:w-auto">{translate('merchant.close')}</button>
+                <button
+                  onClick={() => {
+                    closeViewModal();
+                    handleEditProduct(selectedProduct.id);
+                  }}
+                  className="btn-primary focus:outline-none w-full sm:w-auto"
+                >
+                  {translate('merchant.edit')}
               </button>
+              </div>
             </div>
           </div>
         </div>
-      )}
+        )}
 
-      {/* Edit Product Modal */}
-      {showEditModal && selectedProduct && (
-        <div className="modal fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <div className="w-full max-w-3xl bg-white rounded-lg shadow-lg max-h-[85vh] flex flex-col">
-            <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white rounded-t-lg">
+        {/* Edit Product Modal */}
+        {showEditModal && selectedProduct && (
+          <div className="modal fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+            <div className="w-full max-w-3xl bg-white rounded-lg shadow-lg max-h-[85vh] flex flex-col">
+              <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between sticky top-0 bg-white rounded-t-lg">
               <h3 className="text-lg font-semibold text-gray-900">{translate('merchant.editProduct')}</h3>
               <button onClick={closeEditModal} className="text-gray-500 hover:text-gray-700 focus:outline-none">✕</button>
             </div>
             <form onSubmit={updateProduct} className="p-6 space-y-5 overflow-y-auto">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">{translate('Title (EN)')}</label>
+                  <label className="block text-sm font-semibold text-gray-900 mb-1">{translate('admin.englishTitle') || 'Titel (Englisch)'} <span className="text-gray-500 text-xs">({translate('merchant.optional') || translate('admin.optional') || 'optional'})</span></label>
                   <input
                     value={editingProduct.title_en}
                     onChange={e => setEditingProduct(p => ({ ...p, title_en: e.target.value }))}
-                    className="input-field h-11 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors"
-                    required
+                    className="input-field h-11 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors text-gray-900 font-medium border-2"
                     placeholder={translate('merchant.exampleWirelessHeadphones')}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">{translate('Title (DE)')}</label>
+                  <label className="block text-sm font-semibold text-gray-900 mb-1">{translate('admin.germanTitle') || 'Titel (Deutsch)'} <span className="text-red-500">*</span></label>
                   <input
                     value={editingProduct.title_de}
                     onChange={e => setEditingProduct(p => ({ ...p, title_de: e.target.value }))}
-                    className="input-field h-11 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors"
-                    placeholder={translate('merchant.optional')}
+                    className="input-field h-11 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors text-gray-900 font-medium border-2"
+                    required
+                    placeholder={translate('merchant.exampleGermanTitle') || 'Z.B.: Drahtlose Kopfhörer (erforderlich)'}
                   />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="sm:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700">Slug</label>
+                  <label className="block text-sm font-semibold text-gray-900 mb-1">{translate('admin.slug') || 'Slug'}</label>
                   <input
                     value={editingProduct.slug}
                     onChange={e => setEditingProduct(p => ({ ...p, slug: e.target.value.toLowerCase() }))}
-                    className="input-field h-11 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors"
-                    placeholder={toSlug(editingProduct.title_en || 'my-product')}
+                    className="input-field h-11 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors text-gray-900 font-medium border-2"
+                    placeholder={translate('admin.productSlugPlaceholder') || toSlug(editingProduct.title_en || 'my-product')}
                     required
                   />
                   <p className="mt-1 text-xs text-gray-500">{translate('merchant.slugDescription')}</p>
@@ -2543,27 +2618,27 @@ function MerchantDashboard() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">{translate('Price')}</label>
+                  <label className="block text-sm font-semibold text-gray-900 mb-1">{translate('merchant.price')}</label>
                   <input
                     type="number"
                     min="0"
                     step="0.01"
                     value={editingProduct.price}
                     onChange={e => setEditingProduct(p => ({ ...p, price: e.target.value }))}
-                    className="input-field h-11 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors"
+                    className="input-field h-11 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors text-gray-900 font-medium border-2"
                     required
                     placeholder={translate('merchant.examplePrice')}
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">{translate('Stock')}</label>
+                  <label className="block text-sm font-semibold text-gray-900 mb-1">{translate('merchant.stock')}</label>
                   <input
                     type="number"
                     min="0"
                     step="1"
                     value={editingProduct.stock}
                     onChange={e => setEditingProduct(p => ({ ...p, stock: e.target.value }))}
-                    className="input-field h-11 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors"
+                    className="input-field h-11 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors text-gray-900 font-medium border-2"
                     required
                     placeholder={translate('merchant.exampleStock')}
                   />
@@ -2572,14 +2647,14 @@ function MerchantDashboard() {
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">{translate('Category')}</label>
+                  <label className="block text-sm font-semibold text-gray-900 mb-1">{translate('admin.category')}</label>
                   <div className="flex gap-2">
                     <select
                       value={editingProduct.category}
                       onChange={e => setEditingProduct(p => ({ ...p, category: e.target.value }))}
                       className="input-field h-11 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors cursor-pointer flex-1"
                     >
-                      <option value="General">General</option>
+                      <option value="General">{translate('admin.general') || 'Allgemein'}</option>
                       {categories.map(category => (
                         <option key={category.id} value={category.name}>
                           {category.name}
@@ -2590,47 +2665,27 @@ function MerchantDashboard() {
                       type="button"
                       onClick={() => setShowNewCategoryModal(true)}
                       className="btn-primary text-sm"
-                      title="Add new category"
+                      title={translate('admin.addNewCategory') || 'Neue Kategorie hinzufügen'}
                     >
                       +
                     </button>
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Product Image</label>
-                  <ImageUpload
-                    onImageUpload={handleEditImageUpload}
-                    currentImageUrl={editingProduct.imageUrl}
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">{translate('admin.productImage')} ({translate('merchant.multipleImages') || 'Mehrere Bilder möglich'})</label>
+                  <MultipleImageUpload
+                    onImagesChange={handleEditImagesChange}
+                    currentImages={editingProduct.images}
+                    onUploadStart={() => setIsProductImageUploading(true)}
+                    onUploadEnd={() => setIsProductImageUploading(false)}
                     className="mb-2"
+                    maxImages={10}
                   />
-                  
-                  {/* Alternative: Manual URL Input */}
-                  <div className="mt-2">
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Or enter image URL manually:</label>
-                    <input
-                      value={editingProduct.imageUrl}
-                      onChange={e => setEditingProduct(p => ({ ...p, imageUrl: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                      placeholder={translate('merchant.exampleImageUrl')}
-                    />
-                  </div>
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  {translate('admin.englishDescription')} <span className="text-gray-400 text-xs">({translate('admin.optional') || 'optional'})</span>
-                </label>
-                <textarea
-                  rows={4}
-                  value={editingProduct.desc_en}
-                  onChange={e => setEditingProduct(p => ({ ...p, desc_en: e.target.value }))}
-                  className="input-field min-h-28 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors"
-                  placeholder={translate('merchant.shortDescriptionEn')}
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-semibold text-gray-900 mb-1">
                   {translate('admin.germanDescription')} <span className="text-red-500">*</span>
                 </label>
                 <textarea
@@ -2638,8 +2693,20 @@ function MerchantDashboard() {
                   required
                   value={editingProduct.desc_de}
                   onChange={e => setEditingProduct(p => ({ ...p, desc_de: e.target.value }))}
-                  className="input-field min-h-28 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors"
+                  className="input-field min-h-28 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors text-gray-900 font-medium border-2"
                   placeholder={translate('merchant.shortDescriptionDe')}
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-900 mb-1">
+                  {translate('admin.englishDescription')} <span className="text-gray-500 text-xs">({translate('admin.optional') || 'optional'})</span>
+                </label>
+                <textarea
+                  rows={4}
+                  value={editingProduct.desc_en}
+                  onChange={e => setEditingProduct(p => ({ ...p, desc_en: e.target.value }))}
+                  className="input-field min-h-28 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors text-gray-900 font-medium border-2"
+                  placeholder={translate('merchant.shortDescriptionEn')}
                 />
               </div>
 
@@ -2652,17 +2719,17 @@ function MerchantDashboard() {
             </form>
           </div>
         </div>
-      )}
+        )}
 
-      {/* Add Product Modal */}
-      {showAddModal && (
+        {/* Add Product Modal */}
+        {showAddModal && (
         <div className="modal fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-3xl bg-white rounded-lg shadow-lg max-h-[85vh] flex flex-col relative">
             {isProductImageUploading && (
               <div className="absolute inset-0 bg-white/80 backdrop-blur-sm flex flex-col items-center justify-center z-10">
                 <Loader2 className="w-10 h-10 text-turquoise-600 animate-spin mb-3" />
                 <p className="text-sm font-medium text-gray-700 text-center px-6">
-                  Uploading image… please wait while we generate the link.
+                  {translate('merchant.waitForImageUploadProduct') || 'Bild wird hochgeladen... Bitte warten Sie, während wir den Link generieren.'}
                 </p>
               </div>
             )}
@@ -2673,43 +2740,43 @@ function MerchantDashboard() {
             <form onSubmit={createProduct} className="p-6 space-y-5 overflow-y-auto">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">{translate('merchant.viewProductTitleEn')}</label>
-                  <input value={newProduct.title_en} onChange={e=>setNewProduct(p=>({...p, title_en: e.target.value}))} className="input-field h-11 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors" required placeholder={translate('merchant.exampleWirelessHeadphones')} />
+                  <label className="block text-sm font-semibold text-gray-900 mb-1.5">{translate('admin.englishTitle') || 'Titel (Englisch)'} <span className="text-gray-500 text-xs">({translate('merchant.optional') || translate('admin.optional') || 'optional'})</span></label>
+                  <input value={newProduct.title_en} onChange={e=>setNewProduct(p=>({...p, title_en: e.target.value}))} className="input-field h-11 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors text-gray-900 font-medium border-2" placeholder={translate('merchant.exampleWirelessHeadphones')} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">{translate('merchant.viewProductTitleDe')}</label>
-                  <input value={newProduct.title_de} onChange={e=>setNewProduct(p=>({...p, title_de: e.target.value}))} className="input-field h-11 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors" placeholder={translate('merchant.optional')} />
+                  <label className="block text-sm font-semibold text-gray-900 mb-1.5">{translate('admin.germanTitle') || 'Titel (Deutsch)'} <span className="text-red-500">*</span></label>
+                  <input value={newProduct.title_de} onChange={e=>setNewProduct(p=>({...p, title_de: e.target.value}))} className="input-field h-11 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors text-gray-900 font-medium border-2" required placeholder={translate('merchant.exampleGermanTitle') || 'Z.B.: Drahtlose Kopfhörer (erforderlich)'} />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="sm:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700">{translate('admin.slug')}</label>
+                  <label className="block text-sm font-semibold text-gray-900 mb-1.5">{translate('admin.slug') || 'Slug'}</label>
                   <input
                     value={newProduct.slug}
                     onChange={e=>setNewProduct(p=>({...p, slug: e.target.value.toLowerCase()}))}
-                    className="input-field h-11 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors"
-                    placeholder={toSlug(newProduct.title_en || 'my-product')}
+                    className="input-field h-11 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors text-gray-900 font-medium border-2"
+                    placeholder={translate('admin.productSlugPlaceholder') || toSlug(newProduct.title_en || 'my-product')}
                     required
                   />
-                  <p className="mt-1 text-xs text-gray-500">{translate('merchant.slugDescription')}</p>
+                  <p className="mt-1.5 text-xs text-gray-500">{translate('merchant.slugDescription')}</p>
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">{translate('merchant.price')}</label>
-                  <input type="number" min="0" step="0.01" value={newProduct.price} onChange={e=>setNewProduct(p=>({...p, price: e.target.value}))} className="input-field h-11 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors" required placeholder={translate('merchant.examplePrice')} />
+                  <label className="block text-sm font-semibold text-gray-900 mb-1.5">{translate('merchant.price')}</label>
+                  <input type="number" min="0" step="0.01" value={newProduct.price} onChange={e=>setNewProduct(p=>({...p, price: e.target.value}))} className="input-field h-11 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors text-gray-900 font-medium border-2" required placeholder={translate('merchant.examplePrice')} />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">{translate('merchant.stock')}</label>
-                  <input type="number" min="0" step="1" value={newProduct.stock} onChange={e=>setNewProduct(p=>({...p, stock: e.target.value}))} className="input-field h-11 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors" required placeholder={translate('merchant.exampleStock')} />
+                  <label className="block text-sm font-semibold text-gray-900 mb-1.5">{translate('merchant.stock')}</label>
+                  <input type="number" min="0" step="1" value={newProduct.stock} onChange={e=>setNewProduct(p=>({...p, stock: e.target.value}))} className="input-field h-11 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors text-gray-900 font-medium border-2" required placeholder={translate('merchant.exampleStock')} />
                 </div>
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">{translate('admin.category')}</label>
+                  <label className="block text-sm font-semibold text-gray-900 mb-1.5">{translate('admin.category')}</label>
                   <div className="flex gap-2">
                     <select
                       value={newProduct.category}
@@ -2734,39 +2801,29 @@ function MerchantDashboard() {
                   </div>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">{translate('admin.productImage')}</label>
-                  <ImageUpload
-                    onImageUpload={handleProductImageUpload}
+                  <label className="block text-sm font-semibold text-gray-900 mb-2">{translate('admin.productImage')} ({translate('merchant.multipleImages') || 'Mehrere Bilder möglich'})</label>
+                  <MultipleImageUpload
+                    onImagesChange={handleProductImagesChange}
+                    currentImages={newProduct.images}
                     onUploadStart={() => setIsProductImageUploading(true)}
                     onUploadEnd={() => setIsProductImageUploading(false)}
-                    currentImageUrl={newProduct.imageUrl}
                     className="mb-2"
+                    maxImages={10}
                   />
-                  
-                  {/* Alternative: Manual URL Input */}
-                  <div className="mt-2">
-                    <label className="block text-xs font-medium text-gray-600 mb-1">{translate('admin.enterImageURLManually')}:</label>
-                    <input
-                      value={newProduct.imageUrl}
-                      onChange={e => setNewProduct(p => ({ ...p, imageUrl: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
-                      placeholder={translate('merchant.exampleImageUrl')}
-                    />
-                  </div>
                 </div>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700">
-                  {translate('admin.englishDescription')} <span className="text-gray-400 text-xs">({translate('admin.optional') || 'optional'})</span>
-                </label>
-                <textarea rows={4} value={newProduct.desc_en} onChange={e=>setNewProduct(p=>({...p, desc_en: e.target.value}))} className="input-field min-h-28 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors" placeholder={translate('merchant.shortDescriptionEn')} />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">
+                <label className="block text-sm font-semibold text-gray-900 mb-1">
                   {translate('admin.germanDescription')} <span className="text-red-500">*</span>
                 </label>
-                <textarea rows={4} required value={newProduct.desc_de} onChange={e=>setNewProduct(p=>({...p, desc_de: e.target.value}))} className="input-field min-h-28 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors" placeholder={translate('merchant.shortDescriptionDe')} />
+                <textarea rows={4} required value={newProduct.desc_de} onChange={e=>setNewProduct(p=>({...p, desc_de: e.target.value}))} className="input-field min-h-28 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors text-gray-900 font-medium border-2" placeholder={translate('merchant.shortDescriptionDe') || 'Kurze Beschreibung auf Deutsch (erforderlich)'} />
+              </div>
+              <div>
+                <label className="block text-sm font-semibold text-gray-900 mb-1">
+                  {translate('admin.englishDescription')} <span className="text-gray-500 text-xs">({translate('admin.optional') || 'optional'})</span>
+                </label>
+                <textarea rows={4} value={newProduct.desc_en} onChange={e=>setNewProduct(p=>({...p, desc_en: e.target.value}))} className="input-field min-h-28 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors text-gray-900 font-medium border-2" placeholder={translate('merchant.shortDescriptionEn') || 'Short description in English (optional)'} />
               </div>
 
               <div className="flex items-center justify-end gap-3 pt-2">
@@ -2782,10 +2839,10 @@ function MerchantDashboard() {
             </form>
           </div>
         </div>
-      )}
+        )}
 
-      {/* New Category Modal */}
-      {showNewCategoryModal && (
+        {/* New Category Modal */}
+        {showNewCategoryModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-lg shadow-xl w-full max-w-md mx-4 relative">
             {isCategoryImageUploading && (
@@ -2803,32 +2860,32 @@ function MerchantDashboard() {
             </div>
             <form onSubmit={(e) => { e.preventDefault(); createCategory(); }} className="p-6 space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
                   {translate('admin.categoryName')}
                 </label>
                 <input
                   type="text"
                   value={newCategory.name}
                   onChange={(e) => setNewCategory(prev => ({ ...prev, name: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border-2 border-gray-400 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 text-gray-900 font-medium bg-white"
                   placeholder={translate('admin.categoryName')}
                   required
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
                   {translate('admin.description')}
                 </label>
                 <textarea
                   value={newCategory.description}
                   onChange={(e) => setNewCategory(prev => ({ ...prev, description: e.target.value }))}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border-2 border-gray-400 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 text-gray-900 font-medium bg-white"
                   placeholder={translate('admin.description')}
                   rows={3}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
                   {translate('admin.productImage')}
                 </label>
                 <ImageUpload
@@ -2869,7 +2926,8 @@ function MerchantDashboard() {
             </form>
           </div>
         </div>
-      )}
+        )}
+      </div>
     </ProtectedRoute>
   );
 }

@@ -123,6 +123,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getUserFromReq } from '@/lib/apiAuth';
+import { sendProductSubmissionForApprovalEmail } from '@/lib/email';
 
 // Helper to get user from request
 function getUserFromNextRequest(req: NextRequest) {
@@ -185,7 +186,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   }
 
   const body = await request.json();
-  const { slug, title_en, title_de, desc_en, desc_de, price, stock, imageUrl, category, status } = body;
+  const { slug, title_en, title_de, desc_en, desc_de, price, stock, imageUrl, images, category, status } = body;
 
   // Build update data object - only include fields that are provided
   const updateData: any = {};
@@ -207,6 +208,43 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     updateData.categoryId = categoryId;
   }
 
+  // Handle images: prefer images array, fallback to imageUrl for backward compatibility
+  // Step 1: Images are already uploaded to Cloudinary and URLs are received
+  // Step 2: Validate that we have valid URLs before storing in database
+  if (images !== undefined) {
+    if (Array.isArray(images)) {
+      // Validate all URLs are valid (Cloudinary URLs or valid HTTP/HTTPS URLs)
+      const validImages = images.filter((url: string) => {
+        if (!url || typeof url !== 'string') return false;
+        try {
+          const urlObj = new URL(url);
+          return urlObj.protocol === 'http:' || urlObj.protocol === 'https:';
+        } catch {
+          return false;
+        }
+      });
+      updateData.images = validImages;
+      // Keep first image in imageUrl for backward compatibility
+      updateData.imageUrl = validImages.length > 0 ? validImages[0] : undefined;
+    }
+  } else if (imageUrl !== undefined) {
+    // Validate single imageUrl before storing
+    try {
+      const urlObj = new URL(imageUrl);
+      if (urlObj.protocol === 'http:' || urlObj.protocol === 'https:') {
+        updateData.imageUrl = imageUrl;
+        updateData.images = [imageUrl];
+      } else {
+        updateData.imageUrl = undefined;
+        updateData.images = [];
+      }
+    } catch {
+      // Invalid URL, clear images
+      updateData.imageUrl = undefined;
+      updateData.images = [];
+    }
+  }
+
   // Add other fields if they are provided (not undefined)
   if (slug !== undefined) updateData.slug = slug;
   if (title_en !== undefined) updateData.title_en = title_en;
@@ -215,9 +253,24 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
   if (desc_de !== undefined) updateData.desc_de = desc_de;
   if (price !== undefined) updateData.price = Number(price);
   if (stock !== undefined) updateData.stock = Number(stock);
-  if (imageUrl !== undefined) updateData.imageUrl = imageUrl || undefined;
 
   // Handle status separately with role-based permissions
+  const wasStatusChangedToPending = status !== undefined && status === 'PENDING' && user.role === 'MERCHANT';
+  const previousProduct = wasStatusChangedToPending 
+    ? await prisma.product.findUnique({ 
+        where: { id: productId },
+        include: {
+          merchant: {
+            include: {
+              user: {
+                select: { id: true, name: true, email: true }
+              }
+            }
+          }
+        }
+      })
+    : null;
+
   if (status !== undefined) {
     if (user.role === 'ADMIN') {
       updateData.status = status;
@@ -232,9 +285,29 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     where: { id: productId },
     data: updateData,
     include: {
-      category: { select: { id: true, name: true, description: true } }
+      category: { select: { id: true, name: true, description: true } },
+      merchant: {
+        include: {
+          user: {
+            select: { id: true, name: true, email: true }
+          }
+        }
+      }
     }
   });
+
+  // Send email notification when product is submitted for approval
+  if (wasStatusChangedToPending && previousProduct && previousProduct.status !== 'PENDING' && updated.merchant?.user) {
+    sendProductSubmissionForApprovalEmail(
+      updated.merchant.user.email,
+      updated.merchant.user.name || 'Händler',
+      updated.title_de || updated.title_en || 'Produkt',
+      updated.id
+    ).catch(err => {
+      console.error('Failed to send product submission email:', err);
+      // Don't fail the request if email fails
+    });
+  }
 
   return NextResponse.json({
     ...updated,
@@ -244,30 +317,38 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
 // DELETE product
 export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { id: productId } = await params;
-  if (!productId) {
-    return NextResponse.json({ message: 'Invalid id' }, { status: 400 });
-  }
-
-  const user = getUserFromNextRequest(request);
-  if (!user || (user.role !== 'ADMIN' && user.role !== 'MERCHANT')) {
-    return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
-  }
-
-  // Get product first
-  const product = await prisma.product.findUnique({ where: { id: productId } });
-  if (!product) {
-    return NextResponse.json({ message: 'Not found' }, { status: 404 });
-  }
-
-  if (user.role === 'MERCHANT') {
-    // Get the merchant profile for this user
-    const merchant = await prisma.merchant.findUnique({ where: { userId: user.id } });
-    if (!merchant || product.merchantId !== merchant.id) {
-      return NextResponse.json({ message: 'Forbidden. You can only delete your own products.' }, { status: 403 });
+  try {
+    const { id: productId } = await params;
+    if (!productId) {
+      return NextResponse.json({ message: 'Ungültige ID' }, { status: 400 });
     }
-  }
 
-  await prisma.product.delete({ where: { id: productId } });
-  return new NextResponse(null, { status: 204 });
+    const user = getUserFromNextRequest(request);
+    if (!user || (user.role !== 'ADMIN' && user.role !== 'MERCHANT')) {
+      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 });
+    }
+
+    // Get product first
+    const product = await prisma.product.findUnique({ where: { id: productId } });
+    if (!product) {
+      return NextResponse.json({ message: 'Nicht gefunden' }, { status: 404 });
+    }
+
+    if (user.role === 'MERCHANT') {
+      // Get the merchant profile for this user
+      const merchant = await prisma.merchant.findUnique({ where: { userId: user.id } });
+      if (!merchant || product.merchantId !== merchant.id) {
+        return NextResponse.json({ message: 'Sie können nur Ihre eigenen Produkte löschen.' }, { status: 403 });
+      }
+    }
+
+    await prisma.product.delete({ where: { id: productId } });
+    return new NextResponse(null, { status: 204 });
+  } catch (error) {
+    console.error('Error deleting product:', error);
+    return NextResponse.json(
+      { message: 'Fehler beim Löschen des Produkts' },
+      { status: 500 }
+    );
+  }
 }
