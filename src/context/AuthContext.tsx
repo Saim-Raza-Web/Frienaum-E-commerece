@@ -129,45 +129,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (storedUser && isMounted) {
         try {
           const userFromStorage = JSON.parse(storedUser);
+          console.log('Loaded user from localStorage:', userFromStorage);
           dispatch({ type: 'SET_USER', payload: userFromStorage });
 
-          // Optionally verify the token in the background (don't block UI)
-          fetch('/api/auth/verify', {
-            method: 'GET',
-            credentials: 'include',
-          }).then(response => {
-            if (response.ok && isMounted) {
-              return response.json();
-            } else {
-              throw new Error('Token invalid');
-            }
-          }).then(data => {
-            if (isMounted) {
-              // Update user data if token is still valid
-              const user: User = {
-                id: data.id.toString(),
-                email: data.email,
-                firstName: data.name || 'User',
-                lastName: '',
-                role: data.role === 'ADMIN' ? 'admin' : data.role === 'MERCHANT' ? 'merchant' : 'customer',
-                avatar: '/api/placeholder/100/100',
-                createdAt: new Date().toISOString(),
-                lastLogin: new Date().toISOString()
-              };
-
-              // Only update if the role from token is different from current role
-              // This prevents unnecessary updates and role confusion
-              const currentUser = JSON.parse(localStorage.getItem('feinraum_user') || '{}');
-              if (currentUser.role !== user.role || currentUser.email !== user.email) {
-                localStorage.setItem('feinraum_user', JSON.stringify(user));
-                dispatch({ type: 'SET_USER', payload: user });
-              }
-            }
-          }).catch(() => {
-            // Token is invalid, but keep the user in localStorage for now
-            // They can continue using the app until they try to access protected resources
-          });
+          // Skip background token verification to prevent race conditions during language changes
+          // The user data from localStorage should be sufficient for normal operation
+          // Token verification will happen when accessing protected routes if needed
         } catch (e) {
+          console.log('Error parsing stored user data, clearing localStorage');
           // Invalid localStorage data, remove it
           if (isMounted) {
             localStorage.removeItem('feinraum_user');

@@ -511,9 +511,16 @@ input[type="search"],
   select,
   /* Admin panel specific input classes */
   input.w-full.px-3.py-2.border.border-gray-300.rounded-lg,
+  input.w-full.px-3.py-2.border.border-gray-300.rounded-md,
   select.w-full.px-3.py-2.border.border-gray-300.rounded-lg,
   textarea.w-full.px-3.py-2.border.border-gray-300.rounded-lg,
-  input.w-full.px-3.py-2.border.border-gray-300.rounded-md {
+  /* Additional admin form inputs without w-full class */
+  input.px-3.py-2.border.border-gray-300.rounded-lg,
+  textarea.px-3.py-2.border.border-gray-300.rounded-lg,
+  /* Merchant panel search input classes */
+  input.px-3.py-2.border.border-gray-300.rounded-lg,
+  input.px-3.sm\\:px-4.py-2.border.border-gray-300.rounded-lg,
+  input.pl-4.pr-4.py-2.border.border-gray-300.rounded-lg {
     padding: 0.75rem 1rem;
     font-size: 16px !important; /* Prevents zoom on iOS, ensures readability on Android */
     min-height: 44px;
