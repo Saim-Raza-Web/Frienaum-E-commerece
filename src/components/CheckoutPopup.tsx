@@ -472,12 +472,12 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
                   {isLoading ? (
                     <>
                       <Loader2 className="animate-spin mr-2 h-4 w-4" />
-                      Processing...
+                      {translate('processing')}
                     </>
                   ) : (
                     <>
                       <CreditCard className="mr-2 h-4 w-4" />
-                      Proceed to Payment
+                      {translate('proceedToPayment')}
                     </>
                   )}
                 </button>
@@ -686,12 +686,12 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
                   {isLoading ? (
                     <>
                       <Loader2 className="animate-spin mr-2 h-4 w-4" />
-                      Processing...
+                      {translate('processing')}
                     </>
                   ) : (
                     <>
                       <CreditCard className="mr-2 h-4 w-4" />
-                      Proceed to Payment
+                      {translate('proceedToPayment')}
                     </>
                   )}
                 </button>

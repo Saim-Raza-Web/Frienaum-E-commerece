@@ -61,6 +61,15 @@ function ProfileContent() {
   
   // Payment state
   const [showAddPayment, setShowAddPayment] = useState(false);
+  const emptyBillingAddress = {
+    name: '',
+    street: '',
+    city: '',
+    state: '',
+    zipCode: '',
+    country: ''
+  };
+
   const [paymentMethods, setPaymentMethods] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('paymentMethods');
@@ -75,20 +84,26 @@ function ProfileContent() {
     ];
   });
   const [billingAddress, setBillingAddress] = useState(() => {
+    const isLegacyDefaultAddress = (address: typeof emptyBillingAddress) =>
+      address?.name === 'John Doe' &&
+      address?.street === '123 Main Street' &&
+      address?.city === 'San Francisco' &&
+      address?.state === 'CA' &&
+      address?.zipCode === '94105' &&
+      address?.country === 'United States';
+
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('billingAddress');
       if (saved) {
-        return JSON.parse(saved);
+        try {
+          const parsed = JSON.parse(saved);
+          return isLegacyDefaultAddress(parsed) ? emptyBillingAddress : parsed;
+        } catch (error) {
+          console.error('Failed to parse stored billing address', error);
+        }
       }
     }
-    return {
-      name: 'John Doe',
-      street: '123 Main Street',
-      city: 'San Francisco',
-      state: 'CA',
-      zipCode: '94105',
-      country: 'United States'
-    };
+    return emptyBillingAddress;
   });
   const [newPaymentForm, setNewPaymentForm] = useState({
     cardNumber: '',
@@ -1034,18 +1049,33 @@ function ProfileContent() {
 
                     {!showEditBilling ? (
                       <>
-                        <div className="text-sm text-gray-600 mb-4">
-                          <p>{billingAddress.name}</p>
-                          <p>{billingAddress.street}</p>
-                          <p>{billingAddress.city}, {billingAddress.state} {billingAddress.zipCode}</p>
-                          <p>{billingAddress.country}</p>
-                        </div>
+                        {billingAddress.name ||
+                        billingAddress.street ||
+                        billingAddress.city ||
+                        billingAddress.state ||
+                        billingAddress.zipCode ||
+                        billingAddress.country ? (
+                          <div className="text-sm text-gray-600 mb-4">
+                            <p>{billingAddress.name}</p>
+                            <p>{billingAddress.street}</p>
+                            <p>
+                              {billingAddress.city}
+                              {billingAddress.city && billingAddress.state ? ', ' : ''}
+                              {billingAddress.state} {billingAddress.zipCode}
+                            </p>
+                            <p>{billingAddress.country}</p>
+                          </div>
+                        ) : (
+                          <p className="text-sm text-gray-500 mb-4">
+                            {translate('noBillingAddress') || 'No billing address saved yet.'}
+                          </p>
+                        )}
                         <button
                           type="button"
                           onClick={handleEditBillingAddress}
                           className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-turquoise-500"
                         >
-                          {translate('editAddress')}
+                          {billingAddress.name ? translate('editAddress') : translate('addAddress') || 'Add Address'}
                         </button>
                       </>
                     ) : (
@@ -1170,28 +1200,29 @@ function ProfileContent() {
                   </div>
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold text-blue-900 mb-2">
-                      Become a Merchant
+                      {translate('profile.becomeMerchantTitle') || 'Become a Merchant'}
                     </h3>
                     <p className="text-blue-700 mb-4">
-                      Start selling your products on Feinraum marketplace. Create your online store and reach thousands of customers.
+                      {translate('profile.becomeMerchantDescription') ||
+                        'Start selling your products on Feinraum marketplace. Create your online store and reach thousands of customers.'}
                     </p>
                     <div className="flex flex-wrap gap-2 mb-4">
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        No setup fees
+                        {translate('profile.becomeMerchantBadgeOne') || 'No setup fees'}
                       </span>
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        Secure payments
+                        {translate('profile.becomeMerchantBadgeTwo') || 'Secure payments'}
                       </span>
                       <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        Customer management
+                        {translate('profile.becomeMerchantBadgeThree') || 'Customer management'}
                       </span>
                     </div>
                     <Link
-                      href="/merchant/register"
+                      href={`/${currentLang}/merchant/register`}
                       className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
                     >
                       <Store className="w-4 h-4 mr-2" />
-                      Register as Merchant
+                      {translate('profile.becomeMerchantCta') || 'Register as Merchant'}
                     </Link>
                   </div>
                 </div>

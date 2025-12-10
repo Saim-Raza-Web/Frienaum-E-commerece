@@ -3,7 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Facebook, Twitter, Instagram, Mail, Phone, MapPin, Shield, Lock } from 'lucide-react';
+import { Facebook, Twitter, Instagram, Mail, Phone, MapPin, Shield } from 'lucide-react';
 import SmartImage from '@/components/SmartImage';
 import { useTranslation } from '@/i18n/TranslationProvider';
 
@@ -13,7 +13,7 @@ export default function Footer() {
   const segments = pathname.split('/');
   const lang = segments[1] || 'de';
   return (
-    <footer className="bg-primary-50 text-primary-800 overflow-hidden">
+    <footer className="bg-red-100 text-primary-800 overflow-hidden">
       <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-12 sm:py-16">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
           {/* Company Info */}
@@ -146,22 +146,26 @@ export default function Footer() {
 
         {/* Bottom Bar */}
         <div className="mt-12 pt-8 border-t border-primary-200">
-          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
-            <p className="text-primary-600 font-lora">
-              {translate('copyright')} | 
-              <Link href={`/${lang}/privacy`} className="ml-2 text-primary-600 hover:text-primary-800 hover:font-semibold transition-all duration-200">
+          <div className="flex flex-col gap-4 text-center">
+            <div className="text-primary-600 font-lora text-sm">
+              {translate('copyright')}
+            </div>
+            <div className="flex flex-wrap justify-center gap-x-4 gap-y-2 text-primary-600 font-lora text-sm">
+              <Link href={`/${lang}/privacy`} className="hover:text-primary-800 hover:font-semibold transition-all duration-200">
                 {translate('privacyPolicy')}
               </Link>
-              {' | '}
-              <Link href={`/${lang}/terms`} className="text-primary-600 hover:text-primary-800 hover:font-semibold transition-all duration-200">
+              <span className="text-primary-400">|</span>
+              <Link href={`/${lang}/terms`} className="hover:text-primary-800 hover:font-semibold transition-all duration-200">
                 {translate('termsOfService')}
               </Link>
-            </p>
-            
-            {/* SSL Security Indicator */}
-            <div className="flex items-center gap-2 text-trust-600 bg-trust-50 px-3 py-2 rounded-lg">
-              <Lock className="w-4 h-4" />
-              <span className="text-sm font-medium font-montserrat">SSL Encrypted</span>
+              <span className="text-primary-400">|</span>
+              <Link href={`/${lang}/supplier-guide`} className="hover:text-primary-800 hover:font-semibold transition-all duration-200">
+                {translate('supplierGuideTitle')}
+              </Link>
+              <span className="text-primary-400">|</span>
+              <Link href={`/${lang}/customer-guide`} className="hover:text-primary-800 hover:font-semibold transition-all duration-200">
+                {translate('customerGuideTitle')}
+              </Link>
             </div>
           </div>
         </div>

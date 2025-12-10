@@ -60,6 +60,35 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Record T&C acceptance if not already accepted
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { termsAccepted: true }
+    });
+
+    if (!user?.termsAccepted) {
+      const currentTerms = await prisma.termsVersion.findFirst({
+        where: { isActive: true },
+        orderBy: { effectiveDate: 'desc' }
+      });
+
+      if (currentTerms) {
+        // Get client IP address
+        const forwarded = req.headers.get('x-forwarded-for');
+        const ip = forwarded ? forwarded.split(',')[0] : 'unknown';
+
+        await prisma.user.update({
+          where: { id: userId },
+          data: {
+            termsAccepted: true,
+            termsAcceptedAt: new Date(),
+            termsAcceptedVersion: currentTerms.version,
+            termsAcceptedIP: ip
+          }
+        });
+      }
+    }
+
     // Create the order and related data in a transaction
     const result = await prisma.$transaction(async (tx) => {
       // First, create the shipping address record

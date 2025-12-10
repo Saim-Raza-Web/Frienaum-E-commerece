@@ -25,48 +25,65 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [isClient, setIsClient] = useState(false);
   const { user, isAuthenticated } = useAuth();
+  const [storageKey, setStorageKey] = useState<string>('cart_guest');
+
+  const resolveStorageKey = () => (user?.id ? `cart_${user.id}` : 'cart_guest');
 
   // Ensure we only access localStorage on the client
   useEffect(() => {
     setIsClient(true);
+  }, []);
 
-    // Load cart from localStorage only on client and when authenticated
-    if (isAuthenticated) {
+  // Update storage key when auth state changes, and migrate guest cart if needed
+  useEffect(() => {
+    if (!isClient) return;
+
+    const newKey = resolveStorageKey();
+
+    if (user?.id) {
       try {
-        const savedCart = localStorage.getItem('cart');
-        if (savedCart) {
-          const parsedCart = JSON.parse(savedCart);
-          setCartItems(parsedCart);
+        const guestCart = localStorage.getItem('cart_guest');
+        const existingUserCart = localStorage.getItem(newKey);
+        if (guestCart && (!existingUserCart || existingUserCart === '[]')) {
+          localStorage.setItem(newKey, guestCart);
         }
       } catch (error) {
-        console.error('Failed to load cart from localStorage', error);
-        localStorage.removeItem('cart');
+        console.error('Failed to migrate guest cart to user cart', error);
       }
     }
-  }, [isAuthenticated]);
 
-  // Clear cart when user logs out
-  useEffect(() => {
-    if (isClient && !isAuthenticated) {
-      setCartItems([]);
-      try {
-        localStorage.removeItem('cart');
-      } catch (error) {
-        console.error('Failed to clear cart from localStorage', error);
-      }
-    }
-  }, [isAuthenticated, isClient]);
+    setStorageKey(newKey);
+  }, [user?.id, isClient]);
 
-  // Save cart to localStorage whenever it changes (only on client and when authenticated)
+  // Load cart whenever the storage key changes
   useEffect(() => {
-    if (!isClient || !isAuthenticated) return;
+    if (!isClient || !storageKey) return;
 
     try {
-      localStorage.setItem('cart', JSON.stringify(cartItems));
+      const savedCart = localStorage.getItem(storageKey);
+      if (savedCart) {
+        const parsedCart = JSON.parse(savedCart);
+        setCartItems(parsedCart);
+      } else {
+        setCartItems([]);
+      }
+    } catch (error) {
+      console.error('Failed to load cart from localStorage', error);
+      localStorage.removeItem(storageKey);
+      setCartItems([]);
+    }
+  }, [storageKey, isClient]);
+
+  // Save cart to localStorage whenever it changes (only on client)
+  useEffect(() => {
+    if (!isClient || !storageKey) return;
+
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(cartItems));
     } catch (error) {
       console.error('Failed to save cart to localStorage', error);
     }
-  }, [cartItems, isClient, isAuthenticated]);
+  }, [cartItems, isClient, storageKey]);
 
   const addToCart = (product: Product, quantity: number = 1) => {
     setCartItems(prevItems => {
@@ -107,14 +124,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const clearCart = useCallback(() => {
     setCartItems([]);
-    if (isClient) {
+    if (isClient && storageKey) {
       try {
-        localStorage.removeItem('cart');
+        localStorage.setItem(storageKey, JSON.stringify([]));
       } catch (error) {
         console.error('Failed to clear cart from localStorage', error);
       }
     }
-  }, [isClient]);
+  }, [isClient, storageKey]);
 
   // Calculate total items in cart
   const itemCount = cartItems.reduce((total, item) => total + item.quantity, 0);

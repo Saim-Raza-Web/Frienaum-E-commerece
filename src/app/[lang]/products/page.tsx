@@ -41,8 +41,8 @@ export default function ProductsPage() {
       try {
         // Fetch products and categories in parallel with cache-busting
         const [productsResponse, categoriesResponse] = await Promise.all([
-          fetch(`/api/products?t=${Date.now()}`, { cache: 'no-store' }),
-          fetch('/api/categories')
+          fetch(`/api/products?t=${Date.now()}`, { cache: 'no-store', credentials: 'include' }),
+          fetch('/api/categories', { credentials: 'include' })
         ]);
 
         if (!productsResponse.ok) {
@@ -69,7 +69,8 @@ export default function ProductsPage() {
           rating: Number(product.averageRating || 0),
           reviewCount: Number(product.ratingCount || 0),
           inStock: product.stock > 0,
-          tags: []
+          tags: [],
+          status: product.status
         }));
 
         setProducts(transformedProducts);
@@ -211,7 +212,7 @@ export default function ProductsPage() {
   };
 
   return (
-    <MerchantBlocker>
+    <MerchantBlocker allowMerchantAccess>
     <div className="min-h-screen bg-gray-50">
       <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-6 sm:py-8">
         <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 lg:gap-8">

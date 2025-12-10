@@ -199,11 +199,6 @@
     "save": "Save selection",
     "learnMore": "We comply with GDPR/FADP. You can revisit your consent later in the footer."
   },
-  "privacy": {
-    "contactNote": "We only use your details to respond to this request and delete the message after the legally required retention period.",
-    "authNote": "Registration data is stored on Swiss infrastructure and used solely to operate your account.",
-    "checkoutNote": "We process the shipping details exclusively to fulfil your order according to Swiss law."
-  },
   "phoneOptional": "Phone number (optional)",
   "cantonOptional": "Canton (optional)",
   "postalCode": "Postal code",
@@ -250,36 +245,155 @@
   },
   "privacy": {
     "subtitle": "Learn how we collect, use, and protect your personal information.",
-    "badge": "Policy",
-    "overviewTitle": "Overview",
-    "overviewBody": "We collect information to provide and improve our services, process your orders, and personalize your experience.",
-    "collectTitle": "Information We Collect",
-    "collectItem1": "Account details such as name, email, and password",
-    "collectItem2": "Order and payment information",
-    "collectItem3": "Shipping and contact details",
-    "collectItem4": "Usage data and device information",
-    "useTitle": "How We Use Your Information",
-    "useItem1": "To process and fulfill orders",
-    "useItem2": "To provide customer support",
-    "useItem3": "To improve our products and services",
-    "useItem4": "To comply with legal obligations",
-    "rightsTitle": "Your Rights",
-    "rightsBody": "You may request access to, correction or deletion of your personal data. To exercise your rights, contact us.",
+    "badge": "Privacy",
+    "responsibleTitle": "Responsible Entity",
+    "responsibleBody": "Feinraumshop Landquartstrasse 30, 9320 Arbon<br/>Email: support@feinraumshop.ch<br/>Phone: +41 76 430 87 18",
+    "dataTitle": "Collected Data",
+    "dataList": [
+      "Customer data: Name, address, email, phone number, payment information, order history, IP address",
+      "Supplier data: Name, company information, contact details, bank connections",
+      "Tracking data: Cookies, analysis information (anonymized)"
+    ],
+    "purposesTitle": "Purposes of Processing",
+    "purposesList": [
+      "Order processing, shipping, invoicing",
+      "Management of customer and supplier accounts",
+      "Communication regarding orders, complaints, returns",
+      "Payment processing",
+      "Analysis & platform optimization",
+      "Marketing only with consent"
+    ],
+    "sharingTitle": "Data Sharing",
+    "sharingList": [
+      "Suppliers for shipping & complaints",
+      "Payment providers for payment processing",
+      "Shipping service providers for delivery",
+      "Authorities, as legally required",
+      "International transfers only when contractually necessary"
+    ],
+    "cookiesTitle": "Cookies / Tracking",
+    "cookiesBody": "Cookies/Tracking only with consent, data anonymized<br/>Users can reject or delete cookies",
+    "storageTitle": "Data Storage / Retention",
+    "storageBody": "Customer data: as long as account exists + legal retention obligations (e.g. 10 years accounting)<br/>Supplier data: as long as active + legal obligations<br/>Then deletion or anonymization",
+    "rightsTitle": "User Rights",
+    "rightsBody": "Information, correction, deletion, objection<br/>Complaint to data protection authority (FDPIC)<br/>Contact: [Data protection officer email to be inserted]",
+    "securityTitle": "Security",
+    "securityBody": "SSL encryption, access control, secure storage<br/>Only authorized employees and suppliers have access",
+    "changesTitle": "Changes",
+    "changesBody": "Publication on platform, users will be informed of significant changes",
     "needHelpTitle": "Need help?",
     "needHelpBody": "Visit our Help Center or contact us."
   },
+  "supplierGuideTitle": "Supplier Guide",
+  "supplierGuide": {
+    "subtitle": "Important information for suppliers on Feinraumshop.",
+    "badge": "Suppliers",
+    "infoList": [
+      "Approval requirement for each product",
+      "Compliance with delivery times, quality, shipping",
+      "Liability for products, returns, complaints",
+      "Content may not violate third-party rights",
+      "Data sharing only for contract processing"
+    ],
+    "supportTitle": "Support & Help",
+    "supportBody": "Our support team is available to help with your questions. Use the supplier dashboard for efficient management.",
+    "merchantPanel": "Supplier Panel"
+  },
+  "customerGuideTitle": "Customer Guide",
+  "customerGuide": {
+    "subtitle": "Important information for customers on Feinraumshop.",
+    "badge": "Customers",
+    "infoList": [
+      "Contract partner is the respective supplier",
+      "Shipping and delivery by supplier",
+      "Standard shipping CHF 8.50 B-Post, unless otherwise specified",
+      "Returns/complaints through supplier; Feinraumshop mediates",
+      "Marketing only with consent",
+      "Data protection according to privacy policy"
+    ],
+    "helpTitle": "Help & Support",
+    "helpBody": "Our support team is happy to help with your questions. Use our help center or contact us directly.",
+    "helpCenter": "Help Center"
+  },
+  "termsAcceptanceRequired": "You must accept the Terms and Conditions",
+  "marketingPreferences": "Marketing Preferences (Optional)",
+  "newsletterOptIn": "I would like to receive newsletters and marketing updates",
+  "cookiesOptIn": "I agree to the use of cookies and tracking technologies",
   "terms": {
-    "subtitle": "Understand your rights and responsibilities when using our services.",
-    "acceptanceTitle": "Acceptance of Terms",
-    "acceptanceBody": "By accessing or using our site, you agree to these Terms.",
-    "accountsTitle": "User Accounts",
-    "accountsItem1": "Provide accurate, complete registration information.",
-    "accountsItem2": "Keep your account credentials secure.",
-    "accountsItem3": "Notify us of any unauthorized access.",
-    "ordersTitle": "Orders and Payments",
-    "ordersBody": "All orders are subject to acceptance and availability. Prices may change without notice.",
-    "liabilityTitle": "Limitation of Liability",
-    "liabilityBody": "We are not liable for indirect or consequential damages to the extent permitted by law.",
+    "subtitle": "Understand your rights and responsibilities when using our platform.",
+    "badge": "Terms",
+    "scopeTitle": "Scope",
+    "scopeBody": "These General Terms and Conditions (GTC) regulate the use of the Feinraumshop platform. Feinraumshop mediates the sale of products between registered suppliers (\"Supplier\") and customers (\"Customers\"). By using the platform, all users agree to these GTC.",
+    "contractTitle": "Contract Partners / Contract Conclusion",
+    "contractBody": "The contract partner for customers is the respective supplier offering the product. Feinraumshop provides the platform infrastructure.<br/><br/>A purchase contract is concluded as soon as:<br/>• Customers place an order,<br/>• the supplier confirms the order, and<br/>• Feinraumshop grants product approval.<br/><br/>Products without approval may not be sold.",
+    "suppliersTitle": "Suppliers / Sellers",
+    "suppliersBody": "Suppliers must create an account with Feinraumshop and be approved.<br/><br/>Obligations of suppliers:<br/>• Correct and complete product information (images, description, price, stock, delivery times)<br/>• Timely shipping to customers<br/>• Handling of complaints, returns, warranty cases<br/>• Compliance with legal regulations<br/><br/>Feinraumshop reserves the right to review, reject or remove products, categories or suppliers at any time.<br/><br/>Suppliers are liable for content they upload (images, texts, descriptions).",
+    "productsTitle": "Products / Availability",
+    "productsList": [
+      "Products are maintained by suppliers and must be approved by Feinraumshop.",
+      "Feinraumshop assumes no liability for availability, delivery times or completeness of product information.",
+      "Products are available while stocks last. Changes or withdrawals are reserved."
+    ],
+    "pricingTitle": "Prices / Payment",
+    "pricingList": [
+      "All prices are inclusive of VAT, unless otherwise stated.",
+      "Standard shipping: CHF 8.50 (B-Post), unless otherwise specified by the supplier.",
+      "Different shipping costs are specified by the supplier.",
+      "Payment methods: Twint, credit card, invoice, PayPal or other agreed payment methods.",
+      "Payments must be made in full and on time."
+    ],
+    "shippingTitle": "Shipping / Delivery",
+    "shippingList": [
+      "Suppliers are responsible for shipping and delivery time.",
+      "Standard shipping: CHF 8.50 B-Post, unless otherwise specified.",
+      "Feinraumshop may provide reference values for delivery times.",
+      "Delays in shipping are the responsibility of the supplier.",
+      "Additional costs (duties, taxes) may apply for international deliveries."
+    ],
+    "returnsTitle": "Returns / Complaints / Warranty",
+    "returnsList": [
+      "Customers are entitled to statutory warranty (2 years in Switzerland).",
+      "Complaints or returns are handled through the supplier; Feinraumshop can mediate.",
+      "Returns, replacement deliveries or refunds are carried out in consultation with the supplier."
+    ],
+    "customerObligationsTitle": "Customer Obligations",
+    "customerObligationsList": [
+      "Correct provision of delivery and contact details",
+      "Complete payment",
+      "No misuse of the platform or products"
+    ],
+    "liabilityTitle": "Liability / Limitation of Liability",
+    "liabilityList": [
+      "Feinraumshop is liable solely for providing the platform.",
+      "Suppliers are liable for product quality, shipping, damages or defects.",
+      "Liability is limited to the purchase price; indirect damages excluded."
+    ],
+    "marketingTitle": "Marketing / Newsletter",
+    "marketingList": [
+      "Customers receive newsletters or marketing only after express consent (opt-in).",
+      "Unsubscribe possible at any time via profile or link in email."
+    ],
+    "dataProtectionTitle": "Data Protection",
+    "dataProtectionList": [
+      "Processing of personal data in accordance with the privacy policy.",
+      "Data may be transmitted to suppliers, payment providers or shipping service providers.",
+      "Customers have rights to information, correction, deletion and objection."
+    ],
+    "intellectualPropertyTitle": "Intellectual Property",
+    "intellectualPropertyList": [
+      "Content from Feinraumshop (texts, images, product information) is copyrighted.",
+      "Usage rights only for platform usage."
+    ],
+    "changesTitle": "Changes to Terms",
+    "changesList": [
+      "Changes will be communicated to users (e.g., email, notice on platform).",
+      "Continued use after changes means acceptance."
+    ],
+    "lawTitle": "Applicable Law / Jurisdiction",
+    "lawList": [
+      "Swiss law applies.",
+      "Place of jurisdiction: Arbon, Switzerland."
+    ],
     "questionsTitle": "Questions",
     "questionsBody": "For help, visit our Help Center or contact us."
   },
@@ -357,6 +471,13 @@
   "orders": "Orders",
   "logout": "Logout",
   "signIn": "Sign In",
+  "userMenu": {
+    "profile": "Profile",
+    "orders": "Orders",
+    "merchantDashboard": "Merchant Dashboard",
+    "adminPanel": "Admin Panel",
+    "logout": "Log out"
+  },
   "forgotPassword": "Forgot Password?",
   "resetYourPassword": "Reset your password",
   "forgotPasswordInstructions": "Enter your email address and we'll send you a secure link to reset your password.",
@@ -386,6 +507,12 @@
   "backToSignIn": "Back to sign in",
   "adminToolsDesc": "Access admin dashboard to manage the platform.",
   "adminDashboard": "Admin Dashboard",
+  "becomeMerchantTitle": "Become a Merchant",
+  "becomeMerchantDescription": "Start selling your products on Feinraum marketplace. Create your online store and reach thousands of customers.",
+  "becomeMerchantBadgeOne": "No setup fees",
+  "becomeMerchantBadgeTwo": "Secure payments",
+  "becomeMerchantBadgeThree": "Customer management",
+  "becomeMerchantCta": "Register as Merchant",
   "addToCart": "Add to cart",
   "profile": "Profile",
   "settings": "Settings",
@@ -605,8 +732,8 @@
     "descriptionDePlaceholder": "Product description in German",
     "storeNamePlaceholder": "Feinraum",
     "generalCategory": "General",
-    "setPending": "Set Pending",
-    "approve": "Approve",
+    "statusPending": "Pending",
+    "statusDraft": "Draft",
     "suspend": "Suspend",
     "view": "View",
     "delete": "Delete",
@@ -620,7 +747,12 @@
     "failedToDeleteCategory": "Failed to delete category",
     "categoryNamePlaceholder": "Enter category name",
     "descriptionPlaceholder": "Enter category description",
-    "imageUrlPlaceholder": "Enter image URL"
+    "imageUrlPlaceholder": "Enter image URL",
+    "shippingCost": "Shipping Cost",
+    "shippingCostHelp": "Leave empty for default CHF 8.50",
+    "shippingCostNote": "Shipping Cost Note",
+    "shippingCostNoteHelp": "Optional note about shipping options",
+    "shippingCostNotePlaceholder": "Express delivery available"
   },
   "table": {
     "orderId": "Order ID",
@@ -813,7 +945,8 @@
     "date": "Date",
     "amount": "Amount",
     "status": "Status",
-    "method": "Method"
+    "method": "Method",
+    "viewProducts": "View Products"
   },
   "settings": "Settings",
   "cart": {

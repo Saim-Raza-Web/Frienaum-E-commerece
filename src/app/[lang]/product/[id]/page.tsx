@@ -40,6 +40,7 @@ export default function ProductDetailPage() {
         // Add cache-busting to ensure fresh data
         const response = await fetch(`/api/products/${productId}?t=${Date.now()}`, {
           cache: 'no-store',
+          credentials: 'include',
         });
         if (!response.ok) {
           throw new Error('Product not found');
@@ -322,7 +323,17 @@ export default function ProductDetailPage() {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-6 border-t border-gray-200">
               <div className="flex items-center space-x-2">
                 <Truck className="w-5 h-5 text-orange-600" />
-                <span className="text-sm text-gray-600">{t('freeShipping')}</span>
+                <span className="text-sm text-gray-600">
+                  {product.shippingCost && product.shippingCost > 0
+                    ? `Versand: CHF ${product.shippingCost.toFixed(2)}`
+                    : t('shippingInfo') || 'Standardversand: CHF 8.50 (B-Post)'
+                  }
+                  {product.shippingCostNote && (
+                    <span className="block text-xs text-gray-500 mt-1">
+                      {product.shippingCostNote}
+                    </span>
+                  )}
+                </span>
               </div>
               <div className="flex items-center space-x-2">
                 <Shield className="w-5 h-5 text-orange-600" />

@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { useTranslation } from '@/i18n/TranslationProvider';
+import { usePathname } from 'next/navigation';
 import {
   Store,
   CheckCircle,
@@ -21,16 +22,40 @@ export default function MerchantRegistrationPage() {
   const { user, updateUser } = useAuth();
   const { translate } = useTranslation();
   const router = useRouter();
+  const pathname = usePathname();
+  const segments = pathname?.split('/') || [];
+  const lang = segments[1] || 'de';
+
   const [step, setStep] = useState(1);
+  const [currentTerms, setCurrentTerms] = useState<any>(null);
   const [formData, setFormData] = useState({
     storeName: '',
     businessType: '',
     description: '',
     agreeToTerms: false,
-    agreeToFees: false
+    agreeToFees: false,
+    newsletterConsent: false,
+    cookiesConsent: false
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
+
+  // Fetch current terms on component mount
+  useEffect(() => {
+    const fetchCurrentTerms = async () => {
+      try {
+        const response = await fetch('/api/terms');
+        if (response.ok) {
+          const terms = await response.json();
+          setCurrentTerms(terms);
+        }
+      } catch (error) {
+        console.error('Failed to fetch terms:', error);
+      }
+    };
+
+    fetchCurrentTerms();
+  }, []);
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -55,7 +80,7 @@ export default function MerchantRegistrationPage() {
       return false;
     }
     if (!formData.agreeToTerms) {
-      setError('You must agree to the terms and conditions');
+      setError('You must accept the current Terms & Conditions');
       return false;
     }
     if (!formData.agreeToFees) {
@@ -78,6 +103,41 @@ export default function MerchantRegistrationPage() {
     setError('');
 
     try {
+      // First, accept the terms if not already accepted
+      if (currentTerms && !user?.termsAccepted) {
+        const termsResponse = await fetch('/api/terms/accept', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            termsVersionId: currentTerms.id,
+            accepted: true
+          })
+        });
+
+        if (!termsResponse.ok) {
+          throw new Error('Failed to accept terms and conditions');
+        }
+      }
+
+      // Update marketing consents
+      if (formData.newsletterConsent || formData.cookiesConsent) {
+        const consentsResponse = await fetch('/api/consents', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            newsletterConsent: formData.newsletterConsent,
+            cookiesConsent: formData.cookiesConsent
+          })
+        });
+
+        if (!consentsResponse.ok) {
+          console.warn('Failed to update marketing consents');
+        }
+      }
+
+      // Register as merchant
       const response = await fetch('/api/merchant/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -96,7 +156,7 @@ export default function MerchantRegistrationPage() {
       updateUser({ ...user!, role: 'merchant' });
 
       // Redirect to merchant dashboard
-      router.push('/merchant');
+      router.push(`/${lang}/merchant`);
 
     } catch (err: any) {
       setError(err.message || 'Registration failed. Please try again.');
@@ -315,6 +375,37 @@ export default function MerchantRegistrationPage() {
                     />
                     <label htmlFor="fees" className="text-sm text-gray-700">
                       I understand and agree to the 20% commission fee structure
+                    </label>
+                  </div>
+                </div>
+
+                {/* Marketing Consents */}
+                <div className="space-y-4">
+                  <h3 className="text-lg font-semibold text-gray-900">Marketing Preferences (Optional)</h3>
+
+                  <div className="flex items-start space-x-3">
+                    <input
+                      type="checkbox"
+                      id="newsletter"
+                      checked={formData.newsletterConsent}
+                      onChange={(e) => handleInputChange('newsletterConsent', e.target.checked)}
+                      className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="newsletter" className="text-sm text-gray-700">
+                      I would like to receive newsletters and marketing updates about new features and offers
+                    </label>
+                  </div>
+
+                  <div className="flex items-start space-x-3">
+                    <input
+                      type="checkbox"
+                      id="cookies"
+                      checked={formData.cookiesConsent}
+                      onChange={(e) => handleInputChange('cookiesConsent', e.target.checked)}
+                      className="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    />
+                    <label htmlFor="cookies" className="text-sm text-gray-700">
+                      I agree to the use of cookies and tracking technologies for analytics and personalization
                     </label>
                   </div>
                 </div>

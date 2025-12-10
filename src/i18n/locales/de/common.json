@@ -41,6 +41,8 @@
   "securePayment": "Sichere Zahlung",
   "securePaymentDesc": "100% sichere Zahlungsabwicklung",
   "support247": "24/7 Support",
+  "helpCenter": "Hilfe-Center",
+  "contact": "Kontakt",
   "support247Desc": "Rund um die Uhr Kundensupport",
   "shopByCategory": "Nach Kategorie einkaufen",
   "shopByCategoryDesc": "Entdecken Sie unsere breite Produktpalette nach Kategorien geordnet",
@@ -199,11 +201,6 @@
     "save": "Auswahl speichern",
     "learnMore": "Wir erfüllen DSGVO/DSG. Sie können Ihre Einwilligung jederzeit im Footer anpassen."
   },
-  "privacy": {
-    "contactNote": "Wir verwenden Ihre Angaben ausschließlich zur Beantwortung dieser Anfrage und löschen die Nachricht nach Ablauf der gesetzlichen Aufbewahrungspflicht.",
-    "authNote": "Registrierungsdaten werden auf Schweizer Infrastruktur gespeichert und nur zur Bereitstellung Ihres Kontos genutzt.",
-    "checkoutNote": "Die Versandinformationen werden ausschließlich zur Abwicklung Ihrer Bestellung gemäß Schweizer Recht verarbeitet."
-  },
   "phoneOptional": "Telefonnummer (optional)",
   "cantonOptional": "Kanton (optional)",
   "postalCode": "Postleitzahl",
@@ -250,36 +247,155 @@
   },
   "privacy": {
     "subtitle": "Erfahren Sie, wie wir Ihre personenbezogenen Daten sammeln, verwenden und schützen.",
-    "badge": "Richtlinie",
-    "overviewTitle": "Überblick",
-    "overviewBody": "Wir sammeln Informationen, um unsere Dienstleistungen bereitzustellen und zu verbessern, Ihre Bestellungen zu bearbeiten und Ihr Erlebnis zu personalisieren.",
-    "collectTitle": "Welche Informationen wir sammeln",
-    "collectItem1": "Kontodaten wie Name, E-Mail und Passwort",
-    "collectItem2": "Bestell- und Zahlungsinformationen",
-    "collectItem3": "Versand- und Kontaktdaten",
-    "collectItem4": "Nutzungsdaten und Geräteinformationen",
-    "useTitle": "Wie wir Ihre Informationen verwenden",
-    "useItem1": "Zur Bearbeitung und Erfüllung von Bestellungen",
-    "useItem2": "Zur Bereitstellung von Kundensupport",
-    "useItem3": "Zur Verbesserung unserer Produkte und Dienstleistungen",
-    "useItem4": "Zur Einhaltung gesetzlicher Verpflichtungen",
-    "rightsTitle": "Ihre Rechte",
-    "rightsBody": "Sie können Zugriff auf Ihre personenbezogenen Daten sowie deren Berichtigung oder Löschung beantragen. Um Ihre Rechte auszuüben, kontaktieren Sie uns.",
+    "badge": "Datenschutz",
+    "responsibleTitle": "Verantwortliche Stelle",
+    "responsibleBody": "Feinraumshop Landquartstrasse 30, 9320 Arbon<br/>E-Mail: support@feinraumshop.ch<br/>Telefon: +41 76 430 87 18",
+    "dataTitle": "Erhobene Daten",
+    "dataList": [
+      "Kundendaten: Name, Adresse, E-Mail, Telefonnummer, Zahlungsinformationen, Bestellhistorie, IP-Adresse",
+      "Lieferantendaten: Name, Unternehmensinformationen, Kontaktdaten, Bankverbindungen",
+      "Trackingdaten: Cookies, Analyseinformationen (anonymisiert)"
+    ],
+    "purposesTitle": "Zwecke der Verarbeitung",
+    "purposesList": [
+      "Bestellabwicklung, Versand, Rechnungsstellung",
+      "Verwaltung von Kunden- und Lieferantenkonten",
+      "Kommunikation bei Bestellungen, Reklamationen, Rückgaben",
+      "Zahlungsabwicklung",
+      "Analyse & Optimierung der Plattform",
+      "Marketing nur mit Einwilligung"
+    ],
+    "sharingTitle": "Datenweitergabe",
+    "sharingList": [
+      "Lieferanten für Versand & Reklamationen",
+      "Zahlungsanbieter zur Zahlungsabwicklung",
+      "Versanddienstleister für Lieferung",
+      "Behörden, soweit gesetzlich vorgeschrieben",
+      "Internationale Übermittlungen nur bei Vertragsnotwendigkeit"
+    ],
+    "cookiesTitle": "Cookies / Tracking",
+    "cookiesBody": "Cookies/Tracking nur mit Einwilligung, Daten anonymisiert<br/>Nutzer:innen können Cookies ablehnen oder löschen",
+    "storageTitle": "Datenspeicherung / Aufbewahrung",
+    "storageBody": "Kundendaten: solange Konto besteht + gesetzliche Aufbewahrungspflichten (z. B. 10 Jahre Buchhaltung)<br/>Lieferantendaten: solange aktiv + gesetzliche Pflichten<br/>Danach Löschung oder Anonymisierung",
+    "rightsTitle": "Rechte der Nutzer:innen",
+    "rightsBody": "Auskunft, Berichtigung, Löschung, Widerspruch<br/>Beschwerde bei Datenschutzaufsicht (FDPIC)<br/>Kontakt: [Datenschutzbeauftragter E-Mail einfügen]",
+    "securityTitle": "Sicherheit",
+    "securityBody": "SSL-Verschlüsselung, Zugriffskontrolle, sichere Speicherung<br/>Nur autorisierte Mitarbeiter:innen und Lieferanten haben Zugriff",
+    "changesTitle": "Änderungen",
+    "changesBody": "Veröffentlichung auf Plattform, Nutzer:innen werden bei wesentlichen Änderungen informiert",
     "needHelpTitle": "Brauchen Sie Hilfe?",
     "needHelpBody": "Besuchen Sie unser Hilfe-Center oder kontaktieren Sie uns."
   },
+  "supplierGuideTitle": "Hinweise für Lieferanten",
+  "supplierGuide": {
+    "subtitle": "Wichtige Informationen für Lieferanten auf Feinraumshop.",
+    "badge": "Lieferanten",
+    "infoList": [
+      "Genehmigungspflicht für jedes Produkt",
+      "Einhaltung von Lieferzeiten, Qualität, Versand",
+      "Haftung für Produkte, Rückgaben, Reklamationen",
+      "Inhalte dürfen keine Rechte Dritter verletzen",
+      "Datenweitergabe nur zur Vertragsabwicklung"
+    ],
+    "supportTitle": "Support & Hilfe",
+    "supportBody": "Unser Support-Team steht Ihnen bei Fragen zur Verfügung. Nutzen Sie das Lieferanten-Dashboard für effiziente Verwaltung.",
+    "merchantPanel": "Lieferantenbereich"
+  },
+  "customerGuideTitle": "Hinweise für Kund:innen",
+  "customerGuide": {
+    "subtitle": "Wichtige Informationen für Kund:innen auf Feinraumshop.",
+    "badge": "Kunden",
+    "infoList": [
+      "Vertragspartner ist der jeweilige Lieferant",
+      "Versand und Lieferung durch Lieferant",
+      "Standardversand CHF 8.50 B-Post, sofern nicht anders angegeben",
+      "Rückgabe/Reklamation über Lieferant; Feinraumshop vermittelt",
+      "Marketing nur nach Einwilligung",
+      "Datenschutz gemäss Datenschutzerklärung"
+    ],
+    "helpTitle": "Hilfe & Support",
+    "helpBody": "Unser Support-Team hilft Ihnen gerne bei Fragen. Nutzen Sie unser Hilfe-Center oder kontaktieren Sie uns direkt.",
+    "helpCenter": "Hilfe-Center"
+  },
+  "termsAcceptanceRequired": "Sie müssen die Allgemeinen Geschäftsbedingungen akzeptieren",
+  "marketingPreferences": "Marketing-Einstellungen (optional)",
+  "newsletterOptIn": "Ich möchte Newsletter und Marketing-Updates erhalten",
+  "cookiesOptIn": "Ich stimme der Verwendung von Cookies und Tracking-Technologien zu",
   "terms": {
-    "subtitle": "Verstehen Sie Ihre Rechte und Pflichten bei der Nutzung unserer Dienste.",
-    "acceptanceTitle": "Annahme der Bedingungen",
-    "acceptanceBody": "Durch den Zugriff auf unsere Website oder die Nutzung unserer Dienste stimmen Sie diesen Bedingungen zu.",
-    "accountsTitle": "Benutzerkonten",
-    "accountsItem1": "Geben Sie genaue und vollständige Registrierungsinformationen an.",
-    "accountsItem2": "Halten Sie Ihre Kontodaten sicher.",
-    "accountsItem3": "Benachrichtigen Sie uns über unbefugten Zugriff.",
-    "ordersTitle": "Bestellungen und Zahlungen",
-    "ordersBody": "Alle Bestellungen unterliegen der Annahme und Verfügbarkeit. Preise können ohne Vorankündigung geändert werden.",
-    "liabilityTitle": "Haftungsbeschränkung",
-    "liabilityBody": "Wir haften nicht für indirekte oder Folgeschäden, soweit gesetzlich zulässig.",
+    "subtitle": "Verstehen Sie Ihre Rechte und Pflichten bei der Nutzung unserer Plattform.",
+    "badge": "AGB",
+    "scopeTitle": "Geltungsbereich",
+    "scopeBody": "Diese AGB regeln die Nutzung der Plattform Feinraumshop. Feinraumshop vermittelt den Verkauf von Produkten zwischen registrierten Lieferanten („Lieferant“) und Kund:innen („Kund:innen“). Mit der Nutzung der Plattform erklären sich alle Nutzer:innen mit diesen AGB einverstanden.",
+    "contractTitle": "Vertragspartner / Vertragsschluss",
+    "contractBody": "Vertragspartner für Kund:innen ist der jeweilige Lieferant, der das Produkt anbietet. Feinraumshop stellt die Plattforminfrastruktur bereit.<br/><br/>Ein Kaufvertrag kommt zustande, sobald:<br/>• Kund:innen eine Bestellung aufgeben,<br/>• der Lieferant die Bestellung bestätigt, und<br/>• Feinraumshop die Produktfreigabe erteilt.<br/><br/>Produkte ohne Genehmigung dürfen nicht verkauft werden.",
+    "suppliersTitle": "Lieferanten / Verkäufer",
+    "suppliersBody": "Lieferanten müssen ein Konto bei Feinraumshop erstellen und genehmigt werden.<br/><br/>Pflichten der Lieferanten:<br/>• Korrekte und vollständige Produktinformationen (Bilder, Beschreibung, Preis, Lagerbestand, Lieferzeiten)<br/>• Rechtzeitiger Versand an Kund:innen<br/>• Abwicklung von Reklamationen, Rückgaben, Gewährleistungsfällen<br/>• Einhaltung gesetzlicher Bestimmungen<br/><br/>Feinraumshop behält sich das Recht vor, Produkte, Kategorien oder Lieferanten jederzeit zu überprüfen, abzulehnen oder zu entfernen.<br/><br/>Lieferanten haften für Inhalte, die sie hochladen (Bilder, Texte, Beschreibungen).",
+    "productsTitle": "Produkte / Verfügbarkeit",
+    "productsList": [
+      "Produkte werden von Lieferanten eingepflegt und müssen von Feinraumshop freigegeben werden.",
+      "Feinraumshop übernimmt keine Haftung für Verfügbarkeit, Lieferzeiten oder Vollständigkeit der Produktinformationen.",
+      "Produkte sind verfügbar, solange der Vorrat reicht. Änderungen oder Rücknahmen sind vorbehalten."
+    ],
+    "pricingTitle": "Preise / Zahlung",
+    "pricingList": [
+      "Alle Preise verstehen sich inkl. MwSt., soweit nicht anders angegeben.",
+      "Standardversand: CHF 8.50 (B-Post), sofern vom Lieferanten nichts anderes angegeben wird.",
+      "Abweichende Versandkosten werden vom Lieferanten angegeben.",
+      "Zahlungsarten: Twint, Kreditkarte, Rechnung, PayPal oder weitere vereinbarte Zahlungsmittel.",
+      "Zahlungen müssen vollständig und fristgerecht erfolgen."
+    ],
+    "shippingTitle": "Versand / Lieferung",
+    "shippingList": [
+      "Lieferanten sind für Versand und Lieferzeit verantwortlich.",
+      "Standardversand: CHF 8.50 B-Post, sofern nichts anderes angegeben ist.",
+      "Feinraumshop stellt ggf. Richtwerte für Lieferzeiten bereit.",
+      "Verzögerungen beim Versand liegen in der Verantwortung des Lieferanten.",
+      "Für internationale Lieferungen können zusätzliche Kosten (Zoll, Steuern) anfallen."
+    ],
+    "returnsTitle": "Rückgabe / Reklamation / Gewährleistung",
+    "returnsList": [
+      "Kund:innen haben Anspruch auf gesetzliche Gewährleistung (2 Jahre in der Schweiz).",
+      "Reklamationen oder Rückgaben erfolgen über den Lieferanten; Feinraumshop kann vermitteln.",
+      "Rücksendungen, Ersatzlieferungen oder Erstattungen erfolgen nach Absprache mit dem Lieferanten."
+    ],
+    "customerObligationsTitle": "Pflichten der Kund:innen",
+    "customerObligationsList": [
+      "Korrekte Angabe von Liefer- und Kontaktdaten",
+      "Vollständige Bezahlung",
+      "Kein Missbrauch der Plattform oder Produkte"
+    ],
+    "liabilityTitle": "Haftung / Haftungsbeschränkung",
+    "liabilityList": [
+      "Feinraumshop haftet ausschliesslich für Bereitstellung der Plattform.",
+      "Lieferanten haften für Produktqualität, Versand, Schäden oder Defekte.",
+      "Haftung ist auf den Kaufpreis beschränkt; indirekte Schäden ausgeschlossen."
+    ],
+    "marketingTitle": "Marketing / Newsletter",
+    "marketingList": [
+      "Kund:innen erhalten Newsletter oder Marketing nur nach ausdrücklicher Zustimmung (Opt-in).",
+      "Abmeldung jederzeit über Profil oder Link in E-Mail möglich."
+    ],
+    "dataProtectionTitle": "Datenschutz",
+    "dataProtectionList": [
+      "Verarbeitung personenbezogener Daten gemäss Datenschutzerklärung.",
+      "Daten werden ggf. an Lieferanten, Zahlungsanbieter oder Versanddienstleister übermittelt.",
+      "Kund:innen haben Rechte auf Auskunft, Berichtigung, Löschung und Widerspruch."
+    ],
+    "intellectualPropertyTitle": "Geistiges Eigentum",
+    "intellectualPropertyList": [
+      "Inhalte von Feinraumshop (Texte, Bilder, Produktinformationen) sind urheberrechtlich geschützt.",
+      "Nutzungsrechte nur für Plattformnutzung."
+    ],
+    "changesTitle": "Änderungen der AGB",
+    "changesList": [
+      "Änderungen werden den Nutzer:innen mitgeteilt (z. B. E-Mail, Hinweis auf Plattform).",
+      "Mit fortgesetzter Nutzung nach Änderung gelten diese als akzeptiert."
+    ],
+    "lawTitle": "Anwendbares Recht / Gerichtsstand",
+    "lawList": [
+      "Schweizer Recht.",
+      "Gerichtsstand: Arbon, Schweiz."
+    ],
     "questionsTitle": "Fragen",
     "questionsBody": "Besuchen Sie für Hilfe unser Hilfe-Center oder kontaktieren Sie uns."
   },
@@ -356,6 +472,13 @@
   "adminTools": "Admin-Tools",
   "orders": "Bestellungen",
   "logout": "Abmelden",
+  "userMenu": {
+    "profile": "Profil",
+    "orders": "Bestellungen",
+    "merchantDashboard": "Händler-Dashboard",
+    "adminPanel": "Admin-Panel",
+    "logout": "Abmelden"
+  },
   "signIn": "Anmelden",
   "forgotPassword": "Passwort vergessen?",
   "resetYourPassword": "Passwort zurücksetzen",
@@ -636,6 +759,12 @@
     "settings": "Einstellungen",
     "security": "Sicherheit",
     "paymentMethods": "Zahlungsmethoden",
+    "becomeMerchantTitle": "Händler werden",
+    "becomeMerchantDescription": "Verkaufen Sie Ihre Produkte auf dem Feinraum-Marktplatz. Erstellen Sie Ihren eigenen Shop und erreichen Sie tausende Kundinnen und Kunden.",
+    "becomeMerchantBadgeOne": "Keine Einrichtungsgebühren",
+    "becomeMerchantBadgeTwo": "Sichere Zahlungen",
+    "becomeMerchantBadgeThree": "Kundenverwaltung",
+    "becomeMerchantCta": "Als Händler registrieren",
     "noOrders": "Noch keine Bestellungen",
     "orderHistoryAppear": "Ihr Bestellverlauf wird hier angezeigt.",
     "noSavedItems": "Keine gespeicherten Artikel",
@@ -650,7 +779,12 @@
     "merchantDashboard": "Händler-Dashboard",
     "adminTools": "Admin-Tools",
     "accessAdminDashboard": "Greifen Sie auf das Admin-Dashboard zu, um die Plattform zu verwalten.",
-    "adminDashboard": "Admin-Dashboard"
+    "adminDashboard": "Admin-Dashboard",
+    "shippingCost": "Versandkosten",
+    "shippingCostHelp": "Leer lassen für Standard CHF 8.50",
+    "shippingCostNote": "Versandkosten-Hinweis",
+    "shippingCostNoteHelp": "Optionaler Hinweis zu Versandoptionen",
+    "shippingCostNotePlaceholder": "Expressversand möglich"
   },
   "roles": {
     "customer": "Kunde",
@@ -856,7 +990,8 @@
     "statusPublished": "Veröffentlicht",
     "statusPending": "Ausstehend",
     "statusDraft": "Entwurf",
-    "multipleImages": "Mehrere Bilder möglich"
+    "multipleImages": "Mehrere Bilder möglich",
+    "viewProducts": "Produkte ansehen"
   },
   "settings": "Einstellungen",
   "cart": {

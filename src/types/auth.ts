@@ -17,6 +17,11 @@ export interface User {
   address?: Address;
   createdAt: string;
   lastLogin: string;
+  termsAccepted?: boolean;
+  termsAcceptedAt?: Date;
+  termsAcceptedVersion?: string;
+  newsletterConsent?: boolean;
+  cookiesConsent?: boolean;
 }
 
 export interface LoginCredentials {
@@ -33,6 +38,9 @@ export interface RegisterData {
   confirmPassword: string;
   role: 'customer' | 'merchant';
   storeName?: string; // optional, required when role is merchant
+  agreeToTerms?: boolean;
+  newsletterConsent?: boolean;
+  cookiesConsent?: boolean;
 }
 
 export interface AuthState {

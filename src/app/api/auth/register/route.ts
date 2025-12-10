@@ -8,10 +8,15 @@ import { sendWelcomeEmail } from '@/lib/email';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { firstName, lastName, email, password, phone, role, storeName } = body || {};
+    const { firstName, lastName, email, password, phone, role, storeName, agreeToTerms, newsletterConsent, cookiesConsent } = body || {};
 
     if (!email || !password || !firstName || !lastName) {
       return NextResponse.json({ message: 'Missing required fields' }, { status: 400 });
+    }
+
+    // Validate T&C acceptance for registration
+    if (agreeToTerms !== true) {
+      return NextResponse.json({ message: 'You must accept the Terms and Conditions' }, { status: 400 });
     }
 
     // Validate password strength
@@ -37,6 +42,20 @@ export async function POST(req: NextRequest) {
     const hashed = await bcrypt.hash(password, 12);
     const name = `${firstName} ${lastName}`.trim();
 
+    // Get current active terms version
+    const currentTerms = await prisma.termsVersion.findFirst({
+      where: { isActive: true },
+      orderBy: { effectiveDate: 'desc' }
+    });
+
+    if (!currentTerms) {
+      return NextResponse.json({ message: 'No active terms found. Please contact support.' }, { status: 500 });
+    }
+
+    // Get client IP address
+    const forwarded = req.headers.get('x-forwarded-for');
+    const ip = forwarded ? forwarded.split(',')[0] : 'unknown';
+
     // Create user with requested role (default to CUSTOMER)
     const isMerchant = role === 'merchant' || role === 'MERCHANT';
     const phoneValue = phone && phone.trim() ? phone.trim() : null;
@@ -48,6 +67,18 @@ export async function POST(req: NextRequest) {
         name,
         phone: phoneValue, // Keep in User for backward compatibility
         role: isMerchant ? 'MERCHANT' : 'CUSTOMER',
+        // T&C acceptance tracking
+        termsAccepted: true,
+        termsAcceptedAt: new Date(),
+        termsAcceptedVersion: currentTerms.version,
+        termsAcceptedIP: ip,
+        // Marketing consents
+        newsletterConsent: newsletterConsent === true,
+        newsletterConsentAt: newsletterConsent === true ? new Date() : null,
+        newsletterConsentIP: newsletterConsent === true ? ip : null,
+        cookiesConsent: cookiesConsent === true,
+        cookiesConsentAt: cookiesConsent === true ? new Date() : null,
+        cookiesConsentIP: cookiesConsent === true ? ip : null,
       },
     });
 

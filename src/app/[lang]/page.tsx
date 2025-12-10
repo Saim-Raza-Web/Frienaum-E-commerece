@@ -141,7 +141,7 @@ function HomePage({ params }: HomePageProps) {
       
       // Fetch products, categories, and reviews in parallel with error handling for each
       const [productsResponse, categoriesResponse] = await Promise.all([
-        fetch(`/api/products?t=${Date.now()}`, { cache: 'no-store' }).then(res => {
+        fetch(`/api/products?t=${Date.now()}`, { cache: 'no-store', credentials: 'include' }).then(res => {
           if (!res.ok) throw new Error('Failed to fetch products');
           return res.json();
         }).catch(err => {

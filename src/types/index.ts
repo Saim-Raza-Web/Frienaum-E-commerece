@@ -10,6 +10,9 @@ export interface Product {
   reviewCount: number;
   inStock: boolean;
   tags: string[];
+  status?: 'PUBLISHED' | 'PENDING' | 'DRAFT' | string;
+  shippingCost?: number;
+  shippingCostNote?: string;
 }
 
 export interface CartItem {
@@ -22,6 +25,11 @@ export interface User {
   name: string;
   email: string;
   role: 'customer' | 'merchant' | 'admin';
+  termsAccepted?: boolean;
+  termsAcceptedAt?: Date;
+  termsAcceptedVersion?: string;
+  newsletterConsent?: boolean;
+  cookiesConsent?: boolean;
 }
 
 export interface Order {

@@ -69,20 +69,20 @@ export async function sendPasswordResetEmail(email: string, name: string, resetU
     const mailOptions = {
       from: `"${process.env.FROM_NAME || 'Feinraum Shop'}" <${process.env.FROM_EMAIL || 'support@feinraumshop.ch'}>`,
       to: email,
-      subject: 'Reset Your Password',
+      subject: 'Passwort zurücksetzen - Feinraum Shop',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h2 style="color: #333;">Reset Your Password</h2>
-          <p>Hi ${name},</p>
-          <p>You recently requested to reset your password. Click the button below to reset it:</p>
+          <h2 style="color: #333;">Passwort zurücksetzen</h2>
+          <p>Hallo ${name},</p>
+          <p>Sie haben kürzlich eine Zurücksetzung Ihres Passworts angefordert. Klicken Sie auf die Schaltfläche unten, um es zurückzusetzen:</p>
           <div style="text-align: center; margin: 30px 0;">
-            <a href="${resetUrl}" style="background-color: #06b6d4; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Reset Password</a>
+            <a href="${resetUrl}" style="background-color: #06b6d4; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">Passwort zurücksetzen</a>
           </div>
-          <p>If you didn't request this, please ignore this email. The link will expire in 1 hour.</p>
-          <p>If the button doesn't work, copy and paste this link into your browser:</p>
+          <p>Wenn Sie dies nicht angefordert haben, ignorieren Sie bitte diese E-Mail. Der Link läuft in 1 Stunde ab.</p>
+          <p>Wenn die Schaltfläche nicht funktioniert, kopieren Sie diesen Link und fügen Sie ihn in Ihren Browser ein:</p>
           <p style="word-break: break-all; color: #666;">${resetUrl}</p>
           <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
-          <p style="color: #666; font-size: 14px;">This email was sent from ${process.env.FROM_NAME || 'Your App'}. If you have any questions, please contact our support team.</p>
+          <p style="color: #666; font-size: 14px;">Diese E-Mail wurde von ${process.env.FROM_NAME || 'Feinraum Shop'} gesendet. Bei Fragen kontaktieren Sie bitte unser Support-Team.</p>
         </div>
       `,
     };
@@ -103,28 +103,28 @@ export async function sendWelcomeEmail(email: string, name: string) {
     const mailOptions = {
       from: `"${process.env.FROM_NAME || 'Feinraum Shop'}" <${process.env.FROM_EMAIL || 'support@feinraumshop.ch'}>`,
       to: email,
-      subject: 'Welcome to Feinraum Shop!',
+      subject: 'Willkommen bei Feinraum Shop!',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="background: linear-gradient(135deg, #a97f57 0%, #8e6a49 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-            <h1 style="color: white; margin: 0; font-size: 28px;">Welcome to Feinraum Shop!</h1>
+            <h1 style="color: white; margin: 0; font-size: 28px;">Willkommen bei Feinraum Shop!</h1>
           </div>
           <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
-            <p style="color: #333; font-size: 16px; line-height: 1.6;">Hi ${name},</p>
-            <p style="color: #333; font-size: 16px; line-height: 1.6;">Thank you for creating an account with Feinraum Shop! We're excited to have you as part of our community.</p>
-            <p style="color: #333; font-size: 16px; line-height: 1.6;">Your account has been successfully created. You can now:</p>
+            <p style="color: #333; font-size: 16px; line-height: 1.6;">Hallo ${name},</p>
+            <p style="color: #333; font-size: 16px; line-height: 1.6;">Vielen Dank, dass Sie ein Konto bei Feinraum Shop erstellt haben! Wir freuen uns, Sie als Teil unserer Community begrüßen zu dürfen.</p>
+            <p style="color: #333; font-size: 16px; line-height: 1.6;">Ihr Konto wurde erfolgreich erstellt. Sie können jetzt:</p>
             <ul style="color: #333; font-size: 16px; line-height: 1.8; padding-left: 20px;">
-              <li>Browse our wide selection of products</li>
-              <li>Add items to your cart and checkout securely</li>
-              <li>Track your orders</li>
-              <li>Manage your profile and preferences</li>
+              <li>Unsere große Auswahl an Produkten durchsuchen</li>
+              <li>Artikel sicher in den Warenkorb legen und bezahlen</li>
+              <li>Ihre Bestellungen verfolgen</li>
+              <li>Ihr Profil und Ihre Einstellungen verwalten</li>
             </ul>
             <div style="text-align: center; margin: 30px 0;">
-              <a href="${APP_BASE_URL}" style="background-color: #a97f57; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: 600;">Start Shopping</a>
+              <a href="${APP_BASE_URL}" style="background-color: #a97f57; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: 600;">Einkaufen beginnen</a>
             </div>
-            <p style="color: #666; font-size: 14px; line-height: 1.6;">If you have any questions or need assistance, please don't hesitate to contact our support team.</p>
+            <p style="color: #666; font-size: 14px; line-height: 1.6;">Bei Fragen oder wenn Sie Hilfe benötigen, zögern Sie bitte nicht, unser Support-Team zu kontaktieren.</p>
             <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
-            <p style="color: #666; font-size: 14px; line-height: 1.6;">This email was sent from Feinraum Shop. If you didn't create this account, please contact our support team immediately.</p>
+            <p style="color: #666; font-size: 14px; line-height: 1.6;">Diese E-Mail wurde von Feinraum Shop gesendet. Wenn Sie dieses Konto nicht erstellt haben, kontaktieren Sie bitte sofort unser Support-Team.</p>
           </div>
         </div>
       `,
@@ -158,31 +158,31 @@ export async function sendOrderConfirmationEmail(email: string, name: string, or
   const mailOptions = {
     from: `"${process.env.FROM_NAME || 'Feinraum Shop'}" <${process.env.FROM_EMAIL || 'support@feinraumshop.ch'}>`,
     to: email,
-    subject: `Order Confirmation - Order #${orderDetails.orderId}`,
+    subject: `Bestellbestätigung - Bestellung #${orderDetails.orderId}`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center;">
-          <h1 style="margin: 0; font-size: 28px;">Order Confirmed!</h1>
-          <p style="margin: 10px 0 0 0; font-size: 16px;">Thank you for your purchase</p>
+          <h1 style="margin: 0; font-size: 28px;">Bestellung bestätigt!</h1>
+          <p style="margin: 10px 0 0 0; font-size: 16px;">Vielen Dank für Ihren Einkauf</p>
         </div>
 
         <div style="padding: 30px; background: white;">
           <p style="font-size: 16px; line-height: 1.6; color: #333;">
-            Hi ${name},
+            Hallo ${name},
           </p>
 
           <p style="font-size: 16px; line-height: 1.6; color: #333;">
-            Your order has been successfully placed! Here are the details:
+            Ihre Bestellung wurde erfolgreich aufgegeben! Hier sind die Details:
           </p>
 
           <div style="background: #f8f9fa; padding: 20px; margin: 20px 0; border-radius: 8px;">
-            <h3 style="margin: 0 0 15px 0; color: #333;">Order #${orderDetails.orderId}</h3>
+            <h3 style="margin: 0 0 15px 0; color: #333;">Bestellung #${orderDetails.orderId}</h3>
             <table style="width: 100%; border-collapse: collapse;">
               <thead>
                 <tr style="background: #e9ecef;">
-                  <th style="padding: 10px; text-align: left; border-bottom: 2px solid #dee2e6;">Product</th>
-                  <th style="padding: 10px; text-align: center; border-bottom: 2px solid #dee2e6;">Qty</th>
-                  <th style="padding: 10px; text-align: right; border-bottom: 2px solid #dee2e6;">Total</th>
+                  <th style="padding: 10px; text-align: left; border-bottom: 2px solid #dee2e6;">Produkt</th>
+                  <th style="padding: 10px; text-align: center; border-bottom: 2px solid #dee2e6;">Menge</th>
+                  <th style="padding: 10px; text-align: right; border-bottom: 2px solid #dee2e6;">Gesamt</th>
                 </tr>
               </thead>
               <tbody>
@@ -190,7 +190,7 @@ export async function sendOrderConfirmationEmail(email: string, name: string, or
               </tbody>
               <tfoot>
                 <tr style="background: #e9ecef; font-weight: bold;">
-                  <td colspan="2" style="padding: 15px; text-align: right; border-top: 2px solid #dee2e6;">Total Amount:</td>
+                  <td colspan="2" style="padding: 15px; text-align: right; border-top: 2px solid #dee2e6;">Gesamtbetrag:</td>
                   <td style="padding: 15px; text-align: right; border-top: 2px solid #dee2e6;">${orderDetails.totalAmount.toLocaleString('de-CH', { minimumFractionDigits: 2 })} ${orderDetails.currency}</td>
                 </tr>
               </tfoot>
@@ -198,24 +198,24 @@ export async function sendOrderConfirmationEmail(email: string, name: string, or
           </div>
 
           <p style="font-size: 16px; line-height: 1.6; color: #333;">
-            We'll send you another email when your order ships. You can track your order status by logging into your account.
+            Wir senden Ihnen eine weitere E-Mail, wenn Ihre Bestellung versendet wird. Sie können den Status Ihrer Bestellung verfolgen, indem Sie sich in Ihr Konto einloggen.
           </p>
 
           <div style="text-align: center; margin: 30px 0;">
             <a href="${APP_BASE_URL}/orders"
                style="background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
-              View Your Orders
+              Ihre Bestellungen ansehen
             </a>
           </div>
         </div>
 
         <div style="background: #f8f9fa; padding: 20px; text-align: center; color: #666; font-size: 14px;">
           <p style="margin: 0;">
-            Questions about your order? Contact our support team at
+            Fragen zu Ihrer Bestellung? Kontaktieren Sie unser Support-Team unter
             <a href="mailto:support@feinraumshop.ch" style="color: #667eea;">support@feinraumshop.ch</a>
           </p>
           <p style="color: #666; font-size: 14px; line-height: 1.6;">
-            This email was sent from Feinraum Shop. If you have any questions, please contact our support team.
+            Diese E-Mail wurde von Feinraum Shop gesendet. Bei Fragen kontaktieren Sie bitte unser Support-Team.
           </p>
         </div>
       </div>
@@ -249,39 +249,39 @@ export async function sendOrderNotificationToMerchant(email: string, merchantNam
   const mailOptions = {
     from: `"${process.env.FROM_NAME || 'Feinraum Shop'}" <${process.env.FROM_EMAIL || 'support@feinraumshop.ch'}>`,
     to: email,
-    subject: `New Order Received - Order #${orderDetails.orderId}`,
+    subject: `Neue Bestellung erhalten - Bestellung #${orderDetails.orderId}`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <div style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; padding: 30px; text-align: center;">
-          <h1 style="margin: 0; font-size: 28px;">New Order!</h1>
-          <p style="margin: 10px 0 0 0; font-size: 16px;">You have received a new order</p>
+          <h1 style="margin: 0; font-size: 28px;">Neue Bestellung!</h1>
+          <p style="margin: 10px 0 0 0; font-size: 16px;">Sie haben eine neue Bestellung erhalten</p>
         </div>
 
         <div style="padding: 30px; background: white;">
           <p style="font-size: 16px; line-height: 1.6; color: #333;">
-            Hi ${merchantName},
+            Hallo ${merchantName},
           </p>
 
           <p style="font-size: 16px; line-height: 1.6; color: #333;">
-            Congratulations! You have received a new order. Here are the details:
+            Herzlichen Glückwunsch! Sie haben eine neue Bestellung erhalten. Hier sind die Details:
           </p>
 
           <div style="background: #f8f9fa; padding: 20px; margin: 20px 0; border-radius: 8px;">
             <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
               <div>
-                <strong>Order #${orderDetails.orderId}</strong>
+                <strong>Bestellung #${orderDetails.orderId}</strong>
               </div>
               <div>
-                <strong>Customer:</strong> ${orderDetails.customerName} (${orderDetails.customerEmail})
+                <strong>Kunde:</strong> ${orderDetails.customerName} (${orderDetails.customerEmail})
               </div>
             </div>
 
             <table style="width: 100%; border-collapse: collapse;">
               <thead>
                 <tr style="background: #e9ecef;">
-                  <th style="padding: 10px; text-align: left; border-bottom: 2px solid #dee2e6;">Product</th>
-                  <th style="padding: 10px; text-align: center; border-bottom: 2px solid #dee2e6;">Qty</th>
-                  <th style="padding: 10px; text-align: right; border-bottom: 2px solid #dee2e6;">Total</th>
+                  <th style="padding: 10px; text-align: left; border-bottom: 2px solid #dee2e6;">Produkt</th>
+                  <th style="padding: 10px; text-align: center; border-bottom: 2px solid #dee2e6;">Menge</th>
+                  <th style="padding: 10px; text-align: right; border-bottom: 2px solid #dee2e6;">Gesamt</th>
                 </tr>
               </thead>
               <tbody>
@@ -289,7 +289,7 @@ export async function sendOrderNotificationToMerchant(email: string, merchantNam
               </tbody>
               <tfoot>
                 <tr style="background: #e9ecef; font-weight: bold;">
-                  <td colspan="2" style="padding: 15px; text-align: right; border-top: 2px solid #dee2e6;">Total Amount:</td>
+                  <td colspan="2" style="padding: 15px; text-align: right; border-top: 2px solid #dee2e6;">Gesamtbetrag:</td>
                   <td style="padding: 15px; text-align: right; border-top: 2px solid #dee2e6;">${orderDetails.totalAmount.toLocaleString('de-CH', { minimumFractionDigits: 2 })} ${orderDetails.currency}</td>
                 </tr>
               </tfoot>
@@ -298,25 +298,25 @@ export async function sendOrderNotificationToMerchant(email: string, merchantNam
 
           <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 6px; margin: 20px 0;">
             <p style="margin: 0; color: #856404; font-weight: bold;">
-              ⚡ Action Required: Please process this order within 24 hours to maintain customer satisfaction.
+              ⚡ Aktion erforderlich: Bitte bearbeiten Sie diese Bestellung innerhalb von 24 Stunden, um die Kundenzufriedenheit zu gewährleisten.
             </p>
           </div>
 
           <div style="text-align: center; margin: 30px 0;">
             <a href="${APP_BASE_URL}/merchant/orders"
                style="background: #28a745; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
-              View Order Details
+              Bestelldetails ansehen
             </a>
           </div>
         </div>
 
         <div style="background: #f8f9fa; padding: 20px; text-align: center; color: #666; font-size: 14px;">
           <p style="margin: 0;">
-            Need help with order processing? Contact our support team at
+            Hilfe bei der Bestellbearbeitung benötigt? Kontaktieren Sie unser Support-Team unter
             <a href="mailto:support@feinraumshop.ch" style="color: #28a745;">support@feinraumshop.ch</a>
           </p>
           <p style="color: #666; font-size: 14px; line-height: 1.6;">
-            This email was sent from Feinraum Shop. If you have any questions, please contact our support team.
+            Diese E-Mail wurde von Feinraum Shop gesendet. Bei Fragen kontaktieren Sie bitte unser Support-Team.
           </p>
         </div>
       </div>
@@ -339,47 +339,47 @@ export async function sendOrderStatusUpdateEmail(email: string, name: string, or
 }) {
   const statusMessages = {
     'PROCESSING': {
-      title: 'Order Processing Started',
-      message: 'Your order is now being processed. We\'ll send you another update when it ships.',
+      title: 'Bestellung wird bearbeitet',
+      message: 'Ihre Bestellung wird nun bearbeitet. Wir senden Ihnen ein weiteres Update, wenn sie versendet wird.',
       color: '#ffc107'
     },
     'SHIPPED': {
-      title: 'Order Shipped!',
-      message: 'Your order has been shipped and is on its way to you.',
+      title: 'Bestellung versendet!',
+      message: 'Ihre Bestellung wurde versendet und ist auf dem Weg zu Ihnen.',
       color: '#17a2b8'
     },
     'DELIVERED': {
-      title: 'Order Delivered',
-      message: 'Your order has been successfully delivered. Thank you for shopping with us!',
+      title: 'Bestellung zugestellt',
+      message: 'Ihre Bestellung wurde erfolgreich zugestellt. Vielen Dank für Ihren Einkauf bei uns!',
       color: '#28a745'
     },
     'CANCELLED': {
-      title: 'Order Cancelled',
-      message: 'Your order has been cancelled. If you have any questions, please contact our support team.',
+      title: 'Bestellung storniert',
+      message: 'Ihre Bestellung wurde storniert. Bei Fragen kontaktieren Sie bitte unser Support-Team.',
       color: '#dc3545'
     }
   };
 
   const statusInfo = statusMessages[orderDetails.status as keyof typeof statusMessages] || {
-    title: 'Order Status Update',
-    message: `Your order status has been updated to ${orderDetails.status}.`,
+    title: 'Bestellstatus aktualisiert',
+    message: `Der Status Ihrer Bestellung wurde auf ${orderDetails.status} aktualisiert.`,
     color: '#6c757d'
   };
 
   const mailOptions = {
     from: `"${process.env.FROM_NAME || 'Feinraum Shop'}" <${process.env.FROM_EMAIL || 'support@feinraumshop.ch'}>`,
     to: email,
-    subject: `${statusInfo.title} - Order #${orderDetails.orderId}`,
+    subject: `${statusInfo.title} - Bestellung #${orderDetails.orderId}`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <div style="background: ${statusInfo.color}; color: white; padding: 30px; text-align: center;">
           <h1 style="margin: 0; font-size: 28px;">${statusInfo.title}</h1>
-          <p style="margin: 10px 0 0 0; font-size: 16px;">Order #${orderDetails.orderId}</p>
+          <p style="margin: 10px 0 0 0; font-size: 16px;">Bestellung #${orderDetails.orderId}</p>
         </div>
 
         <div style="padding: 30px; background: white;">
           <p style="font-size: 16px; line-height: 1.6; color: #333;">
-            Hi ${name},
+            Hallo ${name},
           </p>
 
           <p style="font-size: 16px; line-height: 1.6; color: #333;">
@@ -387,27 +387,27 @@ export async function sendOrderStatusUpdateEmail(email: string, name: string, or
           </p>
 
           <div style="background: #f8f9fa; padding: 20px; margin: 20px 0; border-radius: 8px; text-align: center;">
-            <h3 style="margin: 0; color: #333;">Order Details</h3>
+            <h3 style="margin: 0; color: #333;">Bestelldetails</h3>
             <p style="margin: 10px 0 0 0; font-size: 18px; font-weight: bold;">
-              Total: ${orderDetails.totalAmount.toLocaleString('de-CH', { minimumFractionDigits: 2 })} ${orderDetails.currency}
+              Gesamt: ${orderDetails.totalAmount.toLocaleString('de-CH', { minimumFractionDigits: 2 })} ${orderDetails.currency}
             </p>
           </div>
 
           <div style="text-align: center; margin: 30px 0;">
             <a href="${APP_BASE_URL}/orders"
                style="background: ${statusInfo.color}; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
-              Track Your Order
+              Bestellung verfolgen
             </a>
           </div>
         </div>
 
         <div style="background: #f8f9fa; padding: 20px; text-align: center; color: #666; font-size: 14px;">
           <p style="margin: 0;">
-            Questions about your order? Contact our support team at
+            Fragen zu Ihrer Bestellung? Kontaktieren Sie unser Support-Team unter
             <a href="mailto:support@feinraumshop.ch" style="color: ${statusInfo.color};">support@feinraumshop.ch</a>
           </p>
           <p style="color: #666; font-size: 14px; line-height: 1.6;">
-            This email was sent from Feinraum Shop. If you have any questions, please contact our support team.
+            Diese E-Mail wurde von Feinraum Shop gesendet. Bei Fragen kontaktieren Sie bitte unser Support-Team.
           </p>
         </div>
       </div>
@@ -426,62 +426,62 @@ export async function sendMerchantWelcomeEmail(email: string, name: string, stor
   const mailOptions = {
     from: `"${process.env.FROM_NAME || 'Feinraum Shop'}" <${process.env.FROM_EMAIL || 'support@feinraumshop.ch'}>`,
     to: email,
-    subject: `Welcome to Feinraum - Your store "${storeName}" is ready!`,
+    subject: `Willkommen bei Feinraum - Ihr Store "${storeName}" ist bereit!`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center;">
-          <h1 style="margin: 0; font-size: 28px;">Welcome to Feinraum!</h1>
-          <p style="margin: 10px 0 0 0; font-size: 16px;">Your merchant journey begins now</p>
+          <h1 style="margin: 0; font-size: 28px;">Willkommen bei Feinraum!</h1>
+          <p style="margin: 10px 0 0 0; font-size: 16px;">Ihre Händler-Reise beginnt jetzt</p>
         </div>
 
         <div style="padding: 30px; background: white;">
           <p style="font-size: 16px; line-height: 1.6; color: #333;">
-            Hi ${name},
+            Hallo ${name},
           </p>
 
           <p style="font-size: 16px; line-height: 1.6; color: #333;">
-            Congratulations! Your store <strong>"${storeName}"</strong> has been successfully created on Feinraum marketplace.
+            Herzlichen Glückwunsch! Ihr Store <strong>"${storeName}"</strong> wurde erfolgreich auf der Feinraum-Marktplattform erstellt.
           </p>
 
           <div style="background: #f8f9fa; padding: 20px; margin: 20px 0; border-radius: 8px;">
-            <h3 style="margin: 0 0 15px 0; color: #333;">What's next?</h3>
+            <h3 style="margin: 0 0 15px 0; color: #333;">Was kommt als Nächstes?</h3>
             <div style="space-y: 10px;">
               <div style="display: flex; align-items: center;">
                 <span style="background: #28a745; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 10px;">1</span>
-                <span style="color: #333;">Add your first products to your store</span>
+                <span style="color: #333;">Fügen Sie Ihre ersten Produkte zu Ihrem Store hinzu</span>
               </div>
               <div style="display: flex; align-items: center;">
                 <span style="background: #28a745; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 10px;">2</span>
-                <span style="color: #333;">Customize your store settings</span>
+                <span style="color: #333;">Passen Sie Ihre Store-Einstellungen an</span>
               </div>
               <div style="display: flex; align-items: center;">
                 <span style="background: #28a745; color: white; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; margin-right: 10px;">3</span>
-                <span style="color: #333;">Start receiving orders from customers</span>
+                <span style="color: #333;">Beginnen Sie, Bestellungen von Kunden zu erhalten</span>
               </div>
             </div>
           </div>
 
           <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 6px; margin: 20px 0;">
             <p style="margin: 0; color: #856404; font-weight: bold;">
-              📋 Important: Your store is currently pending approval. We'll review it within 24 hours and notify you once it's live.
+              📋 Wichtig: Ihr Store befindet sich derzeit im Genehmigungsprozess. Wir werden ihn innerhalb von 24 Stunden überprüfen und Sie benachrichtigen, sobald er live ist.
             </p>
           </div>
 
           <div style="text-align: center; margin: 30px 0;">
             <a href="${APP_BASE_URL}/merchant"
                style="background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
-              Go to Merchant Dashboard
+              Zum Händler-Dashboard
             </a>
           </div>
         </div>
 
         <div style="background: #f8f9fa; padding: 20px; text-align: center; color: #666; font-size: 14px;">
           <p style="margin: 0;">
-            Questions about selling on Feinraum? Contact our merchant support at
+            Fragen zum Verkaufen auf Feinraum? Kontaktieren Sie unseren Händler-Support unter
             <a href="mailto:merchants@feinraumshop.ch" style="color: #667eea;">merchants@feinraumshop.ch</a>
           </p>
           <p style="color: #666; font-size: 14px; line-height: 1.6;">
-            This email was sent from Feinraum Shop. If you have any questions, please contact our support team.
+            Diese E-Mail wurde von Feinraum Shop gesendet. Bei Fragen kontaktieren Sie bitte unser Support-Team.
           </p>
         </div>
       </div>
@@ -505,45 +505,45 @@ export async function sendLoginNotificationEmail(email: string, name: string, lo
   const mailOptions = {
     from: `"${process.env.FROM_NAME || 'Feinraum Shop'}" <${process.env.FROM_EMAIL || 'support@feinraumshop.ch'}>`,
     to: email,
-    subject: `New Login to Your Feinraum Account`,
+    subject: `Neue Anmeldung bei Ihrem Feinraum-Konto`,
     html: `
       <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
         <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center;">
-          <h1 style="margin: 0; font-size: 28px;">Account Login Notification</h1>
-          <p style="margin: 10px 0 0 0; font-size: 16px;">We detected a new login to your account</p>
+          <h1 style="margin: 0; font-size: 28px;">Konto-Anmeldungsbenachrichtigung</h1>
+          <p style="margin: 10px 0 0 0; font-size: 16px;">Wir haben eine neue Anmeldung bei Ihrem Konto festgestellt</p>
         </div>
 
         <div style="padding: 30px; background: white;">
           <p style="font-size: 16px; line-height: 1.6; color: #333;">
-            Hi ${name},
+            Hallo ${name},
           </p>
 
           <p style="font-size: 16px; line-height: 1.6; color: #333;">
-            We wanted to let you know that your Feinraum account was recently accessed. If this was you, no further action is required.
+            Wir möchten Sie darüber informieren, dass kürzlich auf Ihr Feinraum-Konto zugegriffen wurde. Wenn Sie das waren, ist keine weitere Aktion erforderlich.
           </p>
 
           <div style="background: #f8f9fa; padding: 20px; margin: 20px 0; border-radius: 8px;">
-            <h3 style="margin: 0 0 15px 0; color: #333;">Login Details:</h3>
+            <h3 style="margin: 0 0 15px 0; color: #333;">Anmeldedetails:</h3>
             <table style="width: 100%; border-collapse: collapse;">
               <tr>
-                <td style="padding: 8px 0; border-bottom: 1px solid #dee2e6; font-weight: bold; width: 120px;">Time:</td>
+                <td style="padding: 8px 0; border-bottom: 1px solid #dee2e6; font-weight: bold; width: 120px;">Zeit:</td>
                 <td style="padding: 8px 0; border-bottom: 1px solid #dee2e6;">${new Date(loginDetails.loginTime).toLocaleString('de-CH')}</td>
               </tr>
               ${loginDetails.ipAddress ? `
               <tr>
-                <td style="padding: 8px 0; border-bottom: 1px solid #dee2e6; font-weight: bold;">IP Address:</td>
+                <td style="padding: 8px 0; border-bottom: 1px solid #dee2e6; font-weight: bold;">IP-Adresse:</td>
                 <td style="padding: 8px 0; border-bottom: 1px solid #dee2e6;">${loginDetails.ipAddress}</td>
               </tr>
               ` : ''}
               ${loginDetails.location ? `
               <tr>
-                <td style="padding: 8px 0; border-bottom: 1px solid #dee2e6; font-weight: bold;">Location:</td>
+                <td style="padding: 8px 0; border-bottom: 1px solid #dee2e6; font-weight: bold;">Standort:</td>
                 <td style="padding: 8px 0; border-bottom: 1px solid #dee2e6;">${loginDetails.location}</td>
               </tr>
               ` : ''}
               ${loginDetails.userAgent ? `
               <tr>
-                <td style="padding: 8px 0; font-weight: bold;">Device:</td>
+                <td style="padding: 8px 0; font-weight: bold;">Gerät:</td>
                 <td style="padding: 8px 0;">${loginDetails.userAgent.substring(0, 100)}${loginDetails.userAgent.length > 100 ? '...' : ''}</td>
               </tr>
               ` : ''}
@@ -552,29 +552,29 @@ export async function sendLoginNotificationEmail(email: string, name: string, lo
 
           <div style="background: #fff3cd; border: 1px solid #ffeaa7; padding: 15px; border-radius: 6px; margin: 20px 0;">
             <p style="margin: 0; color: #856404; font-weight: bold;">
-              🔐 Security Notice: If you did not log in to your account, please change your password immediately and contact our support team.
+              🔐 Sicherheitshinweis: Wenn Sie sich nicht bei Ihrem Konto angemeldet haben, ändern Sie bitte sofort Ihr Passwort und kontaktieren Sie unser Support-Team.
             </p>
           </div>
 
           <div style="text-align: center; margin: 30px 0;">
             <a href="${APP_BASE_URL}/profile"
                style="background: #667eea; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
-              Review Account Activity
+              Kontoaktivität überprüfen
             </a>
           </div>
 
           <p style="font-size: 14px; line-height: 1.6; color: #666; margin-top: 20px;">
-            This login notification was sent automatically. You can manage your account security preferences in your profile settings.
+            Diese Anmeldungsbenachrichtigung wurde automatisch gesendet. Sie können Ihre Konto-Sicherheitseinstellungen in Ihren Profileinstellungen verwalten.
           </p>
         </div>
 
         <div style="background: #f8f9fa; padding: 20px; text-align: center; color: #666; font-size: 14px;">
           <p style="margin: 0;">
-            Questions about your account? Contact our support team at
+            Fragen zu Ihrem Konto? Kontaktieren Sie unser Support-Team unter
             <a href="mailto:support@feinraumshop.ch" style="color: #667eea;">support@feinraumshop.ch</a>
           </p>
           <p style="color: #666; font-size: 14px; line-height: 1.6;">
-            This email was sent from Feinraum Shop. If you have any questions, please contact our support team.
+            Diese E-Mail wurde von Feinraum Shop gesendet. Bei Fragen kontaktieren Sie bitte unser Support-Team.
           </p>
         </div>
       </div>
@@ -594,31 +594,31 @@ export async function sendPasswordChangeNotification(email: string, name: string
     const mailOptions = {
       from: `"${process.env.FROM_NAME || 'Feinraum Shop'}" <${process.env.FROM_EMAIL || 'support@feinraumshop.ch'}>`,
       to: email,
-      subject: 'Your Password Has Been Changed',
+      subject: 'Ihr Passwort wurde geändert',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="background: linear-gradient(135deg, #a97f57 0%, #8e6a49 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-            <h1 style="color: white; margin: 0; font-size: 28px;">Password Changed Successfully</h1>
+            <h1 style="color: white; margin: 0; font-size: 28px;">Passwort erfolgreich geändert</h1>
           </div>
           <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
-            <p style="color: #333; font-size: 16px; line-height: 1.6;">Hi ${name},</p>
-            <p style="color: #333; font-size: 16px; line-height: 1.6;">This is to confirm that your password has been successfully changed.</p>
+            <p style="color: #333; font-size: 16px; line-height: 1.6;">Hallo ${name},</p>
+            <p style="color: #333; font-size: 16px; line-height: 1.6;">Dies ist eine Bestätigung, dass Ihr Passwort erfolgreich geändert wurde.</p>
             <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 4px;">
               <p style="color: #856404; font-size: 14px; line-height: 1.6; margin: 0;">
-                <strong>Security Notice:</strong> If you did not make this change, please contact our support team immediately and consider resetting your password.
+                <strong>Sicherheitshinweis:</strong> Wenn Sie diese Änderung nicht vorgenommen haben, kontaktieren Sie bitte sofort unser Support-Team und erwägen Sie, Ihr Passwort zurückzusetzen.
               </p>
             </div>
-            <p style="color: #333; font-size: 16px; line-height: 1.6;">For your security, we recommend:</p>
+            <p style="color: #333; font-size: 16px; line-height: 1.6;">Für Ihre Sicherheit empfehlen wir:</p>
             <ul style="color: #333; font-size: 16px; line-height: 1.8; padding-left: 20px;">
-              <li>Using a strong, unique password</li>
-              <li>Not sharing your password with anyone</li>
-              <li>Enabling two-factor authentication if available</li>
+              <li>Verwendung eines starken, einzigartigen Passworts</li>
+              <li>Nicht teilen Ihres Passworts mit anderen</li>
+              <li>Aktivierung der Zwei-Faktor-Authentifizierung, falls verfügbar</li>
             </ul>
             <div style="text-align: center; margin: 30px 0;">
-              <a href="${APP_BASE_URL}/profile" style="background-color: #a97f57; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: 600;">View Your Profile</a>
+              <a href="${APP_BASE_URL}/profile" style="background-color: #a97f57; color: white; padding: 14px 28px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: 600;">Ihr Profil ansehen</a>
             </div>
             <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
-            <p style="color: #666; font-size: 14px; line-height: 1.6;">This email was sent from Feinraum Shop. If you have any questions or concerns, please contact our support team.</p>
+            <p style="color: #666; font-size: 14px; line-height: 1.6;">Diese E-Mail wurde von Feinraum Shop gesendet. Bei Fragen oder Bedenken kontaktieren Sie bitte unser Support-Team.</p>
           </div>
         </div>
       `,
@@ -644,32 +644,32 @@ export async function sendOrderConfirmationToCustomer(orderData: any) {
     const mailOptions = {
       from: `"${process.env.FROM_NAME || 'Feinraum Shop'}" <${process.env.FROM_EMAIL || 'support@feinraumshop.ch'}>`,
       to: customer.email,
-      subject: `Order Confirmation - Order #${order.id}`,
+      subject: `Bestellbestätigung - Bestellung #${order.id}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="background: linear-gradient(135deg, #a97f57 0%, #8e6a49 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-            <h1 style="color: white; margin: 0; font-size: 28px;">Order Confirmed!</h1>
-            <p style="color: white; margin: 10px 0 0 0; opacity: 0.9;">Thank you for your purchase</p>
+            <h1 style="color: white; margin: 0; font-size: 28px;">Bestellung bestätigt!</h1>
+            <p style="color: white; margin: 10px 0 0 0; opacity: 0.9;">Vielen Dank für Ihren Einkauf</p>
           </div>
           <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
-            <p style="color: #333; font-size: 16px; line-height: 1.6;">Hi ${customer.name},</p>
-            <p style="color: #333; font-size: 16px; line-height: 1.6;">Thank you for your order! We're excited to process your purchase.</p>
+            <p style="color: #333; font-size: 16px; line-height: 1.6;">Hallo ${customer.name},</p>
+            <p style="color: #333; font-size: 16px; line-height: 1.6;">Vielen Dank für Ihre Bestellung! Wir freuen uns, Ihren Einkauf zu bearbeiten.</p>
 
             <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #a97f57;">
-              <h3 style="color: #333; margin: 0 0 15px 0;">Order Details</h3>
-              <p style="margin: 5px 0;"><strong>Order ID:</strong> ${order.id}</p>
-              <p style="margin: 5px 0;"><strong>Total Amount:</strong> CHF ${totalAmount.toFixed(2)}</p>
+              <h3 style="color: #333; margin: 0 0 15px 0;">Bestelldetails</h3>
+              <p style="margin: 5px 0;"><strong>Bestell-ID:</strong> ${order.id}</p>
+              <p style="margin: 5px 0;"><strong>Gesamtbetrag:</strong> CHF ${totalAmount.toFixed(2)}</p>
               <p style="margin: 5px 0;"><strong>Status:</strong> ${order.status}</p>
             </div>
 
-            <h4 style="color: #333; margin: 20px 0 10px 0;">Items Ordered:</h4>
+            <h4 style="color: #333; margin: 20px 0 10px 0;">Bestellte Artikel:</h4>
             <div style="background: white; border-radius: 8px; overflow: hidden;">
               ${items.map((item: any) => `
                 <div style="padding: 15px; border-bottom: 1px solid #eee;">
                   <div style="display: flex; justify-content: space-between; align-items: center;">
                     <div>
                       <strong>${item.product.title_en}</strong><br>
-                      <span style="color: #666;">Quantity: ${item.quantity}</span>
+                      <span style="color: #666;">Menge: ${item.quantity}</span>
                     </div>
                     <span style="font-weight: bold;">CHF ${(item.price * item.quantity).toFixed(2)}</span>
                   </div>
@@ -679,19 +679,19 @@ export async function sendOrderConfirmationToCustomer(orderData: any) {
 
             <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 4px;">
               <p style="color: #856404; font-size: 14px; line-height: 1.6; margin: 0;">
-                <strong>What happens next?</strong><br>
-                We'll process your order and send you shipping updates. You'll receive an email when your order ships.
+                <strong>Was passiert als Nächstes?</strong><br>
+                Wir bearbeiten Ihre Bestellung und senden Ihnen Versand-Updates. Sie erhalten eine E-Mail, wenn Ihre Bestellung versendet wird.
               </p>
             </div>
 
             <p style="color: #666; font-size: 14px; line-height: 1.6;">
-              If you have any questions about your order, please contact our support team.
+              Bei Fragen zu Ihrer Bestellung kontaktieren Sie bitte unser Support-Team.
             </p>
 
             <div style="text-align: center; margin: 30px 0;">
               <a href="${APP_BASE_URL}/orders"
                  style="background: #a97f57; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
-                View Your Orders
+                Ihre Bestellungen ansehen
               </a>
             </div>
           </div>
@@ -719,34 +719,34 @@ export async function sendNewOrderNotificationToMerchant(orderData: any) {
     const mailOptions = {
       from: `"${process.env.FROM_NAME || 'Feinraum Shop'}" <${process.env.FROM_EMAIL || 'support@feinraumshop.ch'}>`,
       to: merchant.user.email,
-      subject: `New Order Received - Order #${order.id}`,
+      subject: `Neue Bestellung erhalten - Bestellung #${order.id}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="background: linear-gradient(135deg, #a97f57 0%, #8e6a49 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-            <h1 style="color: white; margin: 0; font-size: 28px;">New Order Received!</h1>
-            <p style="color: white; margin: 10px 0 0 0; opacity: 0.9;">You have a new order to fulfill</p>
+            <h1 style="color: white; margin: 0; font-size: 28px;">Neue Bestellung erhalten!</h1>
+            <p style="color: white; margin: 10px 0 0 0; opacity: 0.9;">Sie haben eine neue Bestellung zu bearbeiten</p>
           </div>
           <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
-            <p style="color: #333; font-size: 16px; line-height: 1.6;">Hi ${merchant.user.name},</p>
-            <p style="color: #333; font-size: 16px; line-height: 1.6;">Great news! You've received a new order on your store.</p>
+            <p style="color: #333; font-size: 16px; line-height: 1.6;">Hallo ${merchant.user.name},</p>
+            <p style="color: #333; font-size: 16px; line-height: 1.6;">Tolle Neuigkeiten! Sie haben eine neue Bestellung in Ihrem Store erhalten.</p>
 
             <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #a97f57;">
-              <h3 style="color: #333; margin: 0 0 15px 0;">Order Summary</h3>
-              <p style="margin: 5px 0;"><strong>Order ID:</strong> ${order.id}</p>
-              <p style="margin: 5px 0;"><strong>Customer:</strong> ${customer.name} (${customer.email})</p>
-              <p style="margin: 5px 0;"><strong>Total Amount:</strong> CHF ${totalAmount.toFixed(2)}</p>
+              <h3 style="color: #333; margin: 0 0 15px 0;">Bestellübersicht</h3>
+              <p style="margin: 5px 0;"><strong>Bestell-ID:</strong> ${order.id}</p>
+              <p style="margin: 5px 0;"><strong>Kunde:</strong> ${customer.name} (${customer.email})</p>
+              <p style="margin: 5px 0;"><strong>Gesamtbetrag:</strong> CHF ${totalAmount.toFixed(2)}</p>
               <p style="margin: 5px 0;"><strong>Status:</strong> ${order.status}</p>
-              <p style="margin: 5px 0;"><strong>Shipping Address:</strong> ${order.shippingAddress}</p>
+              <p style="margin: 5px 0;"><strong>Lieferadresse:</strong> ${order.shippingAddress}</p>
             </div>
 
-            <h4 style="color: #333; margin: 20px 0 10px 0;">Items Ordered:</h4>
+            <h4 style="color: #333; margin: 20px 0 10px 0;">Bestellte Artikel:</h4>
             <div style="background: white; border-radius: 8px; overflow: hidden;">
               ${items.map((item: any) => `
                 <div style="padding: 15px; border-bottom: 1px solid #eee;">
                   <div style="display: flex; justify-content: space-between; align-items: center;">
                     <div>
                       <strong>${item.product.title_en}</strong><br>
-                      <span style="color: #666;">Quantity: ${item.quantity} | Price: CHF ${item.price.toFixed(2)}</span>
+                      <span style="color: #666;">Menge: ${item.quantity} | Preis: CHF ${item.price.toFixed(2)}</span>
                     </div>
                     <span style="font-weight: bold;">CHF ${(item.price * item.quantity).toFixed(2)}</span>
                   </div>
@@ -756,20 +756,20 @@ export async function sendNewOrderNotificationToMerchant(orderData: any) {
 
             <div style="background: #d1ecf1; border-left: 4px solid #17a2b8; padding: 15px; margin: 20px 0; border-radius: 4px;">
               <p style="color: #0c5460; font-size: 14px; line-height: 1.6; margin: 0;">
-                <strong>Action Required:</strong><br>
-                Please update the order status as you process and ship this order. Your commission will be calculated after delivery.
+                <strong>Aktion erforderlich:</strong><br>
+                Bitte aktualisieren Sie den Bestellstatus, während Sie diese Bestellung bearbeiten und versenden. Ihre Provision wird nach der Lieferung berechnet.
               </p>
             </div>
 
             <div style="text-align: center; margin: 30px 0;">
               <a href="${APP_BASE_URL}/merchant"
                  style="background: #a97f57; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
-                Manage Order
+                Bestellung verwalten
               </a>
             </div>
 
             <p style="color: #666; font-size: 14px; line-height: 1.6;">
-              Remember to update the order status when you ship the items. This helps keep your customers informed.
+              Denken Sie daran, den Bestellstatus zu aktualisieren, wenn Sie die Artikel versenden. Dies hilft, Ihre Kunden informiert zu halten.
             </p>
           </div>
         </div>
@@ -866,38 +866,38 @@ export async function sendOrderStatusUpdateToCustomer(orderData: any, oldStatus:
     const totalAmount = items.reduce((sum: number, item: any) => sum + (item.price * item.quantity), 0);
 
     const statusMessages = {
-      'PROCESSING': 'Your order is now being processed',
-      'SHIPPED': 'Your order has been shipped!',
-      'DELIVERED': 'Your order has been delivered',
-      'CANCELLED': 'Your order has been cancelled'
+      'PROCESSING': 'Ihre Bestellung wird nun bearbeitet',
+      'SHIPPED': 'Ihre Bestellung wurde versendet!',
+      'DELIVERED': 'Ihre Bestellung wurde zugestellt',
+      'CANCELLED': 'Ihre Bestellung wurde storniert'
     };
 
     const mailOptions = {
       from: `"${process.env.FROM_NAME || 'Feinraum Shop'}" <${process.env.FROM_EMAIL || 'support@feinraumshop.ch'}>`,
       to: customer.email,
-      subject: `Order Update - Order #${order.id} - ${newStatus}`,
+      subject: `Bestellupdate - Bestellung #${order.id} - ${newStatus}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="background: linear-gradient(135deg, #a97f57 0%, #8e6a49 100%); padding: 30px; text-align: center; border-radius: 10px 10px 0 0;">
-            <h1 style="color: white; margin: 0; font-size: 28px;">Order Status Updated</h1>
-            <p style="color: white; margin: 10px 0 0 0; opacity: 0.9;">${statusMessages[newStatus as keyof typeof statusMessages] || 'Order status has changed'}</p>
+            <h1 style="color: white; margin: 0; font-size: 28px;">Bestellstatus aktualisiert</h1>
+            <p style="color: white; margin: 10px 0 0 0; opacity: 0.9;">${statusMessages[newStatus as keyof typeof statusMessages] || 'Der Bestellstatus hat sich geändert'}</p>
           </div>
           <div style="background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px;">
-            <p style="color: #333; font-size: 16px; line-height: 1.6;">Hi ${customer.name},</p>
-            <p style="color: #333; font-size: 16px; line-height: 1.6;">We're updating you on your order status.</p>
+            <p style="color: #333; font-size: 16px; line-height: 1.6;">Hallo ${customer.name},</p>
+            <p style="color: #333; font-size: 16px; line-height: 1.6;">Wir informieren Sie über Ihren Bestellstatus.</p>
 
             <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #a97f57;">
-              <h3 style="color: #333; margin: 0 0 15px 0;">Order Details</h3>
-              <p style="margin: 5px 0;"><strong>Order ID:</strong> ${order.id}</p>
+              <h3 style="color: #333; margin: 0 0 15px 0;">Bestelldetails</h3>
+              <p style="margin: 5px 0;"><strong>Bestell-ID:</strong> ${order.id}</p>
               <p style="margin: 5px 0;"><strong>Status:</strong> ${oldStatus} → <strong>${newStatus}</strong></p>
-              <p style="margin: 5px 0;"><strong>Total Amount:</strong> CHF ${totalAmount.toFixed(2)}</p>
+              <p style="margin: 5px 0;"><strong>Gesamtbetrag:</strong> CHF ${totalAmount.toFixed(2)}</p>
             </div>
 
             ${newStatus === 'SHIPPED' ? `
             <div style="background: #d1ecf1; border-left: 4px solid #17a2b8; padding: 15px; margin: 20px 0; border-radius: 4px;">
               <p style="color: #0c5460; font-size: 14px; line-height: 1.6; margin: 0;">
-                <strong>Shipping Information:</strong><br>
-                Your order has been shipped! You should receive tracking information soon if available.
+                <strong>Versandinformationen:</strong><br>
+                Ihre Bestellung wurde versendet! Sie sollten bald Tracking-Informationen erhalten, falls verfügbar.
               </p>
             </div>
             ` : ''}
@@ -905,8 +905,8 @@ export async function sendOrderStatusUpdateToCustomer(orderData: any, oldStatus:
             ${newStatus === 'DELIVERED' ? `
             <div style="background: #d4edda; border-left: 4px solid #28a745; padding: 15px; margin: 20px 0; border-radius: 4px;">
               <p style="color: #155724; font-size: 14px; line-height: 1.6; margin: 0;">
-                <strong>Delivery Confirmation:</strong><br>
-                We hope you're enjoying your purchase! Please consider leaving a review for the products you received.
+                <strong>Lieferbestätigung:</strong><br>
+                Wir hoffen, Sie genießen Ihren Einkauf! Bitte erwägen Sie, eine Bewertung für die erhaltenen Produkte zu hinterlassen.
               </p>
             </div>
             ` : ''}
@@ -914,8 +914,8 @@ export async function sendOrderStatusUpdateToCustomer(orderData: any, oldStatus:
             ${newStatus === 'CANCELLED' ? `
             <div style="background: #f8d7da; border-left: 4px solid #dc3545; padding: 15px; margin: 20px 0; border-radius: 4px;">
               <p style="color: #721c24; font-size: 14px; line-height: 1.6; margin: 0;">
-                <strong>Order Cancelled:</strong><br>
-                We're sorry, but your order has been cancelled. If you have any questions, please contact our support team.
+                <strong>Bestellung storniert:</strong><br>
+                Es tut uns leid, aber Ihre Bestellung wurde storniert. Bei Fragen kontaktieren Sie bitte unser Support-Team.
               </p>
             </div>
             ` : ''}
@@ -923,7 +923,7 @@ export async function sendOrderStatusUpdateToCustomer(orderData: any, oldStatus:
             <div style="text-align: center; margin: 30px 0;">
               <a href="${APP_BASE_URL}/orders"
                  style="background: #a97f57; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">
-                View Order Details
+                Bestelldetails ansehen
               </a>
             </div>
           </div>

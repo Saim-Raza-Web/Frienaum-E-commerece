@@ -119,6 +119,18 @@ enum ProductStatus {
   PUBLISHED
 }
 
+// Terms & Conditions versions for tracking acceptance history
+model TermsVersion {
+  id          String   @id @default(auto()) @map("_id") @db.ObjectId
+  version     String   @unique // e.g., "1.0", "1.1", "2024.01"
+  title       String   // e.g., "Allgemeine Geschäftsbedingungen v1.0"
+  content     String   // Full HTML content of the terms
+  isActive    Boolean  @default(false) // Only one version can be active
+  effectiveDate DateTime @default(now())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 model User {
   id       String  @id @default(auto()) @map("_id") @db.ObjectId
   email    String  @unique
@@ -127,6 +139,20 @@ model User {
   phone    String?
   role     Role    @default(CUSTOMER)
   isDeleted Boolean @default(false)
+
+  // Terms & Conditions acceptance tracking
+  termsAccepted         Boolean?   // Whether user has accepted current T&C
+  termsAcceptedAt       DateTime? // When T&C were accepted
+  termsAcceptedVersion  String?   // Version of T&C accepted
+  termsAcceptedIP       String?   // IP address when accepted
+
+  // Marketing consents
+  newsletterConsent     Boolean   @default(false) // Newsletter subscription consent
+  newsletterConsentAt   DateTime? // When newsletter consent was given
+  newsletterConsentIP   String?   // IP address for newsletter consent
+  cookiesConsent        Boolean   @default(false) // Cookies/tracking consent
+  cookiesConsentAt      DateTime? // When cookies consent was given
+  cookiesConsentIP      String?   // IP address for cookies consent
 
   // Optional one-to-one Merchant profile for users who are merchants
   merchant Merchant?
@@ -180,6 +206,10 @@ model Product {
   images     String[]   @default([]) // Array of image URLs
   categoryId String?    @db.ObjectId
   status     ProductStatus @default(PENDING)
+
+  // Shipping cost configuration
+  shippingCost       Float?    // Custom shipping cost (null = use default CHF 8.50)
+  shippingCostNote   String?   // Optional note about shipping (e.g., "Expressversand möglich")
 
   // Rating fields
   averageRating Float?   @default(0)

@@ -64,6 +64,12 @@ export default function MerchantLayout({
         <div className="flex h-full flex-col">
           <div className="flex h-16 flex-shrink-0 items-center justify-between px-4">
             <h1 className="text-xl font-bold text-primary-800">{translate('merchant.dashboard')}</h1>
+            <Link
+              href={`/${lang}/products`}
+              className="text-sm font-medium text-primary-600 hover:text-primary-800 underline-offset-4 hover:underline transition-colors"
+            >
+              {translate('merchant.viewProducts')}
+            </Link>
             <button
               className="rounded-md p-1 text-gray-400 hover:bg-gray-100 lg:hidden"
               onClick={() => setSidebarOpen(false)}

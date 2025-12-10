@@ -57,6 +57,8 @@ type Product = {
   createdAt: string;
   updatedAt: string;
   status?: 'PUBLISHED' | 'PENDING' | 'DRAFT';
+  shippingCost?: number;
+  shippingCostNote?: string;
 };
 
 function AdminDashboard() {
@@ -111,7 +113,8 @@ function AdminDashboard() {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [form, setForm] = useState<any>({
     slug:"", title_en:"", title_de:"", desc_en:"", desc_de:"",
-    price:"0", stock:"0", imageUrl:"", images: [], category: translate('admin.generalCategory') || 'General'
+    price:"0", stock:"0", imageUrl:"", images: [], category: translate('admin.generalCategory') || 'General',
+    shippingCost:"", shippingCostNote:""
   });
   const [isProductImageUploading, setIsProductImageUploading] = useState(false);
   // Admin-only: selected merchant for new product
@@ -629,7 +632,7 @@ function AdminDashboard() {
       });
 
       if (res.ok) {
-        setForm({ slug:"", title_en:"", title_de:"", desc_en:"", desc_de:"", price:"0", stock:"0", imageUrl:"", images: [], category: "General" });
+        setForm({ slug:"", title_en:"", title_de:"", desc_en:"", desc_de:"", price:"0", stock:"0", imageUrl:"", images: [], category: "General", shippingCost:"", shippingCostNote:"" });
         setShowForm(false);
         setEditingProduct(null);
         setSelectedMerchantId('');
@@ -669,6 +672,8 @@ function AdminDashboard() {
       desc_en: product.desc_en,
       desc_de: product.desc_de,
       price: product.price.toString(),
+      shippingCost: product.shippingCost?.toString() || "",
+      shippingCostNote: product.shippingCostNote || "",
       stock: product.stock.toString(),
       imageUrl: product.imageUrl || "",
       images: (product as any).images || [],
@@ -1425,6 +1430,39 @@ function AdminDashboard() {
                               value={form.stock}
                               onChange={e=>setForm({...form, stock:e.target.value})}
                               placeholder={translate('admin.stockPlaceholder')}
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              {translate('admin.shippingCost')} (CHF):
+                              <span className="text-xs text-gray-500 ml-1">
+                                ({translate('admin.shippingCostHelp') || 'Leave empty for default CHF 8.50'})
+                              </span>
+                            </label>
+                            <input
+                              type="number"
+                              step="0.01"
+                              min="0"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent"
+                              value={form.shippingCost || ''}
+                              onChange={e=>setForm({...form, shippingCost:e.target.value})}
+                              placeholder="8.50"
+                            />
+                          </div>
+                          <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                              {translate('admin.shippingCostNote')}:
+                              <span className="text-xs text-gray-500 ml-1">
+                                ({translate('admin.shippingCostNoteHelp') || 'Optional note about shipping'})
+                              </span>
+                            </label>
+                            <input
+                              type="text"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-turquoise-500 focus:border-transparent"
+                              value={form.shippingCostNote || ''}
+                              onChange={e=>setForm({...form, shippingCostNote:e.target.value})}
+                              placeholder={translate('admin.shippingCostNotePlaceholder') || 'Expressversand möglich'}
+                              maxLength={100}
                             />
                           </div>
                           <div>

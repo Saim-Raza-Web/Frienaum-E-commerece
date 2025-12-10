@@ -9,14 +9,19 @@ import { AlertTriangle, ShoppingBag } from 'lucide-react';
  * Component that blocks merchants from accessing customer shopping pages
  * and redirects them to their merchant dashboard
  */
-export default function MerchantBlocker({ children }: { children: React.ReactNode }) {
+interface MerchantBlockerProps {
+  children: React.ReactNode;
+  allowMerchantAccess?: boolean;
+}
+
+export default function MerchantBlocker({ children, allowMerchantAccess = false }: MerchantBlockerProps) {
   const { user, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
     // Only check if we're done loading and user is authenticated
-    if (!isLoading && isAuthenticated && user?.role === 'merchant') {
+    if (!allowMerchantAccess && !isLoading && isAuthenticated && user?.role === 'merchant') {
       // Get current language
       const langMatch = pathname?.match(/^\/([a-z]{2})(\/|$)/);
       const currentLang = langMatch ? langMatch[1] : 'de';
@@ -39,7 +44,7 @@ export default function MerchantBlocker({ children }: { children: React.ReactNod
   }
 
   // If merchant is authenticated, show blocking message while redirecting
-  if (isAuthenticated && user?.role === 'merchant') {
+  if (!allowMerchantAccess && isAuthenticated && user?.role === 'merchant') {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center max-w-md mx-auto px-4">

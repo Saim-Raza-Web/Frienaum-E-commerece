@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
 import { Eye, EyeOff, Mail, Lock, User, ShoppingBag, Loader2 } from 'lucide-react';
@@ -25,7 +26,10 @@ export default function LoginPage() {
     password: '',
     confirmPassword: '',
     role: 'customer' as 'customer' | 'merchant',
-    storeName: ''
+    storeName: '',
+    agreeToTerms: false,
+    newsletterConsent: false,
+    cookiesConsent: false
   });
 
   const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false);
@@ -128,7 +132,7 @@ export default function LoginPage() {
     setResetEmail('');
   };
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: string, value: string | boolean) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
@@ -144,7 +148,10 @@ export default function LoginPage() {
       password: '',
       confirmPassword: '',
       role: 'customer',
-      storeName: ''
+      storeName: '',
+      agreeToTerms: false,
+      newsletterConsent: false,
+      cookiesConsent: false
     });
     clearError();
   }, [clearError]);
@@ -393,6 +400,66 @@ export default function LoginPage() {
                   </div>
                   <div className="ml-3">
                     <p className="text-sm text-red-800">{error}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Terms & Conditions and Marketing Consents - Only for Registration */}
+            {!isLogin && (
+              <div className="space-y-4">
+                <div className="flex items-start space-x-3">
+                  <input
+                    type="checkbox"
+                    id="terms"
+                    name="agreeToTerms"
+                    checked={formData.agreeToTerms || false}
+                    onChange={(e) => handleInputChange('agreeToTerms', e.target.checked)}
+                    className="mt-1 h-4 w-4 text-primary-warm focus:ring-primary-warm border-gray-300 rounded"
+                    required
+                  />
+                  <label htmlFor="terms" className="text-sm text-gray-700">
+                    I accept the{' '}
+                    <Link href={`/${currentLang}/terms`} className="text-primary-warm hover:text-primary-warm-hover underline">
+                      Terms of Service
+                    </Link>
+                    {' '}and{' '}
+                    <Link href={`/${currentLang}/privacy`} className="text-primary-warm hover:text-primary-warm-hover underline">
+                      Privacy Policy
+                    </Link>
+                    {' '}*
+                  </label>
+                </div>
+
+                <div className="space-y-3">
+                  <h4 className="text-sm font-medium text-gray-900">Marketing Preferences (Optional)</h4>
+
+                  <div className="flex items-start space-x-3">
+                    <input
+                      type="checkbox"
+                      id="newsletter"
+                      name="newsletterConsent"
+                      checked={formData.newsletterConsent || false}
+                      onChange={(e) => handleInputChange('newsletterConsent', e.target.checked)}
+                      className="mt-1 h-4 w-4 text-primary-warm focus:ring-primary-warm border-gray-300 rounded"
+                    />
+                    <label htmlFor="newsletter" className="text-sm text-gray-700">
+                      I would like to receive newsletters and marketing updates
+                    </label>
+                  </div>
+
+                  <div className="flex items-start space-x-3">
+                    <input
+                      type="checkbox"
+                      id="cookies"
+                      name="cookiesConsent"
+                      checked={formData.cookiesConsent || false}
+                      onChange={(e) => handleInputChange('cookiesConsent', e.target.checked)}
+                      className="mt-1 h-4 w-4 text-primary-warm focus:ring-primary-warm border-gray-300 rounded"
+                    />
+                    <label htmlFor="cookies" className="text-sm text-sm text-gray-700">
+                      I agree to the use of cookies and tracking technologies
+                    </label>
                   </div>
                 </div>
               </div>

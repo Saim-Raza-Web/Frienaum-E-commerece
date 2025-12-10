@@ -26,6 +26,24 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
     }
   };
 
+  const getTranslation = (key: string, fallback: string) => {
+    const result = translate(key);
+    return result === key ? fallback : result;
+  };
+
+  const statusBadge = (() => {
+    if (!product.status || product.status === 'PUBLISHED') return null;
+    const label =
+      product.status === 'PENDING'
+        ? getTranslation('merchant.statusPending', 'Pending')
+        : getTranslation('merchant.statusDraft', 'Draft');
+    const badgeClass =
+      product.status === 'PENDING'
+        ? 'bg-yellow-500/90 text-white'
+        : 'bg-gray-700/90 text-white';
+    return { label, badgeClass };
+  })();
+
   return (
     <Link href={`/${lang}/product/${product.id}`} className="group h-full">
       <div className="card overflow-hidden h-full flex flex-col bg-white rounded-lg sm:rounded-xl shadow-sm hover:shadow-lg sm:hover:shadow-xl transition-all duration-300 border border-primary-100 hover:border-primary-200">
@@ -47,18 +65,22 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
               </div>
             )}
           </div>
-          
+          <div className="absolute top-3 left-3 flex flex-col gap-2">
+            {statusBadge && (
+              <div className={`text-xs px-3 py-1 rounded-full font-montserrat font-medium shadow-lg ${statusBadge.badgeClass}`}>
+                {statusBadge.label}
+              </div>
+            )}
+            {!product.inStock && (
+              <div className="bg-cta-500 text-white text-xs px-3 py-1 rounded-full font-montserrat font-medium shadow-lg">
+                {translate('outOfStock')}
+              </div>
+            )}
+          </div>
           {/* Wishlist Button - Minimalist design */}
           <button className="absolute top-3 right-3 p-2 bg-white/90 backdrop-blur-sm rounded-full shadow-lg opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-white hover:scale-110">
             <Heart className="w-4 h-4 text-primary-400 hover:text-cta-500 transition-colors duration-200" />
           </button>
-          
-          {/* Out of Stock Badge */}
-          {!product.inStock && (
-            <div className="absolute top-3 left-3 bg-cta-500 text-white text-xs px-3 py-1 rounded-full font-montserrat font-medium shadow-lg">
-              {translate('outOfStock')}
-            </div>
-          )}
         </div>
 
         {/* Product Info - Responsive layout */}

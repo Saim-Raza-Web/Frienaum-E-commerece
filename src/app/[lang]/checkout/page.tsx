@@ -47,10 +47,11 @@ export default function CheckoutPage() {
     zipCode: '',
     country: 'United States',
   });
-  const [errors, setErrors] = useState<Partial<Address>>({});
+  const [errors, setErrors] = useState<Partial<Address & { terms?: string }>>({});
   const [step, setStep] = useState<CheckoutStep>('shipping');
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [paymentData, setPaymentData] = useState<{
     clientSecret: string;
     paymentIntentId: string;
@@ -70,7 +71,18 @@ export default function CheckoutPage() {
     return (cartTotal + shipping) * 0.081;
   };
   const calculateShipping = () => {
-    return cartTotal >= SHIPPING_FREE_THRESHOLD ? 0 : SHIPPING_FLAT_FEE;
+    // Calculate shipping based on products in cart
+    let totalShipping = 0;
+    cartItems.forEach(item => {
+      // Use custom shipping cost if set, otherwise use default
+      const shippingCost = item.product.shippingCost && item.product.shippingCost > 0
+        ? item.product.shippingCost
+        : SHIPPING_FLAT_FEE;
+      totalShipping += shippingCost * item.quantity;
+    });
+
+    // Apply free shipping threshold (if total cart value >= threshold, make shipping free)
+    return cartTotal >= SHIPPING_FREE_THRESHOLD ? 0 : totalShipping;
   };
   const total = cartTotal + calculateShipping() + calculateTax();
 
@@ -82,7 +94,7 @@ export default function CheckoutPage() {
   };
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<Address> = {};
+    const newErrors: Partial<Address & { terms?: string }> = {};
     if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
     if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required';
     if (!formData.email.trim()) {
@@ -95,6 +107,7 @@ export default function CheckoutPage() {
     if (!formData.city.trim()) newErrors.city = 'City is required';
     if (!formData.state.trim()) newErrors.state = 'State is required';
     if (!formData.zipCode.trim()) newErrors.zipCode = 'ZIP code is required';
+    if (!agreeToTerms) newErrors.terms = translate('termsAcceptanceRequired');
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -303,12 +316,41 @@ export default function CheckoutPage() {
                     </div>
                   </div>
 
+                  {/* Terms & Conditions Acceptance */}
+                  <div className="space-y-4 border-t border-gray-200 pt-6">
+                    <div className="flex items-start space-x-3">
+                      <input
+                        type="checkbox"
+                        id="checkout-terms"
+                        checked={agreeToTerms || false}
+                        onChange={(e) => setAgreeToTerms(e.target.checked)}
+                        className="mt-1 h-4 w-4 text-primary-warm focus:ring-primary-warm border-gray-300 rounded"
+                        required
+                      />
+                      <label htmlFor="checkout-terms" className="text-sm text-gray-700">
+                        I accept the{' '}
+                        <Link href={`/${currentLocale}/terms`} className="text-primary-warm hover:text-primary-warm-hover underline">
+                          Terms of Service
+                        </Link>
+                        {' '}and{' '}
+                        <Link href={`/${currentLocale}/privacy`} className="text-primary-warm hover:text-primary-warm-hover underline">
+                          Privacy Policy
+                        </Link>
+                        {' '}*
+                      </label>
+                    </div>
+
+                    {errors.terms && (
+                      <p className="text-red-600 text-sm">{errors.terms}</p>
+                    )}
+                  </div>
+
                   <button
                     type="submit"
-                    disabled={isLoading}
+                    disabled={isLoading || !agreeToTerms}
                     className="w-full btn-primary py-3 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isLoading ? 'Processing...' : 'Proceed to Payment'}
+                    {isLoading ? translate('processing') : translate('proceedToPayment')}
                   </button>
                 </form>
               )}

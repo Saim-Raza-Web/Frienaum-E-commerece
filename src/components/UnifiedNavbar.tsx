@@ -58,6 +58,31 @@ export default function UnifiedNavbar() {
   const { user, isAuthenticated, logout } = useAuth();
   const { translate } = useTranslation();
 
+  const getUserMenuLabel = (key: string, fallback: string) => {
+    const label = translate(`userMenu.${key}`);
+    return label === `userMenu.${key}` ? fallback : label;
+  };
+
+  const getRoleLabel = () => {
+    if (!user?.role) return '';
+    const roleKey = `role.${user.role.toUpperCase()}`;
+    const label = translate(roleKey);
+    if (!label || label === roleKey) {
+      return user.role.charAt(0).toUpperCase() + user.role.slice(1);
+    }
+    return label;
+  };
+
+  const userMenuLabels = {
+    profile: getUserMenuLabel('profile', 'Profile'),
+    orders: getUserMenuLabel('orders', 'Orders'),
+    merchantDashboard: getUserMenuLabel('merchantDashboard', 'Merchant Dashboard'),
+    adminPanel: getUserMenuLabel('adminPanel', 'Admin Panel'),
+    logout: getUserMenuLabel('logout', 'Log out'),
+  };
+
+  const userRoleLabel = getRoleLabel();
+
   const cartItemCount = cartItems.reduce((total: number, item: any) => total + item.quantity, 0);
 
   // Prevent hydration mismatch
@@ -183,7 +208,7 @@ export default function UnifiedNavbar() {
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onKeyDown={handleSearch}
                     className="w-40 sm:w-48 lg:w-56 xl:w-64 px-3 sm:px-4 h-10 bg-white border border-gray-200 rounded-xl shadow-sm placeholder-gray-400 text-gray-900 font-lora text-sm transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-primary-300 focus:border-primary-300 hover:border-gray-300"
-                    placeholder="Search products..."
+                    placeholder={translate('searchPlaceholder') || 'Search products...'}
                   />
                 </div>
               </div>
@@ -257,7 +282,7 @@ export default function UnifiedNavbar() {
                       <p className="text-xs text-gray-500 max-w-[160px] truncate whitespace-nowrap overflow-hidden" title={user.email}>
                         {user.email}
                       </p>
-                      <p className="text-xs text-primary-600 font-medium capitalize">{user.role}</p>
+                      <p className="text-xs text-primary-600 font-medium">{userRoleLabel}</p>
                     </div>
                     
                     <Link
@@ -266,7 +291,7 @@ export default function UnifiedNavbar() {
                       onClick={() => setIsUserMenuOpen(false)}
                     >
                       <User className="w-4 h-4 mr-2" />
-                      {translate('profile')}
+                      {userMenuLabels.profile}
                     </Link>
 
                     {/* Show orders link only for customers, not merchants */}
@@ -277,7 +302,7 @@ export default function UnifiedNavbar() {
                         onClick={() => setIsUserMenuOpen(false)}
                       >
                         <Package className="w-4 h-4 mr-2" />
-                        {translate('orders')}
+                        {userMenuLabels.orders}
                       </Link>
                     )}
 
@@ -288,7 +313,7 @@ export default function UnifiedNavbar() {
                         onClick={() => setIsUserMenuOpen(false)}
                       >
                         <ShoppingBag className="w-4 h-4 mr-2" />
-                        {translate('merchant.dashboard') || 'Merchant Dashboard'}
+                        {userMenuLabels.merchantDashboard}
                       </Link>
                     )}
 
@@ -299,7 +324,7 @@ export default function UnifiedNavbar() {
                         onClick={() => setIsUserMenuOpen(false)}
                       >
                         <Settings className="w-4 h-4 mr-2" />
-                        {translate('admin.panel')}
+                        {userMenuLabels.adminPanel}
                       </Link>
                     )}
 
@@ -308,7 +333,7 @@ export default function UnifiedNavbar() {
                       className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                     >
                       <LogOut className="w-4 h-4 mr-2" />
-                      {translate('logout')}
+                      {userMenuLabels.logout}
                     </button>
                   </div>
                 )}
@@ -346,7 +371,7 @@ export default function UnifiedNavbar() {
                     onChange={(e) => setSearchQuery(e.target.value)}
                     onKeyDown={handleSearch}
                     className="search-input block w-full px-4 py-2 rounded-full placeholder-gray-500 text-gray-900 text-sm transition-all duration-200 focus:outline-none"
-                    placeholder="Search..."
+                    placeholder={translate('searchPlaceholder') || 'Search...'}
                   />
                 </div>
               </div>
@@ -469,7 +494,7 @@ export default function UnifiedNavbar() {
                   className="block px-3 py-2 text-gray-700 hover:text-[var(--color-primary-700)] hover:bg-[var(--color-primary-50)] rounded text-base"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
-                  {translate('profile')}
+                  {userMenuLabels.profile}
                 </Link>
                 {/* Show orders link only for customers, not merchants */}
                 {user.role !== 'merchant' && (
@@ -478,7 +503,7 @@ export default function UnifiedNavbar() {
                     className="block px-3 py-2 text-gray-700 hover:text-[var(--color-primary-700)] hover:bg-[var(--color-primary-50)] rounded text-base"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    {translate('orders')}
+                    {userMenuLabels.orders}
                   </Link>
                 )}
                 {user.role === 'merchant' && (
@@ -487,7 +512,7 @@ export default function UnifiedNavbar() {
                     className="block px-3 py-2 text-gray-700 hover:text-[var(--color-primary-700)] hover:bg-[var(--color-primary-50)] rounded text-base"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    {translate('merchant.dashboard') || 'Merchant Dashboard'}
+                    {userMenuLabels.merchantDashboard}
                   </Link>
                 )}
                 {user.role === 'admin' && (
@@ -496,14 +521,14 @@ export default function UnifiedNavbar() {
                     className="block px-3 py-2 text-gray-700 hover:text-[var(--color-primary-700)] hover:bg-[var(--color-primary-50)] rounded text-base"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
-                    {translate('admin.panel')}
+                    {userMenuLabels.adminPanel}
                   </Link>
                 )}
                 <button
                   onClick={handleLogout}
                   className="block w-full text-left px-3 py-2 text-gray-700 hover:text-primary-600 text-base"
                 >
-                  {translate('logout')}
+                  {userMenuLabels.logout}
                 </button>
               </>
             )}

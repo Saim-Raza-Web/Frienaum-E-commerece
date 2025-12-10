@@ -110,6 +110,8 @@ export async function GET(request: NextRequest) {
         category: p.category?.name || 'General',
         averageRating: p.averageRating ?? 0,
         ratingCount: p.ratingCount ?? 0,
+        shippingCost: p.shippingCost,
+        shippingCostNote: p.shippingCostNote,
         merchant: {
           id: p.merchant.user.id,
           name: p.merchant.user.name,
@@ -191,6 +193,8 @@ export async function GET(request: NextRequest) {
           price: true,
           stock: true,
           imageUrl: true,
+          shippingCost: true,
+          shippingCostNote: true,
           categoryId: true,
           merchantId: true,
           status: true,
@@ -209,6 +213,8 @@ export async function GET(request: NextRequest) {
         category: p.category?.name || 'General',
         averageRating: 0,
         ratingCount: 0,
+        shippingCost: p.shippingCost,
+        shippingCostNote: p.shippingCostNote,
         merchant: null
       })));
     } catch (fallbackError) {
@@ -244,7 +250,9 @@ export async function POST(request: NextRequest) {
       stock,
       imageUrl,
       images,
-      category
+      category,
+      shippingCost,
+      shippingCostNote
     } = productData;
 
     // Handle images: prefer images array, fallback to imageUrl for backward compatibility
@@ -343,7 +351,9 @@ export async function POST(request: NextRequest) {
         images: productImages,
         categoryId: categoryId,
         merchantId: targetMerchantId,
-        status: productStatus as any
+        status: productStatus as any,
+        shippingCost: shippingCost ? Number(shippingCost) : null,
+        shippingCostNote: shippingCostNote || null
       },
       include: {
         merchant: {
