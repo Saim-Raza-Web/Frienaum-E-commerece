@@ -33,11 +33,7 @@ export default function SupplierGuidePage() {
             <Store className="w-6 h-6 text-primary-600" />
             <h2 className="text-2xl font-montserrat font-semibold text-primary-800">{translate('supplierGuideTitle')}</h2>
           </div>
-          <ul className="list-disc pl-6 space-y-3 text-primary-600 font-lora text-lg">
-            {translations.supplierGuide.infoList.map((item, index) => (
-              <li key={index}>{item}</li>
-            ))}
-          </ul>
+          <p className="text-primary-600 font-lora text-lg">{translations.supplierGuide.infoList}</p>
         </div>
 
         {/* Sidebar */}

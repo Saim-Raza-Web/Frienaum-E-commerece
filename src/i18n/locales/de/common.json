@@ -251,28 +251,11 @@
     "responsibleTitle": "Verantwortliche Stelle",
     "responsibleBody": "Feinraumshop Landquartstrasse 30, 9320 Arbon<br/>E-Mail: support@feinraumshop.ch<br/>Telefon: +41 76 430 87 18",
     "dataTitle": "Erhobene Daten",
-    "dataList": [
-      "Kundendaten: Name, Adresse, E-Mail, Telefonnummer, Zahlungsinformationen, Bestellhistorie, IP-Adresse",
-      "Lieferantendaten: Name, Unternehmensinformationen, Kontaktdaten, Bankverbindungen",
-      "Trackingdaten: Cookies, Analyseinformationen (anonymisiert)"
-    ],
+    "dataList": "Kundendaten: Name, Adresse, E-Mail, Telefonnummer, Zahlungsinformationen, Bestellhistorie, IP-Adresse. Lieferantendaten: Name, Unternehmensinformationen, Kontaktdaten, Bankverbindungen. Trackingdaten: Cookies, Analyseinformationen (anonymisiert).",
     "purposesTitle": "Zwecke der Verarbeitung",
-    "purposesList": [
-      "Bestellabwicklung, Versand, Rechnungsstellung",
-      "Verwaltung von Kunden- und Lieferantenkonten",
-      "Kommunikation bei Bestellungen, Reklamationen, Rückgaben",
-      "Zahlungsabwicklung",
-      "Analyse & Optimierung der Plattform",
-      "Marketing nur mit Einwilligung"
-    ],
+    "purposesList": "Bestellabwicklung, Versand, Rechnungsstellung. Verwaltung von Kunden- und Lieferantenkonten. Kommunikation bei Bestellungen, Reklamationen, Rückgaben. Zahlungsabwicklung. Analyse & Optimierung der Plattform. Marketing nur mit Einwilligung.",
     "sharingTitle": "Datenweitergabe",
-    "sharingList": [
-      "Lieferanten für Versand & Reklamationen",
-      "Zahlungsanbieter zur Zahlungsabwicklung",
-      "Versanddienstleister für Lieferung",
-      "Behörden, soweit gesetzlich vorgeschrieben",
-      "Internationale Übermittlungen nur bei Vertragsnotwendigkeit"
-    ],
+    "sharingList": "Lieferanten für Versand & Reklamationen. Zahlungsanbieter zur Zahlungsabwicklung. Versanddienstleister für Lieferung. Behörden, soweit gesetzlich vorgeschrieben. Internationale Übermittlungen nur bei Vertragsnotwendigkeit.",
     "cookiesTitle": "Cookies / Tracking",
     "cookiesBody": "Cookies/Tracking nur mit Einwilligung, Daten anonymisiert<br/>Nutzer:innen können Cookies ablehnen oder löschen",
     "storageTitle": "Datenspeicherung / Aufbewahrung",
@@ -290,13 +273,7 @@
   "supplierGuide": {
     "subtitle": "Wichtige Informationen für Lieferanten auf Feinraumshop.",
     "badge": "Lieferanten",
-    "infoList": [
-      "Genehmigungspflicht für jedes Produkt",
-      "Einhaltung von Lieferzeiten, Qualität, Versand",
-      "Haftung für Produkte, Rückgaben, Reklamationen",
-      "Inhalte dürfen keine Rechte Dritter verletzen",
-      "Datenweitergabe nur zur Vertragsabwicklung"
-    ],
+    "infoList": "Genehmigungspflicht für jedes Produkt. Einhaltung von Lieferzeiten, Qualität, Versand. Haftung für Produkte, Rückgaben, Reklamationen. Inhalte dürfen keine Rechte Dritter verletzen. Datenweitergabe nur zur Vertragsabwicklung.",
     "supportTitle": "Support & Hilfe",
     "supportBody": "Unser Support-Team steht Ihnen bei Fragen zur Verfügung. Nutzen Sie das Lieferanten-Dashboard für effiziente Verwaltung.",
     "merchantPanel": "Lieferantenbereich"
@@ -305,14 +282,7 @@
   "customerGuide": {
     "subtitle": "Wichtige Informationen für Kund:innen auf Feinraumshop.",
     "badge": "Kunden",
-    "infoList": [
-      "Vertragspartner ist der jeweilige Lieferant",
-      "Versand und Lieferung durch Lieferant",
-      "Standardversand CHF 8.50 B-Post, sofern nicht anders angegeben",
-      "Rückgabe/Reklamation über Lieferant; Feinraumshop vermittelt",
-      "Marketing nur nach Einwilligung",
-      "Datenschutz gemäss Datenschutzerklärung"
-    ],
+    "infoList": "Vertragspartner ist der jeweilige Lieferant. Versand und Lieferung durch Lieferant. Standardversand CHF 8.50 B-Post, sofern nicht anders angegeben. Rückgabe/Reklamation über Lieferant; Feinraumshop vermittelt. Marketing nur nach Einwilligung. Datenschutz gemäss Datenschutzerklärung.",
     "helpTitle": "Hilfe & Support",
     "helpBody": "Unser Support-Team hilft Ihnen gerne bei Fragen. Nutzen Sie unser Hilfe-Center oder kontaktieren Sie uns direkt.",
     "helpCenter": "Hilfe-Center"
@@ -331,71 +301,27 @@
     "suppliersTitle": "Lieferanten / Verkäufer",
     "suppliersBody": "Lieferanten müssen ein Konto bei Feinraumshop erstellen und genehmigt werden.<br/><br/>Pflichten der Lieferanten:<br/>• Korrekte und vollständige Produktinformationen (Bilder, Beschreibung, Preis, Lagerbestand, Lieferzeiten)<br/>• Rechtzeitiger Versand an Kund:innen<br/>• Abwicklung von Reklamationen, Rückgaben, Gewährleistungsfällen<br/>• Einhaltung gesetzlicher Bestimmungen<br/><br/>Feinraumshop behält sich das Recht vor, Produkte, Kategorien oder Lieferanten jederzeit zu überprüfen, abzulehnen oder zu entfernen.<br/><br/>Lieferanten haften für Inhalte, die sie hochladen (Bilder, Texte, Beschreibungen).",
     "productsTitle": "Produkte / Verfügbarkeit",
-    "productsList": [
-      "Produkte werden von Lieferanten eingepflegt und müssen von Feinraumshop freigegeben werden.",
-      "Feinraumshop übernimmt keine Haftung für Verfügbarkeit, Lieferzeiten oder Vollständigkeit der Produktinformationen.",
-      "Produkte sind verfügbar, solange der Vorrat reicht. Änderungen oder Rücknahmen sind vorbehalten."
-    ],
+    "productsList": "Produkte werden von Lieferanten eingepflegt und müssen von Feinraumshop freigegeben werden. Feinraumshop übernimmt keine Haftung für Verfügbarkeit, Lieferzeiten oder Vollständigkeit der Produktinformationen. Produkte sind verfügbar, solange der Vorrat reicht. Änderungen oder Rücknahmen sind vorbehalten.",
     "pricingTitle": "Preise / Zahlung",
-    "pricingList": [
-      "Alle Preise verstehen sich inkl. MwSt., soweit nicht anders angegeben.",
-      "Standardversand: CHF 8.50 (B-Post), sofern vom Lieferanten nichts anderes angegeben wird.",
-      "Abweichende Versandkosten werden vom Lieferanten angegeben.",
-      "Zahlungsarten: Twint, Kreditkarte, Rechnung, PayPal oder weitere vereinbarte Zahlungsmittel.",
-      "Zahlungen müssen vollständig und fristgerecht erfolgen."
-    ],
+    "pricingList": "Alle Preise verstehen sich inkl. MwSt., soweit nicht anders angegeben. Standardversand: CHF 8.50 (B-Post), sofern vom Lieferanten nichts anderes angegeben wird. Abweichende Versandkosten werden vom Lieferanten angegeben. Zahlungsarten: Twint, Kreditkarte, Rechnung, PayPal oder weitere vereinbarte Zahlungsmittel. Zahlungen müssen vollständig und fristgerecht erfolgen.",
     "shippingTitle": "Versand / Lieferung",
-    "shippingList": [
-      "Lieferanten sind für Versand und Lieferzeit verantwortlich.",
-      "Standardversand: CHF 8.50 B-Post, sofern nichts anderes angegeben ist.",
-      "Feinraumshop stellt ggf. Richtwerte für Lieferzeiten bereit.",
-      "Verzögerungen beim Versand liegen in der Verantwortung des Lieferanten.",
-      "Für internationale Lieferungen können zusätzliche Kosten (Zoll, Steuern) anfallen."
-    ],
+    "shippingList": "Lieferanten sind für Versand und Lieferzeit verantwortlich. Standardversand: CHF 8.50 B-Post, sofern nichts anderes angegeben ist. Feinraumshop stellt ggf. Richtwerte für Lieferzeiten bereit. Verzögerungen beim Versand liegen in der Verantwortung des Lieferanten. Für internationale Lieferungen können zusätzliche Kosten (Zoll, Steuern) anfallen.",
     "returnsTitle": "Rückgabe / Reklamation / Gewährleistung",
-    "returnsList": [
-      "Kund:innen haben Anspruch auf gesetzliche Gewährleistung (2 Jahre in der Schweiz).",
-      "Reklamationen oder Rückgaben erfolgen über den Lieferanten; Feinraumshop kann vermitteln.",
-      "Rücksendungen, Ersatzlieferungen oder Erstattungen erfolgen nach Absprache mit dem Lieferanten."
-    ],
+    "returnsList": "Kund:innen haben Anspruch auf gesetzliche Gewährleistung (2 Jahre in der Schweiz). Reklamationen oder Rückgaben erfolgen über den Lieferanten; Feinraumshop kann vermitteln. Rücksendungen, Ersatzlieferungen oder Erstattungen erfolgen nach Absprache mit dem Lieferanten.",
     "customerObligationsTitle": "Pflichten der Kund:innen",
-    "customerObligationsList": [
-      "Korrekte Angabe von Liefer- und Kontaktdaten",
-      "Vollständige Bezahlung",
-      "Kein Missbrauch der Plattform oder Produkte"
-    ],
+    "customerObligationsList": "Korrekte Angabe von Liefer- und Kontaktdaten. Vollständige Bezahlung. Kein Missbrauch der Plattform oder Produkte.",
     "liabilityTitle": "Haftung / Haftungsbeschränkung",
-    "liabilityList": [
-      "Feinraumshop haftet ausschliesslich für Bereitstellung der Plattform.",
-      "Lieferanten haften für Produktqualität, Versand, Schäden oder Defekte.",
-      "Haftung ist auf den Kaufpreis beschränkt; indirekte Schäden ausgeschlossen."
-    ],
+    "liabilityList": "Feinraumshop haftet ausschliesslich für Bereitstellung der Plattform. Lieferanten haften für Produktqualität, Versand, Schäden oder Defekte. Haftung ist auf den Kaufpreis beschränkt; indirekte Schäden ausgeschlossen.",
     "marketingTitle": "Marketing / Newsletter",
-    "marketingList": [
-      "Kund:innen erhalten Newsletter oder Marketing nur nach ausdrücklicher Zustimmung (Opt-in).",
-      "Abmeldung jederzeit über Profil oder Link in E-Mail möglich."
-    ],
+    "marketingList": "Kund:innen erhalten Newsletter oder Marketing nur nach ausdrücklicher Zustimmung (Opt-in). Abmeldung jederzeit über Profil oder Link in E-Mail möglich.",
     "dataProtectionTitle": "Datenschutz",
-    "dataProtectionList": [
-      "Verarbeitung personenbezogener Daten gemäss Datenschutzerklärung.",
-      "Daten werden ggf. an Lieferanten, Zahlungsanbieter oder Versanddienstleister übermittelt.",
-      "Kund:innen haben Rechte auf Auskunft, Berichtigung, Löschung und Widerspruch."
-    ],
+    "dataProtectionList": "Verarbeitung personenbezogener Daten gemäss Datenschutzerklärung. Daten werden ggf. an Lieferanten, Zahlungsanbieter oder Versanddienstleister übermittelt. Kund:innen haben Rechte auf Auskunft, Berichtigung, Löschung und Widerspruch.",
     "intellectualPropertyTitle": "Geistiges Eigentum",
-    "intellectualPropertyList": [
-      "Inhalte von Feinraumshop (Texte, Bilder, Produktinformationen) sind urheberrechtlich geschützt.",
-      "Nutzungsrechte nur für Plattformnutzung."
-    ],
+    "intellectualPropertyList": "Inhalte von Feinraumshop (Texte, Bilder, Produktinformationen) sind urheberrechtlich geschützt. Nutzungsrechte nur für Plattformnutzung.",
     "changesTitle": "Änderungen der AGB",
-    "changesList": [
-      "Änderungen werden den Nutzer:innen mitgeteilt (z. B. E-Mail, Hinweis auf Plattform).",
-      "Mit fortgesetzter Nutzung nach Änderung gelten diese als akzeptiert."
-    ],
+    "changesList": "Änderungen werden den Nutzer:innen mitgeteilt (z. B. E-Mail, Hinweis auf Plattform). Mit fortgesetzter Nutzung nach Änderung gelten diese als akzeptiert.",
     "lawTitle": "Anwendbares Recht / Gerichtsstand",
-    "lawList": [
-      "Schweizer Recht.",
-      "Gerichtsstand: Arbon, Schweiz."
-    ],
+    "lawList": "Schweizer Recht. Gerichtsstand: Arbon, Schweiz.",
     "questionsTitle": "Fragen",
     "questionsBody": "Besuchen Sie für Hilfe unser Hilfe-Center oder kontaktieren Sie uns."
   },

@@ -46,11 +46,7 @@ export default function PrivacyPolicyPage() {
                 <Database className="w-5 h-5 text-primary-600" />
                 <h2 className="text-xl font-montserrat font-semibold text-primary-800">{translate('privacy.dataTitle')}</h2>
               </div>
-              <ul className="list-disc pl-6 space-y-2 text-primary-600 font-lora">
-                {translations.privacy.dataList.map((item, index) => (
-                  <li key={index}>{item}</li>
-                ))}
-              </ul>
+              <p className="text-primary-600 font-lora">{translations.privacy.dataList}</p>
             </section>
 
             <section className="group relative bg-white rounded-2xl shadow-sm border border-primary-200 p-6 transition-all duration-300 hover:border-primary-400 hover:shadow-lg">
@@ -59,11 +55,7 @@ export default function PrivacyPolicyPage() {
                 <Target className="w-5 h-5 text-primary-600" />
                 <h2 className="text-xl font-montserrat font-semibold text-primary-800">{translate('privacy.purposesTitle')}</h2>
               </div>
-              <ul className="list-disc pl-6 space-y-2 text-primary-600 font-lora">
-                {translations.privacy.purposesList.map((item, index) => (
-                  <li key={index}>{item}</li>
-                ))}
-              </ul>
+              <p className="text-primary-600 font-lora">{translations.privacy.purposesList}</p>
             </section>
 
             <section className="group relative bg-white rounded-2xl shadow-sm border border-primary-200 p-6 transition-all duration-300 hover:border-primary-400 hover:shadow-lg">
@@ -72,11 +64,7 @@ export default function PrivacyPolicyPage() {
                 <Share className="w-5 h-5 text-primary-600" />
                 <h2 className="text-xl font-montserrat font-semibold text-primary-800">{translate('privacy.sharingTitle')}</h2>
               </div>
-              <ul className="list-disc pl-6 space-y-2 text-primary-600 font-lora">
-                {translations.privacy.sharingList.map((item, index) => (
-                  <li key={index}>{item}</li>
-                ))}
-              </ul>
+              <p className="text-primary-600 font-lora">{translations.privacy.sharingList}</p>
             </section>
 
             <section className="group relative bg-white rounded-2xl shadow-sm border border-primary-200 p-6 transition-all duration-300 hover:border-primary-400 hover:shadow-lg">

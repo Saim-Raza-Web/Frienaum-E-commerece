@@ -249,28 +249,11 @@
     "responsibleTitle": "Responsible Entity",
     "responsibleBody": "Feinraumshop Landquartstrasse 30, 9320 Arbon<br/>Email: support@feinraumshop.ch<br/>Phone: +41 76 430 87 18",
     "dataTitle": "Collected Data",
-    "dataList": [
-      "Customer data: Name, address, email, phone number, payment information, order history, IP address",
-      "Supplier data: Name, company information, contact details, bank connections",
-      "Tracking data: Cookies, analysis information (anonymized)"
-    ],
+    "dataList": "Customer data: Name, address, email, phone number, payment information, order history, IP address. Supplier data: Name, company information, contact details, bank connections. Tracking data: Cookies, analysis information (anonymized).",
     "purposesTitle": "Purposes of Processing",
-    "purposesList": [
-      "Order processing, shipping, invoicing",
-      "Management of customer and supplier accounts",
-      "Communication regarding orders, complaints, returns",
-      "Payment processing",
-      "Analysis & platform optimization",
-      "Marketing only with consent"
-    ],
+    "purposesList": "Order processing, shipping, invoicing. Management of customer and supplier accounts. Communication regarding orders, complaints, returns. Payment processing. Analysis & platform optimization. Marketing only with consent.",
     "sharingTitle": "Data Sharing",
-    "sharingList": [
-      "Suppliers for shipping & complaints",
-      "Payment providers for payment processing",
-      "Shipping service providers for delivery",
-      "Authorities, as legally required",
-      "International transfers only when contractually necessary"
-    ],
+    "sharingList": "Suppliers for shipping & complaints. Payment providers for payment processing. Shipping service providers for delivery. Authorities, as legally required. International transfers only when contractually necessary.",
     "cookiesTitle": "Cookies / Tracking",
     "cookiesBody": "Cookies/Tracking only with consent, data anonymized<br/>Users can reject or delete cookies",
     "storageTitle": "Data Storage / Retention",
@@ -288,13 +271,7 @@
   "supplierGuide": {
     "subtitle": "Important information for suppliers on Feinraumshop.",
     "badge": "Suppliers",
-    "infoList": [
-      "Approval requirement for each product",
-      "Compliance with delivery times, quality, shipping",
-      "Liability for products, returns, complaints",
-      "Content may not violate third-party rights",
-      "Data sharing only for contract processing"
-    ],
+    "infoList": "Approval requirement for each product. Compliance with delivery times, quality, shipping. Liability for products, returns, complaints. Content may not violate third-party rights. Data sharing only for contract processing.",
     "supportTitle": "Support & Help",
     "supportBody": "Our support team is available to help with your questions. Use the supplier dashboard for efficient management.",
     "merchantPanel": "Supplier Panel"
@@ -303,14 +280,7 @@
   "customerGuide": {
     "subtitle": "Important information for customers on Feinraumshop.",
     "badge": "Customers",
-    "infoList": [
-      "Contract partner is the respective supplier",
-      "Shipping and delivery by supplier",
-      "Standard shipping CHF 8.50 B-Post, unless otherwise specified",
-      "Returns/complaints through supplier; Feinraumshop mediates",
-      "Marketing only with consent",
-      "Data protection according to privacy policy"
-    ],
+    "infoList": "Contract partner is the respective supplier. Shipping and delivery by supplier. Standard shipping CHF 8.50 B-Post, unless otherwise specified. Returns/complaints through supplier; Feinraumshop mediates. Marketing only with consent. Data protection according to privacy policy.",
     "helpTitle": "Help & Support",
     "helpBody": "Our support team is happy to help with your questions. Use our help center or contact us directly.",
     "helpCenter": "Help Center"
@@ -329,71 +299,27 @@
     "suppliersTitle": "Suppliers / Sellers",
     "suppliersBody": "Suppliers must create an account with Feinraumshop and be approved.<br/><br/>Obligations of suppliers:<br/>• Correct and complete product information (images, description, price, stock, delivery times)<br/>• Timely shipping to customers<br/>• Handling of complaints, returns, warranty cases<br/>• Compliance with legal regulations<br/><br/>Feinraumshop reserves the right to review, reject or remove products, categories or suppliers at any time.<br/><br/>Suppliers are liable for content they upload (images, texts, descriptions).",
     "productsTitle": "Products / Availability",
-    "productsList": [
-      "Products are maintained by suppliers and must be approved by Feinraumshop.",
-      "Feinraumshop assumes no liability for availability, delivery times or completeness of product information.",
-      "Products are available while stocks last. Changes or withdrawals are reserved."
-    ],
+    "productsList": "Products are maintained by suppliers and must be approved by Feinraumshop. Feinraumshop assumes no liability for availability, delivery times or completeness of product information. Products are available while stocks last. Changes or withdrawals are reserved.",
     "pricingTitle": "Prices / Payment",
-    "pricingList": [
-      "All prices are inclusive of VAT, unless otherwise stated.",
-      "Standard shipping: CHF 8.50 (B-Post), unless otherwise specified by the supplier.",
-      "Different shipping costs are specified by the supplier.",
-      "Payment methods: Twint, credit card, invoice, PayPal or other agreed payment methods.",
-      "Payments must be made in full and on time."
-    ],
+    "pricingList": "All prices are inclusive of VAT, unless otherwise stated. Standard shipping: CHF 8.50 (B-Post), unless otherwise specified by the supplier. Different shipping costs are specified by the supplier. Payment methods: Twint, credit card, invoice, PayPal or other agreed payment methods. Payments must be made in full and on time.",
     "shippingTitle": "Shipping / Delivery",
-    "shippingList": [
-      "Suppliers are responsible for shipping and delivery time.",
-      "Standard shipping: CHF 8.50 B-Post, unless otherwise specified.",
-      "Feinraumshop may provide reference values for delivery times.",
-      "Delays in shipping are the responsibility of the supplier.",
-      "Additional costs (duties, taxes) may apply for international deliveries."
-    ],
+    "shippingList": "Suppliers are responsible for shipping and delivery time. Standard shipping: CHF 8.50 B-Post, unless otherwise specified. Feinraumshop may provide reference values for delivery times. Delays in shipping are the responsibility of the supplier. Additional costs (duties, taxes) may apply for international deliveries.",
     "returnsTitle": "Returns / Complaints / Warranty",
-    "returnsList": [
-      "Customers are entitled to statutory warranty (2 years in Switzerland).",
-      "Complaints or returns are handled through the supplier; Feinraumshop can mediate.",
-      "Returns, replacement deliveries or refunds are carried out in consultation with the supplier."
-    ],
+    "returnsList": "Customers are entitled to statutory warranty (2 years in Switzerland). Complaints or returns are handled through the supplier; Feinraumshop can mediate. Returns, replacement deliveries or refunds are carried out in consultation with the supplier.",
     "customerObligationsTitle": "Customer Obligations",
-    "customerObligationsList": [
-      "Correct provision of delivery and contact details",
-      "Complete payment",
-      "No misuse of the platform or products"
-    ],
+    "customerObligationsList": "Correct provision of delivery and contact details. Complete payment. No misuse of the platform or products.",
     "liabilityTitle": "Liability / Limitation of Liability",
-    "liabilityList": [
-      "Feinraumshop is liable solely for providing the platform.",
-      "Suppliers are liable for product quality, shipping, damages or defects.",
-      "Liability is limited to the purchase price; indirect damages excluded."
-    ],
+    "liabilityList": "Feinraumshop is liable solely for providing the platform. Suppliers are liable for product quality, shipping, damages or defects. Liability is limited to the purchase price; indirect damages excluded.",
     "marketingTitle": "Marketing / Newsletter",
-    "marketingList": [
-      "Customers receive newsletters or marketing only after express consent (opt-in).",
-      "Unsubscribe possible at any time via profile or link in email."
-    ],
+    "marketingList": "Customers receive newsletters or marketing only after express consent (opt-in). Unsubscribe possible at any time via profile or link in email.",
     "dataProtectionTitle": "Data Protection",
-    "dataProtectionList": [
-      "Processing of personal data in accordance with the privacy policy.",
-      "Data may be transmitted to suppliers, payment providers or shipping service providers.",
-      "Customers have rights to information, correction, deletion and objection."
-    ],
+    "dataProtectionList": "Processing of personal data in accordance with the privacy policy. Data may be transmitted to suppliers, payment providers or shipping service providers. Customers have rights to information, correction, deletion and objection.",
     "intellectualPropertyTitle": "Intellectual Property",
-    "intellectualPropertyList": [
-      "Content from Feinraumshop (texts, images, product information) is copyrighted.",
-      "Usage rights only for platform usage."
-    ],
+    "intellectualPropertyList": "Content from Feinraumshop (texts, images, product information) is copyrighted. Usage rights only for platform usage.",
     "changesTitle": "Changes to Terms",
-    "changesList": [
-      "Changes will be communicated to users (e.g., email, notice on platform).",
-      "Continued use after changes means acceptance."
-    ],
+    "changesList": "Changes will be communicated to users (e.g., email, notice on platform). Continued use after changes means acceptance.",
     "lawTitle": "Applicable Law / Jurisdiction",
-    "lawList": [
-      "Swiss law applies.",
-      "Place of jurisdiction: Arbon, Switzerland."
-    ],
+    "lawList": "Swiss law applies. Place of jurisdiction: Arbon, Switzerland.",
     "questionsTitle": "Questions",
     "questionsBody": "For help, visit our Help Center or contact us."
   },

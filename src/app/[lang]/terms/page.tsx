@@ -64,11 +64,7 @@ export default function TermsOfServicePage() {
                 <Package className="w-5 h-5 text-primary-600" />
                 <h2 className="text-xl font-montserrat font-semibold text-primary-800">{translate('terms.productsTitle')}</h2>
               </div>
-              <ul className="list-disc pl-6 space-y-2 text-primary-600 font-lora">
-                {translations.terms.productsList.map((item, index) => (
-                  <li key={index}>{item}</li>
-                ))}
-              </ul>
+              <p className="text-primary-600 font-lora">{translations.terms.productsList}</p>
             </section>
 
             <section className="group relative bg-white rounded-2xl shadow-sm border border-primary-200 p-6 transition-all duration-300 hover:border-primary-400 hover:shadow-lg">
@@ -77,11 +73,7 @@ export default function TermsOfServicePage() {
                 <DollarSign className="w-5 h-5 text-primary-600" />
                 <h2 className="text-xl font-montserrat font-semibold text-primary-800">{translate('terms.pricingTitle')}</h2>
               </div>
-              <ul className="list-disc pl-6 space-y-2 text-primary-600 font-lora">
-                {translations.terms.pricingList.map((item, index) => (
-                  <li key={index}>{item}</li>
-                ))}
-              </ul>
+              <p className="text-primary-600 font-lora">{translations.terms.pricingList}</p>
             </section>
 
             <section className="group relative bg-white rounded-2xl shadow-sm border border-primary-200 p-6 transition-all duration-300 hover:border-primary-400 hover:shadow-lg">
@@ -90,11 +82,7 @@ export default function TermsOfServicePage() {
                 <Truck className="w-5 h-5 text-primary-600" />
                 <h2 className="text-xl font-montserrat font-semibold text-primary-800">{translate('terms.shippingTitle')}</h2>
               </div>
-              <ul className="list-disc pl-6 space-y-2 text-primary-600 font-lora">
-                {translations.terms.shippingList.map((item, index) => (
-                  <li key={index}>{item}</li>
-                ))}
-              </ul>
+              <p className="text-primary-600 font-lora">{translations.terms.shippingList}</p>
             </section>
 
             <section className="group relative bg-white rounded-2xl shadow-sm border border-primary-200 p-6 transition-all duration-300 hover:border-primary-400 hover:shadow-lg">
@@ -103,11 +91,7 @@ export default function TermsOfServicePage() {
                 <RotateCcw className="w-5 h-5 text-primary-600" />
                 <h2 className="text-xl font-montserrat font-semibold text-primary-800">{translate('terms.returnsTitle')}</h2>
               </div>
-              <ul className="list-disc pl-6 space-y-2 text-primary-600 font-lora">
-                {translations.terms.returnsList.map((item, index) => (
-                  <li key={index}>{item}</li>
-                ))}
-              </ul>
+              <p className="text-primary-600 font-lora">{translations.terms.returnsList}</p>
             </section>
 
             <section className="group relative bg-white rounded-2xl shadow-sm border border-primary-200 p-6 transition-all duration-300 hover:border-primary-400 hover:shadow-lg">
@@ -116,11 +100,7 @@ export default function TermsOfServicePage() {
                 <UserCheck className="w-5 h-5 text-primary-600" />
                 <h2 className="text-xl font-montserrat font-semibold text-primary-800">{translate('terms.customerObligationsTitle')}</h2>
               </div>
-              <ul className="list-disc pl-6 space-y-2 text-primary-600 font-lora">
-                {translations.terms.customerObligationsList.map((item, index) => (
-                  <li key={index}>{item}</li>
-                ))}
-              </ul>
+              <p className="text-primary-600 font-lora">{translations.terms.customerObligationsList}</p>
             </section>
 
             <section className="group relative bg-white rounded-2xl shadow-sm border border-primary-200 p-6 transition-all duration-300 hover:border-primary-400 hover:shadow-lg">
@@ -129,11 +109,7 @@ export default function TermsOfServicePage() {
                 <Shield className="w-5 h-5 text-primary-600" />
                 <h2 className="text-xl font-montserrat font-semibold text-primary-800">{translate('terms.liabilityTitle')}</h2>
               </div>
-              <ul className="list-disc pl-6 space-y-2 text-primary-600 font-lora">
-                {translations.terms.liabilityList.map((item, index) => (
-                  <li key={index}>{item}</li>
-                ))}
-              </ul>
+              <p className="text-primary-600 font-lora">{translations.terms.liabilityList}</p>
             </section>
 
             <section className="group relative bg-white rounded-2xl shadow-sm border border-primary-200 p-6 transition-all duration-300 hover:border-primary-400 hover:shadow-lg">
@@ -142,11 +118,7 @@ export default function TermsOfServicePage() {
                 <Mail className="w-5 h-5 text-primary-600" />
                 <h2 className="text-xl font-montserrat font-semibold text-primary-800">{translate('terms.marketingTitle')}</h2>
               </div>
-              <ul className="list-disc pl-6 space-y-2 text-primary-600 font-lora">
-                {translations.terms.marketingList.map((item, index) => (
-                  <li key={index}>{item}</li>
-                ))}
-              </ul>
+              <p className="text-primary-600 font-lora">{translations.terms.marketingList}</p>
             </section>
 
             <section className="group relative bg-white rounded-2xl shadow-sm border border-primary-200 p-6 transition-all duration-300 hover:border-primary-400 hover:shadow-lg">
@@ -155,11 +127,7 @@ export default function TermsOfServicePage() {
                 <Database className="w-5 h-5 text-primary-600" />
                 <h2 className="text-xl font-montserrat font-semibold text-primary-800">{translate('terms.dataProtectionTitle')}</h2>
               </div>
-              <ul className="list-disc pl-6 space-y-2 text-primary-600 font-lora">
-                {translations.terms.dataProtectionList.map((item, index) => (
-                  <li key={index}>{item}</li>
-                ))}
-              </ul>
+              <p className="text-primary-600 font-lora">{translations.terms.dataProtectionList}</p>
             </section>
 
             <section className="group relative bg-white rounded-2xl shadow-sm border border-primary-200 p-6 transition-all duration-300 hover:border-primary-400 hover:shadow-lg">
@@ -168,11 +136,7 @@ export default function TermsOfServicePage() {
                 <Copyright className="w-5 h-5 text-primary-600" />
                 <h2 className="text-xl font-montserrat font-semibold text-primary-800">{translate('terms.intellectualPropertyTitle')}</h2>
               </div>
-              <ul className="list-disc pl-6 space-y-2 text-primary-600 font-lora">
-                {translations.terms.intellectualPropertyList.map((item, index) => (
-                  <li key={index}>{item}</li>
-                ))}
-              </ul>
+              <p className="text-primary-600 font-lora">{translations.terms.intellectualPropertyList}</p>
             </section>
 
             <section className="group relative bg-white rounded-2xl shadow-sm border border-primary-200 p-6 transition-all duration-300 hover:border-primary-400 hover:shadow-lg">
@@ -181,11 +145,7 @@ export default function TermsOfServicePage() {
                 <Edit className="w-5 h-5 text-primary-600" />
                 <h2 className="text-xl font-montserrat font-semibold text-primary-800">{translate('terms.changesTitle')}</h2>
               </div>
-              <ul className="list-disc pl-6 space-y-2 text-primary-600 font-lora">
-                {translations.terms.changesList.map((item, index) => (
-                  <li key={index}>{item}</li>
-                ))}
-              </ul>
+              <p className="text-primary-600 font-lora">{translations.terms.changesList}</p>
             </section>
 
             <section className="group relative bg-white rounded-2xl shadow-sm border border-primary-200 p-6 transition-all duration-300 hover:border-primary-400 hover:shadow-lg">
@@ -194,11 +154,7 @@ export default function TermsOfServicePage() {
                 <Gavel className="w-5 h-5 text-primary-600" />
                 <h2 className="text-xl font-montserrat font-semibold text-primary-800">{translate('terms.lawTitle')}</h2>
               </div>
-              <ul className="list-disc pl-6 space-y-2 text-primary-600 font-lora">
-                {translations.terms.lawList.map((item, index) => (
-                  <li key={index}>{item}</li>
-                ))}
-              </ul>
+              <p className="text-primary-600 font-lora">{translations.terms.lawList}</p>
             </section>
           </div>
         </div>

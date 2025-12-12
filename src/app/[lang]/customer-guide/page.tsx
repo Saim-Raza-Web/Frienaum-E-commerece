@@ -33,11 +33,7 @@ export default function CustomerGuidePage() {
             <ShoppingBag className="w-6 h-6 text-primary-600" />
             <h2 className="text-2xl font-montserrat font-semibold text-primary-800">{translate('customerGuideTitle')}</h2>
           </div>
-          <ul className="list-disc pl-6 space-y-3 text-primary-600 font-lora text-lg">
-            {translations.customerGuide.infoList.map((item, index) => (
-              <li key={index}>{item}</li>
-            ))}
-          </ul>
+          <p className="text-primary-600 font-lora text-lg">{translations.customerGuide.infoList}</p>
         </div>
 
         {/* Sidebar */}
