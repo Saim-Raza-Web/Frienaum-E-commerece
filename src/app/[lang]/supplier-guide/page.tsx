@@ -33,7 +33,26 @@ export default function SupplierGuidePage() {
             <Store className="w-6 h-6 text-primary-600" />
             <h2 className="text-2xl font-montserrat font-semibold text-primary-800">{translate('supplierGuideTitle')}</h2>
           </div>
-          <p className="text-primary-600 font-lora text-lg">{translations.supplierGuide.infoList}</p>
+          <div className="text-primary-600 font-lora space-y-4">
+            <p>
+              {translate('supplierGuide.registrationText')}
+            </p>
+            <p>
+              {translate('supplierGuide.approvalText')}
+            </p>
+            <p>
+              {translate('supplierGuide.responsibilitiesText')}
+            </p>
+            <p>
+              {translate('supplierGuide.complianceText')}
+            </p>
+            <p>
+              {translate('supplierGuide.liabilityText')}
+            </p>
+            <p>
+              {translate('supplierGuide.dataText')}
+            </p>
+          </div>
         </div>
 
         {/* Sidebar */}

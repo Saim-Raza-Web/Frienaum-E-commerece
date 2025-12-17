@@ -4,9 +4,10 @@ import React from 'react';
 import { usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useTranslation } from '@/i18n/TranslationProvider';
-import { ShoppingBag, Truck, RotateCcw, CreditCard, User, MessageCircle, HelpCircle, Shield } from 'lucide-react';
 import deTranslations from '@/i18n/locales/de/common.json';
 import enTranslations from '@/i18n/locales/en/common.json';
+
+import { ShoppingBag, Truck, RotateCcw, CreditCard, User, MessageCircle, HelpCircle, Shield } from 'lucide-react';
 
 export default function CustomerGuidePage() {
   const { translate } = useTranslation();
@@ -33,7 +34,29 @@ export default function CustomerGuidePage() {
             <ShoppingBag className="w-6 h-6 text-primary-600" />
             <h2 className="text-2xl font-montserrat font-semibold text-primary-800">{translate('customerGuideTitle')}</h2>
           </div>
-          <p className="text-primary-600 font-lora text-lg">{translations.customerGuide.infoList}</p>
+          <div className="text-primary-600 font-lora space-y-4">
+            <p>
+              {translate('customerGuide.contractText')}
+            </p>
+            <p>
+              {translate('customerGuide.shippingText')}
+            </p>
+            <p>
+              {translate('customerGuide.returnsText')}
+            </p>
+            <p>
+              {translate('customerGuide.marketingText')}
+            </p>
+            <p>
+              {translate('customerGuide.privacyText')}
+              {' '}
+              <Link href={`/${lang}/privacy`} className="underline decoration-primary-300 hover:decoration-primary-500">
+                /{lang}/privacy
+              </Link>
+              {' '}
+              {translate('customerGuide.privacyText2')}
+            </p>
+          </div>
         </div>
 
         {/* Sidebar */}

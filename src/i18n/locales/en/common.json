@@ -274,7 +274,13 @@
     "infoList": "Approval requirement for each product. Compliance with delivery times, quality, shipping. Liability for products, returns, complaints. Content may not violate third-party rights. Data sharing only for contract processing.",
     "supportTitle": "Support & Help",
     "supportBody": "Our support team is available to help with your questions. Use the supplier dashboard for efficient management.",
-    "merchantPanel": "Supplier Panel"
+    "merchantPanel": "Supplier Panel",
+    "registrationText": "Registration as a supplier on Feinraumshop is done through an online form where you must provide your company data, contact information and banking details. After registration, Feinraumshop reviews your information and conducts identity and credit checks. Activation of your supplier account occurs only after successful review and acceptance of the supplier agreement. You will receive confirmation by email once your account is activated.",
+    "approvalText": "Every product you wish to offer on the platform is subject to an approval process by Feinraumshop. Products must meet legal requirements, have complete and accurate product information, and meet Feinraumshop's quality standards. Approval may be denied if products violate applicable law, have safety deficiencies, or violate platform guidelines. You will be informed about the status of your product requests by email.",
+    "responsibilitiesText": "As a supplier, you are responsible for accurate product descriptions, compliance with stated delivery times, and ensuring product quality. You commit to confirming orders promptly, packaging and shipping products properly, and being available for handling returns and complaints. You are also responsible for complying with all trade, tax, and commercial legal obligations.",
+    "complianceText": "You guarantee that all products and content you offer are free from third-party rights and do not infringe trademark, copyright, patent, or other protection rights. You ensure that your products meet Swiss and European safety and quality standards and carry all required conformity markings. You commit to complying with all legal labeling requirements, particularly for food, cosmetics, and electronic devices.",
+    "liabilityText": "You bear sole liability for all products you offer and sell on the platform. This includes product liability, warranty obligations, and liability for any damages caused by your products. Feinraumshop assumes no liability for the quality, authenticity, or safety of your products. In case of damages, you as supplier are primarily contactable and responsible for regulating claims.",
+    "dataText": "Processing of personal data in the context of supplier activities is carried out in accordance with the provisions of Feinraumshop's privacy policy. You receive access to customer data only to the extent necessary for contract processing. You commit to treating customer data confidentially, not using it for your own purposes, and deleting it after contract processing. Transfer of data to third parties is only permitted with prior consent from Feinraumshop."
   },
   "customerGuideTitle": "Customer Guide",
   "customerGuide": {
@@ -283,7 +289,13 @@
     "infoList": "Contract partner is the respective supplier. Shipping and delivery by supplier. Standard shipping CHF 8.50 B-Post, unless otherwise specified. Returns/complaints through supplier; Feinraumshop mediates. Marketing only with consent. Data protection according to privacy policy.",
     "helpTitle": "Help & Support",
     "helpBody": "Our support team is happy to help with your questions. Use our help center or contact us directly.",
-    "helpCenter": "Help Center"
+    "helpCenter": "Help Center",
+    "contractText": "The purchase contract is concluded exclusively between you as a customer and the respective supplier who offers the product on the platform. Feinraumshop acts only as an intermediary and provides the technical infrastructure; Feinraumshop is not a contracting party to the purchase contract and assumes no contractual liability obligations from the purchase relationship.",
+    "shippingText": "Delivery and shipping are handled entirely by the respective supplier. Unless the supplier's offer specifies otherwise, standard shipping is CHF 8.50 via B-Post. Any deviating shipping costs are transparently indicated by the suppliers in the offer or during the ordering process.",
+    "returnsText": "Returns, complaints, and warranty claims are processed and handled exclusively by the respective supplier. Feinraumshop can assist in communication between you and the supplier but is not responsible for processing returns or fulfilling warranty claims.",
+    "marketingText": "We send marketing communications, particularly newsletters or promotional emails, only with your express prior consent. Consent is voluntary and can be revoked at any time with effect for the future, for example via the unsubscribe link in each email or via your account settings on the platform.",
+    "privacyText": "The processing of your personal data in connection with platform use and order processing is carried out in accordance with the provisions of our privacy policy. You can find this at",
+    "privacyText2": "and apply in addition to these General Terms and Conditions."
   },
   "termsAcceptanceRequired": "You must accept the Terms and Conditions",
   "marketingPreferences": "Marketing Preferences (Optional)",
