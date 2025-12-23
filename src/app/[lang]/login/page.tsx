@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
-import { Eye, EyeOff, Mail, Lock, User, ShoppingBag, Loader2 } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, ShoppingBag, Loader2, X, FileText, Shield } from 'lucide-react';
 import { useTranslation } from '@/i18n/TranslationProvider';
 
 export default function LoginPage() {
@@ -36,6 +36,12 @@ export default function LoginPage() {
   const [forgotPasswordError, setForgotPasswordError] = useState('');
   const [forgotPasswordSuccess, setForgotPasswordSuccess] = useState(false);
   const [resetEmail, setResetEmail] = useState('');
+  
+  // T&C Popup state
+  const [showTermsPopup, setShowTermsPopup] = useState(false);
+  const [activeTermsTab, setActiveTermsTab] = useState<'terms' | 'privacy'>('terms');
+  const [termsScrolledToBottom, setTermsScrolledToBottom] = useState(false);
+  const [privacyScrolledToBottom, setPrivacyScrolledToBottom] = useState(false);
 
   const { login, register, isAuthenticated, isLoading, error, clearError, user } = useAuth();
   const router = useRouter();
@@ -154,7 +160,30 @@ export default function LoginPage() {
       cookiesConsent: false
     });
     clearError();
+    // Reset T&C popup state
+    setTermsScrolledToBottom(false);
+    setPrivacyScrolledToBottom(false);
   }, [clearError]);
+
+  // Handle scroll in T&C popup to detect if user scrolled to bottom
+  const handleTermsScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const target = e.target as HTMLDivElement;
+    const isAtBottom = target.scrollHeight - target.scrollTop <= target.clientHeight + 50;
+    if (activeTermsTab === 'terms' && isAtBottom) {
+      setTermsScrolledToBottom(true);
+    } else if (activeTermsTab === 'privacy' && isAtBottom) {
+      setPrivacyScrolledToBottom(true);
+    }
+  };
+
+  // Accept terms from popup
+  const handleAcceptTerms = () => {
+    handleInputChange('agreeToTerms', true);
+    setShowTermsPopup(false);
+  };
+
+  // Check if user can accept (scrolled both sections)
+  const canAcceptTerms = termsScrolledToBottom && privacyScrolledToBottom;
 
   const toggleMode = useCallback(() => {
     setIsLogin(prev => !prev);
@@ -414,25 +443,52 @@ export default function LoginPage() {
                     id="terms"
                     name="agreeToTerms"
                     checked={formData.agreeToTerms || false}
-                    onChange={(e) => handleInputChange('agreeToTerms', e.target.checked)}
-                    className="mt-1 h-4 w-4 text-primary-warm focus:ring-primary-warm border-gray-300 rounded"
+                    onChange={(e) => {
+                      if (e.target.checked) {
+                        // If trying to check, open popup
+                        setShowTermsPopup(true);
+                      } else {
+                        // Allow unchecking directly
+                        handleInputChange('agreeToTerms', false);
+                        // Reset scroll states when unchecking
+                        setTermsScrolledToBottom(false);
+                        setPrivacyScrolledToBottom(false);
+                      }
+                    }}
+                    className="mt-1 h-4 w-4 text-primary-warm focus:ring-primary-warm border-gray-300 rounded cursor-pointer"
                     required
                   />
-                  <label htmlFor="terms" className="text-sm text-gray-700">
-                    I accept the{' '}
-                    <Link href={`/${currentLang}/terms`} className="text-primary-warm hover:text-primary-warm-hover underline">
-                      Terms of Service
-                    </Link>
-                    {' '}and{' '}
-                    <Link href={`/${currentLang}/privacy`} className="text-primary-warm hover:text-primary-warm-hover underline">
-                      Privacy Policy
-                    </Link>
+                  <label className="text-sm text-gray-700">
+                    {translate('I accept the')}{' '}
+                    <button
+                      type="button"
+                      onClick={() => setShowTermsPopup(true)}
+                      className="text-primary-warm hover:text-primary-warm-hover underline font-medium"
+                    >
+                      {translate('Terms of Service')}
+                    </button>
+                    {' '}{translate('and')}{' '}
+                    <button
+                      type="button"
+                      onClick={() => { setShowTermsPopup(true); setActiveTermsTab('privacy'); }}
+                      className="text-primary-warm hover:text-primary-warm-hover underline font-medium"
+                    >
+                      {translate('Privacy Policy')}
+                    </button>
                     {' '}*
                   </label>
                 </div>
+                {formData.agreeToTerms && (
+                  <p className="text-xs text-green-600 flex items-center gap-1">
+                    <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                    </svg>
+                    {translate('Terms and Privacy Policy accepted')}
+                  </p>
+                )}
 
                 <div className="space-y-3">
-                  <h4 className="text-sm font-medium text-gray-900">Marketing Preferences (Optional)</h4>
+                  <h4 className="text-sm font-medium text-gray-900">{translate('Marketing Preferences (Optional)')}</h4>
 
                   <div className="flex items-start space-x-3">
                     <input
@@ -444,7 +500,7 @@ export default function LoginPage() {
                       className="mt-1 h-4 w-4 text-primary-warm focus:ring-primary-warm border-gray-300 rounded"
                     />
                     <label htmlFor="newsletter" className="text-sm text-gray-700">
-                      I would like to receive newsletters and marketing updates
+                      {translate('I would like to receive newsletters and marketing updates')}
                     </label>
                   </div>
 
@@ -457,8 +513,8 @@ export default function LoginPage() {
                       onChange={(e) => handleInputChange('cookiesConsent', e.target.checked)}
                       className="mt-1 h-4 w-4 text-primary-warm focus:ring-primary-warm border-gray-300 rounded"
                     />
-                    <label htmlFor="cookies" className="text-sm text-sm text-gray-700">
-                      I agree to the use of cookies and tracking technologies
+                    <label htmlFor="cookies" className="text-sm text-gray-700">
+                      {translate('I agree to the use of cookies and tracking technologies')}
                     </label>
                   </div>
                 </div>
@@ -625,6 +681,221 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
+
+      {/* T&C Popup Modal */}
+      {showTermsPopup && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col">
+            {/* Header */}
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
+                  <FileText className="w-5 h-5 text-primary-600" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900">AGB & Datenschutz</h2>
+                  <p className="text-sm text-gray-500">Bitte lesen und akzeptieren Sie, um fortzufahren</p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowTermsPopup(false)}
+                className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex border-b border-gray-200">
+              <button
+                type="button"
+                onClick={() => setActiveTermsTab('terms')}
+                className={`flex-1 px-6 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
+                  activeTermsTab === 'terms'
+                    ? 'text-primary-600 border-b-2 border-primary-600 bg-primary-50'
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <FileText className="w-4 h-4" />
+                AGB
+                {termsScrolledToBottom && (
+                  <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveTermsTab('privacy')}
+                className={`flex-1 px-6 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
+                  activeTermsTab === 'privacy'
+                    ? 'text-primary-600 border-b-2 border-primary-600 bg-primary-50'
+                    : 'text-gray-500 hover:text-gray-700 hover:bg-gray-50'
+                }`}
+              >
+                <Shield className="w-4 h-4" />
+                Datenschutz
+                {privacyScrolledToBottom && (
+                  <svg className="w-4 h-4 text-green-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                )}
+              </button>
+            </div>
+
+            {/* Content */}
+            <div 
+              className="flex-1 overflow-y-auto p-6 text-sm text-gray-700 leading-relaxed"
+              onScroll={handleTermsScroll}
+            >
+              {activeTermsTab === 'terms' ? (
+                <div className="space-y-6">
+                  <section>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">1. Geltungsbereich</h3>
+                    <p className="mb-2">Diese Allgemeinen Geschäftsbedingungen regeln die Nutzung der Online-Plattform Feinraumshop. Betreiberin der Plattform ist Feinraumshop.</p>
+                    <p>Diese AGB gelten für alle Nutzerinnen und Nutzer der Plattform. Mit dem Zugriff auf die Plattform erklärst du dich mit diesen AGB einverstanden.</p>
+                  </section>
+                  <section>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">2. Vertragspartner</h3>
+                    <p className="mb-2">Feinraumshop ist nicht Verkäuferin der über die Plattform angebotenen Produkte. Ein Kaufvertrag kommt ausschliesslich zwischen der Kundschaft und dem jeweiligen Lieferanten zustande.</p>
+                  </section>
+                  <section>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">3. Preise und Zahlung</h3>
+                    <p>Sämtliche Preise werden in Schweizer Franken (CHF) angezeigt. Massgeblich ist der Preis zum Zeitpunkt der Bestellung.</p>
+                  </section>
+                  <section>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">4. Versand und Lieferung</h3>
+                    <p>Versand und Lieferung erfolgen durch den jeweiligen Lieferanten. Standardversand beträgt CHF 8.50.</p>
+                  </section>
+                  <section>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">5. Rücksendungen</h3>
+                    <p>Rücksendungen und Reklamationen werden durch den jeweiligen Lieferanten bearbeitet.</p>
+                  </section>
+                  <section>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">6. Haftung</h3>
+                    <p>Feinraumshop haftet ausschliesslich für Schäden bei Vorsatz oder grober Fahrlässigkeit.</p>
+                  </section>
+                  <section>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">7. Anwendbares Recht</h3>
+                    <p>Es gilt schweizerisches Recht. Gerichtsstand ist Arbon, Schweiz.</p>
+                  </section>
+                  <div className="mt-8 p-4 bg-gray-50 rounded-lg text-center text-gray-500 text-xs">
+                    Bitte scrollen Sie nach unten, um alle Bedingungen zu lesen
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  <section>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">1. Verantwortliche Stelle</h3>
+                    <p>Verantwortliche Stelle für die Datenbearbeitung ist die Feinraumshop AG, Arbon, Schweiz.</p>
+                  </section>
+                  <section>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">2. Erhobene Daten</h3>
+                    <p>Wir bearbeiten Personendaten wie Stammdaten, Vertragsdaten, Kommunikationsdaten, Nutzungsdaten und Zahlungsdaten.</p>
+                  </section>
+                  <section>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">3. Zwecke der Datenbearbeitung</h3>
+                    <p>Die Datenbearbeitung dient der Bereitstellung der Plattform, Abwicklung von Bestellungen, Kommunikation und Verbesserung unserer Services.</p>
+                  </section>
+                  <section>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">4. Weitergabe von Daten</h3>
+                    <p>Eine Weitergabe erfolgt nur zur Vertragserfüllung an Lieferanten, Zahlungsdienstleister und Versanddienstleister.</p>
+                  </section>
+                  <section>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">5. Cookies</h3>
+                    <p>Wir verwenden Cookies für den Betrieb der Plattform und statistische Analysen. Nicht notwendige Cookies nur mit Ihrer Einwilligung.</p>
+                  </section>
+                  <section>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">6. Ihre Rechte</h3>
+                    <p>Sie haben das Recht auf Auskunft, Berichtigung, Löschung und Datenübertragbarkeit.</p>
+                  </section>
+                  <section>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-3">7. Datensicherheit</h3>
+                    <p>Wir treffen technische und organisatorische Massnahmen zum Schutz Ihrer Daten, einschliesslich SSL/TLS-Verschlüsselung.</p>
+                  </section>
+                  <div className="mt-8 p-4 bg-gray-50 rounded-lg text-center text-gray-500 text-xs">
+                    Bitte scrollen Sie nach unten, um alle Bedingungen zu lesen
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
+              <div className="flex flex-col gap-4">
+                {/* Status message */}
+                <div className="flex items-center gap-2 text-sm">
+                  {!canAcceptTerms ? (
+                    <p className="text-amber-600">
+                      ⚠️ Bitte lesen Sie beide Abschnitte (AGB & Datenschutz) vollständig durch
+                    </p>
+                  ) : (
+                    <p className="text-green-600 flex items-center gap-1">
+                      <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      Beide Abschnitte gelesen
+                    </p>
+                  )}
+                </div>
+
+                {/* Checkbox and buttons row */}
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  {/* Acceptance checkbox */}
+                  <div className={`flex items-center gap-3 p-3 rounded-lg border-2 transition-colors ${
+                    canAcceptTerms 
+                      ? 'border-primary-300 bg-primary-50' 
+                      : 'border-gray-200 bg-gray-100 opacity-60'
+                  }`}>
+                    <input
+                      type="checkbox"
+                      id="popupTermsCheckbox"
+                      checked={formData.agreeToTerms}
+                      onChange={(e) => {
+                        if (canAcceptTerms) {
+                          handleInputChange('agreeToTerms', e.target.checked);
+                        }
+                      }}
+                      disabled={!canAcceptTerms}
+                      className="h-5 w-5 text-primary-600 focus:ring-primary-500 border-gray-300 rounded cursor-pointer disabled:cursor-not-allowed"
+                    />
+                    <label 
+                      htmlFor="popupTermsCheckbox" 
+                      className={`text-sm font-medium ${canAcceptTerms ? 'text-gray-900 cursor-pointer' : 'text-gray-500 cursor-not-allowed'}`}
+                    >
+                      Ich habe die AGB und Datenschutzerklärung gelesen und akzeptiere diese
+                    </label>
+                  </div>
+
+                  {/* Buttons */}
+                  <div className="flex gap-3 flex-shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => setShowTermsPopup(false)}
+                      className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      Abbrechen
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowTermsPopup(false)}
+                      disabled={!formData.agreeToTerms}
+                      className={`px-6 py-2 rounded-lg font-medium transition-colors ${
+                        formData.agreeToTerms
+                          ? 'bg-primary-600 text-white hover:bg-primary-700'
+                          : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                      }`}
+                    >
+                      Bestätigen
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -241,17 +241,15 @@ export default function UnifiedNavbar() {
               </div>
             </div>
 
-            {/* Cart - Responsive design (hidden for merchants) */}
-            {(!isAuthenticated || user?.role !== 'merchant') && (
-              <Link href={`/${lang}/cart`} className="relative inline-flex h-9 w-9 items-center justify-center text-gray-600 hover:text-[var(--color-primary-700)] transition-colors duration-200 rounded-full hover:bg-gray-50">
-                <ShoppingCart className="w-4 h-4" />
-                {cartItemCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-cta-500 text-white text-xs rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center font-montserrat font-bold shadow-sm text-[10px] sm:text-xs">
-                    {cartItemCount > 99 ? '99+' : cartItemCount}
-                  </span>
-                )}
-              </Link>
-            )}
+            {/* Cart - Show for all users including merchants */}
+            <Link href={`/${lang}/cart`} className="relative inline-flex h-9 w-9 items-center justify-center text-gray-600 hover:text-[var(--color-primary-700)] transition-colors duration-200 rounded-full hover:bg-gray-50">
+              <ShoppingCart className="w-4 h-4" />
+              {cartItemCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-cta-500 text-white text-xs rounded-full h-4 w-4 sm:h-5 sm:w-5 flex items-center justify-center font-montserrat font-bold shadow-sm text-[10px] sm:text-xs">
+                  {cartItemCount > 99 ? '99+' : cartItemCount}
+                </span>
+              )}
+            </Link>
 
             {/* User Menu or Sign In - Responsive design */}
             {isAuthenticated && user ? (
@@ -294,17 +292,15 @@ export default function UnifiedNavbar() {
                       {userMenuLabels.profile}
                     </Link>
 
-                    {/* Show orders link only for customers, not merchants */}
-                    {user.role !== 'merchant' && (
-                      <Link
-                        href={`/${lang}/orders`}
-                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-[var(--color-primary-50)] hover:text-[var(--color-primary-700)]"
-                        onClick={() => setIsUserMenuOpen(false)}
-                      >
-                        <Package className="w-4 h-4 mr-2" />
-                        {userMenuLabels.orders}
-                      </Link>
-                    )}
+                    {/* Customer orders (available to everyone) */}
+                    <Link
+                      href={`/${lang}/orders`}
+                      className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-[var(--color-primary-50)] hover:text-[var(--color-primary-700)]"
+                      onClick={() => setIsUserMenuOpen(false)}
+                    >
+                      <Package className="w-4 h-4 mr-2" />
+                      {userMenuLabels.orders}
+                    </Link>
 
                     {user.role === 'merchant' && (
                       <Link
@@ -496,25 +492,15 @@ export default function UnifiedNavbar() {
                 >
                   {userMenuLabels.profile}
                 </Link>
-                {/* Show orders link only for customers, not merchants */}
-                {user.role !== 'merchant' && (
-                  <Link
-                    href={`/${lang}/orders`}
-                    className="block px-3 py-2 text-gray-700 hover:text-[var(--color-primary-700)] hover:bg-[var(--color-primary-50)] rounded text-base"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    {userMenuLabels.orders}
-                  </Link>
-                )}
-                {user.role === 'merchant' && (
-                  <Link
-                    href={`/${lang}/merchant`}
-                    className="block px-3 py-2 text-gray-700 hover:text-[var(--color-primary-700)] hover:bg-[var(--color-primary-50)] rounded text-base"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    {userMenuLabels.merchantDashboard}
-                  </Link>
-                )}
+                {/* Customer orders (available to everyone) */}
+                <Link
+                  href={`/${lang}/orders`}
+                  className="block px-3 py-2 text-gray-700 hover:text-[var(--color-primary-700)] hover:bg-[var(--color-primary-50)] rounded text-base"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                >
+                  {userMenuLabels.orders}
+                </Link>
+                
                 {user.role === 'admin' && (
                   <Link
                     href={`/${lang}/admin`}

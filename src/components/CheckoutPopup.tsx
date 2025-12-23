@@ -74,18 +74,18 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
   const validateAddress = (): boolean => {
     const errors: Partial<Address> = {};
 
-    if (!shippingAddress.firstName.trim()) errors.firstName = 'First name is required';
-    if (!shippingAddress.lastName.trim()) errors.lastName = 'Last name is required';
+    if (!shippingAddress.firstName.trim()) errors.firstName = translate('checkout.errors.firstName');
+    if (!shippingAddress.lastName.trim()) errors.lastName = translate('checkout.errors.lastName');
     if (!shippingAddress.email.trim()) {
-      errors.email = 'Email is required';
+      errors.email = translate('checkout.errors.emailRequired');
     } else if (!/\S+@\S+\.\S+/.test(shippingAddress.email)) {
-      errors.email = 'Email is invalid';
+      errors.email = translate('checkout.errors.emailInvalid');
     }
-    if (!shippingAddress.phone.trim()) errors.phone = 'Phone number is required';
-    if (!shippingAddress.address.trim()) errors.address = 'Address is required';
-    if (!shippingAddress.city.trim()) errors.city = 'City is required';
-    if (!shippingAddress.state.trim()) errors.state = 'State is required';
-    if (!shippingAddress.zipCode.trim()) errors.zipCode = 'ZIP code is required';
+    if (!shippingAddress.phone.trim()) errors.phone = translate('checkout.errors.phone');
+    if (!shippingAddress.address.trim()) errors.address = translate('checkout.errors.address');
+    if (!shippingAddress.city.trim()) errors.city = translate('checkout.errors.city');
+    if (!shippingAddress.state.trim()) errors.state = translate('checkout.errors.state');
+    if (!shippingAddress.zipCode.trim()) errors.zipCode = translate('checkout.errors.zipCode');
 
     setAddressErrors(errors);
     return Object.keys(errors).length === 0;
@@ -104,8 +104,8 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
   const buildMinimalShippingAddress = (): Address => {
     const firstNameFromUser = (user?.firstName || '').trim();
     const lastNameFromUser = (user?.lastName || '').trim();
-    const firstName = firstNameFromUser || 'Customer';
-    const lastName = lastNameFromUser || 'User';
+    const firstName = firstNameFromUser || translate('checkout.form.firstNamePlaceholder') || 'Customer';
+    const lastName = lastNameFromUser || translate('checkout.form.lastNamePlaceholder') || 'User';
     return {
       firstName,
       lastName,
@@ -128,7 +128,7 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
 
     try {
       if (!isAuthenticated || !user) {
-        throw new Error('You need to be signed in to complete your purchase');
+        throw new Error(translate('checkout.errors.signInRequired') || 'You need to be signed in to complete your purchase');
       }
 
       const minimalAddress = buildMinimalShippingAddress();
@@ -198,7 +198,7 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
 
       const result = await response.json();
       if (result.status !== 'PAYMENT_REQUIRED' || !result.payment?.clientSecret) {
-        throw new Error('Invalid response from server');
+        throw new Error(translate('checkout.errors.general') || 'Invalid response from server');
       }
 
       // Save payment data for Stripe Elements
@@ -210,7 +210,7 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
       setCurrentStep('payment');
     } catch (err: any) {
       console.error('Checkout error:', err);
-      setError(err?.message || 'Failed to process your order. Please try again.');
+      setError(err?.message || translate('checkout.errors.general') || 'Failed to process your order. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -372,7 +372,7 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
       setCurrentStep('payment');
     } catch (err) {
       console.error('Checkout error:', err);
-      setError('Failed to process your order. Please try again.');
+      setError(translate('checkout.errors.general') || 'Failed to process your order. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -409,8 +409,8 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
             <h2 className="text-2xl font-bold">
               {currentStep === 'cart' && translate('cart.orderSummary')}
               {currentStep === 'shipping' && translate('cart.shipping')}
-              {currentStep === 'payment' && 'Select Payment Method'}
-              {currentStep === 'success' && 'Order Placed!'}
+              {currentStep === 'payment' && translate('checkout.paymentMethodTitle') || 'Select Payment Method'}
+              {currentStep === 'success' && translate('checkout.successTitle')}
             </h2>
             <button 
               onClick={onClose}
@@ -472,12 +472,12 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
                   {isLoading ? (
                     <>
                       <Loader2 className="animate-spin mr-2 h-4 w-4" />
-                      {translate('processing')}
+                      {translate('checkout.processing') || translate('processing')}
                     </>
                   ) : (
                     <>
                       <CreditCard className="mr-2 h-4 w-4" />
-                      {translate('proceedToPayment')}
+                      {translate('checkout.proceedToPayment')}
                     </>
                   )}
                 </button>
@@ -488,13 +488,13 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
           {currentStep === 'shipping' && (
             <div className="space-y-4">
               <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="font-medium text-gray-900 mb-3">Shipping Information</h3>
+                <h3 className="font-medium text-gray-900 mb-3">{translate('checkout.shippingInformationTitle') || 'Shipping Information'}</h3>
                 <div className="space-y-3">
                   {/* Personal Information */}
                   <div className="grid grid-cols-2 gap-3">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        First Name *
+                        {translate('checkout.form.firstNameLabel')}
                       </label>
                       <input
                         type="text"
@@ -503,7 +503,7 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
                         className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                           addressErrors.firstName ? 'border-red-500' : 'border-gray-300'
                         }`}
-                        placeholder="John"
+                        placeholder={translate('checkout.form.firstNamePlaceholder') || 'John'}
                         disabled={isLoading}
                       />
                       {addressErrors.firstName && (
@@ -512,7 +512,7 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Last Name *
+                        {translate('checkout.form.lastNameLabel')}
                       </label>
                       <input
                         type="text"
@@ -521,7 +521,7 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
                         className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                           addressErrors.lastName ? 'border-red-500' : 'border-gray-300'
                         }`}
-                        placeholder="Doe"
+                        placeholder={translate('checkout.form.lastNamePlaceholder') || 'Doe'}
                         disabled={isLoading}
                       />
                       {addressErrors.lastName && (
@@ -532,7 +532,7 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Email Address *
+                      {translate('checkout.form.emailLabel')}
                     </label>
                     <input
                       type="email"
@@ -541,7 +541,7 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
                       className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                         addressErrors.email ? 'border-red-500' : 'border-gray-300'
                       }`}
-                      placeholder="john@example.com"
+                      placeholder={translate('checkout.form.emailPlaceholder') || 'john@example.com'}
                       disabled={isLoading}
                     />
                     {addressErrors.email && (
@@ -551,7 +551,7 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Phone Number *
+                      {translate('checkout.form.phoneLabel')}
                     </label>
                     <input
                       type="tel"
@@ -560,7 +560,7 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
                       className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                         addressErrors.phone ? 'border-red-500' : 'border-gray-300'
                       }`}
-                      placeholder="(555) 123-4567"
+                      placeholder={translate('checkout.form.phonePlaceholder') || '(555) 123-4567'}
                       disabled={isLoading}
                     />
                     {addressErrors.phone && (
@@ -571,7 +571,7 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
                   {/* Address */}
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Street Address *
+                      {translate('checkout.form.addressLabel')}
                     </label>
                     <input
                       type="text"
@@ -580,7 +580,7 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
                       className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                         addressErrors.address ? 'border-red-500' : 'border-gray-300'
                       }`}
-                      placeholder="123 Main St"
+                      placeholder={translate('checkout.form.addressPlaceholder') || '123 Main St'}
                       disabled={isLoading}
                     />
                     {addressErrors.address && (
@@ -591,7 +591,7 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
                   <div className="grid grid-cols-3 gap-3">
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        City *
+                        {translate('checkout.form.cityLabel')}
                       </label>
                       <input
                         type="text"
@@ -600,7 +600,7 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
                         className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                           addressErrors.city ? 'border-red-500' : 'border-gray-300'
                         }`}
-                        placeholder="New York"
+                        placeholder={translate('checkout.form.cityPlaceholder') || 'New York'}
                         disabled={isLoading}
                       />
                       {addressErrors.city && (
@@ -609,7 +609,7 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        State *
+                        {translate('checkout.form.stateLabel')}
                       </label>
                       <input
                         type="text"
@@ -618,7 +618,7 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
                         className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                           addressErrors.state ? 'border-red-500' : 'border-gray-300'
                         }`}
-                        placeholder="NY"
+                        placeholder={translate('checkout.form.statePlaceholder') || 'NY'}
                         disabled={isLoading}
                       />
                       {addressErrors.state && (
@@ -627,7 +627,7 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
                     </div>
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-1">
-                        ZIP Code *
+                        {translate('checkout.form.zipCodeLabel')}
                       </label>
                       <input
                         type="text"
@@ -636,7 +636,7 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
                         className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
                           addressErrors.zipCode ? 'border-red-500' : 'border-gray-300'
                         }`}
-                        placeholder="10001"
+                        placeholder={translate('checkout.form.zipCodePlaceholder') || '10001'}
                         disabled={isLoading}
                       />
                       {addressErrors.zipCode && (
@@ -647,7 +647,7 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Country *
+                      {translate('checkout.form.countryLabel')}
                     </label>
                     <div className="relative">
                       <select
@@ -676,7 +676,7 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
                   className="flex-1 bg-gray-200 text-gray-700 py-3 rounded-lg hover:bg-gray-300 disabled:opacity-50"
                   disabled={isLoading}
                 >
-                  ← Back
+                  ← {translate('checkout.back') || 'Back'}
                 </button>
                 <button
                   onClick={handleProceedToPaymentFromShipping}
@@ -717,7 +717,7 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
                 className="mt-4 text-sm text-blue-600 hover:text-blue-700"
                 disabled={isLoading}
               >
-                ← Back to shipping
+                ← {translate('checkout.backToShipping') || 'Back to shipping'}
               </button>
             </div>
           )}
@@ -725,9 +725,9 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
           {currentStep === 'payment' && paymentData && !stripePromise && (
             <div className="space-y-4">
               <div className="bg-red-50 text-red-700 p-4 rounded-md">
-                <h3 className="font-medium mb-2">Payment Unavailable</h3>
+                <h3 className="font-medium mb-2">{translate('checkout.paymentUnavailableTitle')}</h3>
                 <p className="text-sm">
-                  Stripe payment system is not properly configured. Please contact support or try again later.
+                  {translate('checkout.paymentUnavailableMessage')}
                 </p>
               </div>
 
@@ -746,12 +746,12 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
               <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
                 <CheckCircle className="h-6 w-6 text-green-600" />
               </div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Order Placed Successfully!</h3>
+              <h3 className="text-lg font-medium text-gray-900 mb-2">{translate('checkout.successTitle')}</h3>
               <p className="text-gray-600 mb-6">
-                Thank you for your purchase. You'll receive an email confirmation shortly.
+                {translate('checkout.successMessage')}
               </p>
               <div className="animate-pulse text-sm text-gray-500">
-                Redirecting to orders...
+                {translate('checkout.redirecting') || 'Redirecting to orders...'}
               </div>
             </div>
           )}

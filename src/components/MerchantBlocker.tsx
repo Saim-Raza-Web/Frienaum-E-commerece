@@ -4,6 +4,7 @@ import React, { useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
 import { AlertTriangle, ShoppingBag } from 'lucide-react';
+import { useTranslation } from '@/i18n/TranslationProvider';
 
 /**
  * Component that blocks merchants from accessing customer shopping pages
@@ -18,6 +19,7 @@ export default function MerchantBlocker({ children, allowMerchantAccess = false 
   const { user, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const { translate } = useTranslation();
 
   useEffect(() => {
     // Only check if we're done loading and user is authenticated
@@ -25,11 +27,27 @@ export default function MerchantBlocker({ children, allowMerchantAccess = false 
       // Get current language
       const langMatch = pathname?.match(/^\/([a-z]{2})(\/|$)/);
       const currentLang = langMatch ? langMatch[1] : 'de';
-
-      // Redirect merchant to their dashboard
-      router.replace(`/${currentLang}/merchant`);
+      
+      // Define paths that merchants are allowed to access
+      const allowedPaths = [
+        `^\/${currentLang}\/product\/\\d+$`, // Product details page
+        `^\/${currentLang}\/products`, // Products listing
+        `^\/${currentLang}\/checkout`, // Checkout process
+        `^\/${currentLang}\/cart`, // Cart page
+        `^\/${currentLang}\/orders` // Customer orders history
+      ];
+      
+      // Check if current path is in the allowed list
+      const isAllowedPath = allowedPaths.some(pattern => 
+        new RegExp(pattern).test(pathname || '')
+      );
+      
+      // Only redirect if not on an allowed path
+      if (!isAllowedPath) {
+        router.replace(`/${currentLang}/merchant`);
+      }
     }
-  }, [isLoading, isAuthenticated, user, router, pathname]);
+  }, [isLoading, isAuthenticated, user, router, pathname, allowMerchantAccess]);
 
   // Show loading while checking
   if (isLoading) {
@@ -43,20 +61,37 @@ export default function MerchantBlocker({ children, allowMerchantAccess = false 
     );
   }
 
-  // If merchant is authenticated, show blocking message while redirecting
+  // If merchant is authenticated and not on an allowed path, show blocking message
   if (!allowMerchantAccess && isAuthenticated && user?.role === 'merchant') {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center max-w-md mx-auto px-4">
-          <ShoppingBag className="w-16 h-16 text-turquoise-600 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">Merchant Dashboard</h1>
-          <p className="text-gray-600 mb-4">
-            As a merchant, you have access to your merchant dashboard to manage your products and orders.
-          </p>
-          <p className="text-sm text-gray-500">Redirecting to your dashboard...</p>
-        </div>
-      </div>
+    // Define paths that merchants are allowed to access
+    const langMatch = pathname?.match(/^\/([a-z]{2})(\/|$)/);
+    const currentLang = langMatch ? langMatch[1] : 'de';
+    const allowedPaths = [
+      `^\/${currentLang}\/product\/\\d+$`, // Product details page
+      `^\/${currentLang}\/products`, // Products listing
+      `^\/${currentLang}\/checkout`, // Checkout process
+      `^\/${currentLang}\/cart`, // Cart page
+      `^\/${currentLang}\/orders` // Customer orders history
+    ];
+    
+    const isAllowedPath = allowedPaths.some(pattern => 
+      new RegExp(pattern).test(pathname || '')
     );
+    
+    if (!isAllowedPath) {
+      return (
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <div className="text-center max-w-md mx-auto px-4">
+            <ShoppingBag className="w-16 h-16 text-turquoise-600 mx-auto mb-4" />
+            <h1 className="text-2xl font-bold text-gray-900 mb-2">{translate('merchant.merchantDashboard') || 'Merchant Dashboard'}</h1>
+            <p className="text-gray-600 mb-4">
+              {translate('merchant.merchantAccessMessage') || 'As a merchant, you have access to your merchant dashboard to manage your products and orders.'}
+            </p>
+            <p className="text-sm text-gray-500">{translate('merchant.redirecting') || 'Redirecting to your dashboard...'}</p>
+          </div>
+        </div>
+      );
+    }
   }
 
   // Allow access for customers and non-authenticated users

@@ -28,6 +28,7 @@ import {
 import { useAuth } from '@/context/AuthContext';
 import { useTranslation } from '@/i18n/TranslationProvider';
 import SmartImage from '@/components/SmartImage';
+import NotificationBell from '@/components/NotificationBell';
 
 const ImageUpload = dynamic(() => import('@/components/ImageUpload'), {
   ssr: false,
@@ -65,6 +66,11 @@ function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const { translate } = useTranslation();
   const { user } = useAuth();
+
+  const translateOrFallback = (key: string, fallback: string) => {
+    const result = translate(key);
+    return result === key ? fallback : result;
+  };
 
   // Helper function to translate roles
   const translateRole = (role: string) => {
@@ -739,9 +745,12 @@ function AdminDashboard() {
               <h1 className="text-xl sm:text-2xl md:text-3xl font-montserrat font-bold text-primary-800">{translate('admin.panel')}</h1>
               <p className="mt-1 sm:mt-2 text-sm sm:text-base text-gray-600">{translate('admin.managePlatform')}</p>
             </div>
-            <div className="flex items-center space-x-2 sm:space-x-3">
-              <div className="w-2 h-2 sm:w-3 sm:h-3 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="text-xs sm:text-sm text-gray-600">{translate('admin.systemOnline')}</span>
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <NotificationBell userRole="ADMIN" />
+              <div className="flex items-center space-x-2 sm:space-x-3">
+                <div className="w-2 h-2 sm:w-3 sm:h-3 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-xs sm:text-sm text-gray-600">{translate('admin.systemOnline')}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -1230,9 +1239,13 @@ function AdminDashboard() {
                     ) : filteredProducts.length === 0 ? (
                       <div className="text-center py-12">
                         <Package className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-                        <h3 className="text-base font-montserrat font-semibold text-primary-800 mb-2">{translate('admin.noProductsFound')}</h3>
+                        <h3 className="text-base font-montserrat font-semibold text-primary-800 mb-2">
+                          {translateOrFallback('admin.noProductsFound', 'No products found')}
+                        </h3>
                         <p className="text-gray-600 mb-6 text-sm">
-                          {translate(searchTerm ? 'admin.tryAdjustingSearch' : 'admin.getStartedAddProduct')}
+                          {searchTerm
+                            ? translateOrFallback('admin.tryAdjustingSearch', 'Try adjusting your search terms.')
+                            : translateOrFallback('admin.getStartedAddProduct', 'Get started by adding your first product.')}
                         </p>
                         {!searchTerm && (
                           <button
@@ -1240,7 +1253,7 @@ function AdminDashboard() {
                             className="btn-primary"
                           >
                             <Plus className="w-5 h-5 mr-2" />
-                            {translate('admin.addYourFirstProduct')}
+                            {translateOrFallback('admin.addYourFirstProduct', 'Add Your First Product')}
                           </button>
                         )}
                       </div>
@@ -1298,29 +1311,52 @@ function AdminDashboard() {
                                   {translate('admin.created')}: {new Date(p.createdAt).toLocaleDateString()}
                                 </p>
                               </div>
-                              <div className="mt-2 flex flex-row items-center gap-2">
-                                <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                                  p.status === 'PUBLISHED' ? 'bg-blue-100 text-blue-800' :
-                                  p.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
-                                  'bg-gray-100 text-gray-800'}`}>{
-                                  p.status === 'PUBLISHED' ? statusLabels.published :
-                                  p.status === 'PENDING' ? statusLabels.pending :
-                                  statusLabels.draft
-                                }</span>
+                              <div className="mt-2 flex flex-col gap-2">
+                                <div className="flex items-center">
+                                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                                    p.status === 'PUBLISHED' ? 'bg-blue-100 text-blue-800' :
+                                    p.status === 'PENDING' ? 'bg-yellow-100 text-yellow-800' :
+                                    'bg-gray-100 text-gray-800'}`}>{
+                                    p.status === 'PUBLISHED' ? statusLabels.published :
+                                    p.status === 'PENDING' ? statusLabels.pending :
+                                    statusLabels.draft
+                                  }</span>
+                                </div>
                                 {p.status === 'PENDING' && (
-                                  <button
-                                    className="px-3 py-1 text-xs rounded bg-green-600 text-white hover:bg-green-700 whitespace-nowrap"
-                                    onClick={async () => {
-                                      try {
-                                        const res = await fetch(`/api/admin/products/${p.id}/approve`, { method: 'POST', credentials: 'include' });
-                                        if (!res.ok) throw new Error('Failed to publish');
-                                        await loadProducts();
-                                        alert(translate('admin.productApproved'));
-                                      } catch (err) {
-                                        alert(translate('admin.errorApprovingProduct'));
-                                      }
-                                    }}
-                                  >{translate('action.approve')}</button>
+                                  <div className="flex flex-wrap gap-2">
+                                    <button
+                                      className="px-3 py-1.5 text-xs rounded bg-green-600 text-white hover:bg-green-700 whitespace-nowrap font-medium"
+                                      onClick={async () => {
+                                        try {
+                                          const res = await fetch(`/api/admin/products/${p.id}/approve`, { method: 'POST', credentials: 'include' });
+                                          if (!res.ok) throw new Error('Failed to publish');
+                                          await loadProducts();
+                                          alert(translate('admin.productApproved'));
+                                        } catch (err) {
+                                          alert(translate('admin.errorApprovingProduct'));
+                                        }
+                                      }}
+                                    >{translate('action.approve')}</button>
+                                    <button
+                                      className="px-3 py-1.5 text-xs rounded bg-red-600 text-white hover:bg-red-700 whitespace-nowrap font-medium"
+                                      onClick={async () => {
+                                        const reason = prompt(translate('admin.rejectReason') || 'Grund für Ablehnung (optional):');
+                                        try {
+                                          const res = await fetch(`/api/admin/products/${p.id}/reject`, { 
+                                            method: 'POST', 
+                                            credentials: 'include',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ reason: reason || '' })
+                                          });
+                                          if (!res.ok) throw new Error('Failed to reject');
+                                          await loadProducts();
+                                          alert(translate('admin.productRejected') || 'Produkt abgelehnt');
+                                        } catch (err) {
+                                          alert(translate('admin.errorRejectingProduct') || 'Fehler beim Ablehnen');
+                                        }
+                                      }}
+                                    >{translate('action.reject')}</button>
+                                  </div>
                                 )}
                               </div>
                             </div>

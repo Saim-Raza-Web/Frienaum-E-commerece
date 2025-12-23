@@ -2,259 +2,231 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { paymentService } from '@/lib/payment-service';
 import { verifyToken } from '@/lib/auth';
-import { OrderStatus } from '@prisma/client';
+import { OrderStatus, Prisma } from '@prisma/client';
 import Stripe from 'stripe';
 import { sendOrderConfirmationEmail, sendOrderNotificationToMerchant } from '@/lib/email';
-import { sendOrderConfirmationToCustomer, sendNewOrderNotificationToMerchant } from '@/lib/email';
+import { notifyMerchantOrderPlaced } from '@/lib/notifications';
+
+const orderInclude = {
+  subOrders: {
+    include: {
+      items: {
+        include: { product: true },
+      },
+      merchant: {
+        include: { user: true },
+      },
+    },
+  },
+};
+
+const retryableErrorCodes = new Set(['P2034']);
 
 export async function POST(req: NextRequest) {
   try {
-    // Get token from cookie
     const token = req.cookies.get('token')?.value;
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Verify token
     let payload;
     try {
       payload = verifyToken(token);
-    } catch (error) {
+    } catch {
       return NextResponse.json({ error: 'Invalid token' }, { status: 401 });
     }
 
     const userId = payload.id;
-
     const body = await req.json().catch(() => ({} as any));
-    const { paymentIntentId, orderId } = body;
+    const { paymentIntentId } = body;
 
     if (!paymentIntentId) {
-      return NextResponse.json(
-        { error: 'Payment intent ID is required' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Payment intent ID is required' }, { status: 400 });
     }
 
-    // Retrieve the payment intent to verify it and get metadata
     const stripe = paymentService['getStripe']();
     const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
 
     if (paymentIntent.status !== 'succeeded') {
-      return NextResponse.json(
-        { error: 'Payment not succeeded' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Payment not succeeded' }, { status: 400 });
     }
 
-    // Extract metadata from payment intent
     const metadata = paymentIntent.metadata || {};
-    const cartItems = metadata.cartItems ? JSON.parse(metadata.cartItems) : [];
     const shippingAddress = metadata.shippingAddress ? JSON.parse(metadata.shippingAddress) : {};
     const splitData = metadata.splitData ? JSON.parse(metadata.splitData) : {};
-    const currency = metadata.currency || 'CHF';
+    const currency = metadata.currency || paymentIntent.currency?.toUpperCase() || 'CHF';
+    const subOrders = Array.isArray(splitData.subOrders) ? splitData.subOrders : [];
 
-    if (!cartItems.length) {
-      return NextResponse.json(
-        { error: 'No cart items found in payment metadata' },
-        { status: 400 }
-      );
+    if (!subOrders.length) {
+      return NextResponse.json({ error: 'Missing split order data' }, { status: 400 });
     }
 
-    // Record T&C acceptance if not already accepted
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { termsAccepted: true }
+    const normalizedShipping = {
+      firstName: shippingAddress.firstName || 'Customer',
+      lastName: shippingAddress.lastName || 'User',
+      email: shippingAddress.email || payload.email,
+      phone: shippingAddress.phone || '',
+      address: shippingAddress.address || '',
+      city: shippingAddress.city || '',
+      state: shippingAddress.state || '',
+      zipCode: shippingAddress.zipCode || '',
+      country: shippingAddress.country || 'Switzerland',
+    };
+
+    await ensureTermsAcceptance(userId, req);
+
+    const existingPayment = await prisma.payment.findFirst({
+      where: { transactionId: paymentIntentId },
+      include: { order: { include: orderInclude } },
     });
 
-    if (!user?.termsAccepted) {
-      const currentTerms = await prisma.termsVersion.findFirst({
-        where: { isActive: true },
-        orderBy: { effectiveDate: 'desc' }
+    if (existingPayment?.order) {
+      await sendOrderEmailsIfNeeded(existingPayment.order, normalizedShipping);
+
+      return NextResponse.json({
+        success: true,
+        order: existingPayment.order,
+        payment: {
+          id: paymentIntentId,
+          status: 'succeeded',
+          amount: paymentIntent.amount,
+          currency: paymentIntent.currency,
+        },
       });
-
-      if (currentTerms) {
-        // Get client IP address
-        const forwarded = req.headers.get('x-forwarded-for');
-        const ip = forwarded ? forwarded.split(',')[0] : 'unknown';
-
-        await prisma.user.update({
-          where: { id: userId },
-          data: {
-            termsAccepted: true,
-            termsAcceptedAt: new Date(),
-            termsAcceptedVersion: currentTerms.version,
-            termsAcceptedIP: ip
-          }
-        });
-      }
     }
 
-    // Create the order and related data in a transaction
-    const result = await prisma.$transaction(async (tx) => {
-      // First, create the shipping address record
-      const address = await tx.address.create({
-        data: {
-          userId,
-          name: `${shippingAddress.firstName} ${shippingAddress.lastName}`,
-          phone: shippingAddress.phone,
-          line1: shippingAddress.address,
-          city: shippingAddress.city,
-          state: shippingAddress.state,
-          postalCode: shippingAddress.zipCode,
-          country: shippingAddress.country,
-        },
-      });
+    const createResult = await runWithRetry(async () => {
+      return prisma.$transaction(async (tx) => {
+        const paymentRecord = await tx.payment.findFirst({
+          where: { transactionId: paymentIntentId },
+          include: { order: { include: orderInclude } },
+        });
 
-      // Create formatted shipping address string
-      const formattedShippingAddress = `${shippingAddress.firstName} ${shippingAddress.lastName}, ${shippingAddress.address}, ${shippingAddress.city}, ${shippingAddress.state} ${shippingAddress.zipCode}, ${shippingAddress.country}`;
+        if (paymentRecord?.order) {
+          return { order: paymentRecord.order, alreadyProcessed: true };
+        }
 
-      // Create the order with the address reference
-      const order = await tx.order.create({
-        data: {
-          customerId: userId,
-          merchantId: splitData.subOrders[0]?.merchantId || '', // Legacy field
-          status: OrderStatus.PENDING,
-          totalAmount: splitData.grandTotal,
-          shippingAddress: formattedShippingAddress,
-          shippingAddressId: address.id,
-          grandTotal: splitData.grandTotal,
-          currency,
-          gatewayUsed: metadata.paymentMethod === 'paypal' ? 'PAYPAL' : 'STRIPE',
-          paymentStatus: 'SUCCEEDED',
-        },
-      });
-
-      // Create sub-orders with their items
-      for (const so of splitData.subOrders) {
-        // Create the sub-order
-        const subOrder = await tx.subOrder.create({
+        const address = await tx.address.create({
           data: {
-            orderId: order.id,
-            merchantId: so.merchantId,
-            subtotal: so.subtotal,
-            commission: so.commission,
-            payoutAmount: so.payoutAmount,
-            status: 'PENDING',
+            userId,
+            name: `${normalizedShipping.firstName} ${normalizedShipping.lastName}`.trim(),
+            phone: normalizedShipping.phone,
+            line1: normalizedShipping.address,
+            city: normalizedShipping.city,
+            state: normalizedShipping.state,
+            postalCode: normalizedShipping.zipCode,
+            country: normalizedShipping.country,
           },
         });
 
-        // Create order items for this sub-order
-        for (const item of so.items) {
-          // Get the product to ensure it exists and get its details
-          const product = await tx.product.findUnique({
-            where: { id: item.productId },
+        const formattedShippingAddress = `${normalizedShipping.firstName} ${normalizedShipping.lastName}, ${normalizedShipping.address}, ${normalizedShipping.city}, ${normalizedShipping.state} ${normalizedShipping.zipCode}, ${normalizedShipping.country}`;
+        const grandTotal = Number(splitData.grandTotal) || paymentIntent.amount_received / 100;
+        const gateway = metadata.paymentMethod === 'paypal' ? 'PAYPAL' : 'STRIPE';
+
+        const order = await tx.order.create({
+          data: {
+            customerId: userId,
+            merchantId: subOrders[0]?.merchantId || '',
+            status: OrderStatus.PENDING,
+            totalAmount: grandTotal,
+            shippingAddress: formattedShippingAddress,
+            shippingAddressId: address.id,
+            grandTotal,
+            currency,
+            gatewayUsed: gateway,
+            paymentStatus: 'SUCCEEDED',
+            emailNotificationsSent: false,
+          },
+        });
+
+        for (const so of subOrders) {
+          const subOrder = await tx.subOrder.create({
+            data: {
+              orderId: order.id,
+              merchantId: so.merchantId,
+              subtotal: so.subtotal,
+              commission: so.commission,
+              payoutAmount: so.payoutAmount,
+              status: 'PENDING',
+            },
           });
 
-          if (!product) {
-            throw new Error(`Product not found: ${item.productId}`);
+          for (const item of so.items) {
+            const product = await tx.product.findUnique({ where: { id: item.productId } });
+            if (!product) {
+              throw new Error(`Product not found: ${item.productId}`);
+            }
+
+            await tx.orderItem.create({
+              data: {
+                subOrderId: subOrder.id,
+                orderId: order.id,
+                productId: item.productId,
+                quantity: item.quantity,
+                price: item.price,
+              },
+            });
           }
 
-          await tx.orderItem.create({
+          const balance = await tx.payoutBalance.findUnique({
+            where: { merchantId: so.merchantId },
+          });
+
+          if (balance) {
+            await tx.payoutBalance.update({
+              where: { merchantId: so.merchantId },
+              data: { available: { increment: so.payoutAmount } },
+            });
+          } else {
+            await tx.payoutBalance.create({
+              data: {
+                merchantId: so.merchantId,
+                available: so.payoutAmount,
+                pending: 0,
+              },
+            });
+          }
+
+          await tx.payoutTransaction.create({
             data: {
-              subOrderId: subOrder.id,
-              orderId: order.id,
-              productId: item.productId,
-              quantity: item.quantity,
-              price: item.price,
+              merchantId: so.merchantId,
+              amount: so.payoutAmount,
+              status: 'PENDING',
+              method: 'PLATFORM',
             },
           });
         }
-      }
 
-      // Create payment record
-      const payment = await tx.payment.create({
-        data: {
-          orderId: order.id,
-          gateway: metadata.paymentMethod === 'paypal' ? 'PAYPAL' : 'STRIPE',
-          status: 'SUCCEEDED',
-          amount: splitData.grandTotal,
-          currency,
-          transactionId: paymentIntentId,
-          raw: paymentIntent as any,
-        },
-      });
-
-      // Update merchant balances
-      await paymentService.updateMerchantBalances({
-        id: order.id,
-        subOrders: await tx.subOrder.findMany({
-          where: { orderId: order.id },
-        }),
-      });
-
-      // Fetch the complete order with all related data
-      return tx.order.findUnique({
-        where: { id: order.id },
-        include: {
-          subOrders: {
-            include: {
-              items: {
-                include: {
-                  product: true,
-                },
-              },
-              merchant: {
-                include: {
-                  user: true,
-                },
-              },
-            },
+        await tx.payment.create({
+          data: {
+            orderId: order.id,
+            gateway,
+            status: 'SUCCEEDED',
+            amount: grandTotal,
+            currency,
+            transactionId: paymentIntentId,
+            raw: paymentIntent as any,
           },
-        },
+        });
+
+        const orderWithDetails = await tx.order.findUnique({
+          where: { id: order.id },
+          include: orderInclude,
+        });
+
+        return { order: orderWithDetails, alreadyProcessed: false };
       });
     });
 
-    if (!result) {
+    if (!createResult?.order) {
       throw new Error('Failed to create order');
     }
 
-    // Send order confirmation emails asynchronously (don't block response)
-    try {
-      // Send confirmation to customer
-      sendOrderConfirmationEmail(
-        shippingAddress.email,
-        `${shippingAddress.firstName} ${shippingAddress.lastName}`,
-        {
-          orderId: result.id,
-          totalAmount: result.grandTotal,
-          currency: result.currency,
-          items: result.subOrders.flatMap(subOrder =>
-            subOrder.items.map(item => ({
-              productTitle: item.product.title_en,
-              quantity: item.quantity,
-              price: item.price
-            }))
-          )
-        }
-      ).catch(err => console.error('Failed to send customer confirmation email:', err));
-
-      // Send notifications to merchants
-      for (const subOrder of result.subOrders) {
-        sendOrderNotificationToMerchant(
-          subOrder.merchant.user.email,
-          subOrder.merchant.user.name,
-          {
-            orderId: result.id,
-            customerName: `${shippingAddress.firstName} ${shippingAddress.lastName}`,
-            customerEmail: shippingAddress.email,
-            totalAmount: subOrder.subtotal,
-            currency: result.currency,
-            items: subOrder.items.map(item => ({
-              productTitle: item.product.title_en,
-              quantity: item.quantity,
-              price: item.price
-            }))
-          }
-        ).catch(err => console.error('Failed to send merchant notification:', err));
-      }
-    } catch (error) {
-      // Don't fail the order if emails fail
-      console.error('Error sending order emails:', error);
-    }
+    await sendOrderEmailsIfNeeded(createResult.order, normalizedShipping);
 
     return NextResponse.json({
       success: true,
-      order: result,
+      order: createResult.order,
       payment: {
         id: paymentIntentId,
         status: 'succeeded',
@@ -264,10 +236,126 @@ export async function POST(req: NextRequest) {
     });
   } catch (error) {
     console.error('Payment confirmation error:', error);
+    return NextResponse.json({ error: 'Payment confirmation failed' }, { status: 500 });
+  }
+}
 
-    return NextResponse.json(
-      { error: 'Payment confirmation failed' },
-      { status: 500 }
+async function ensureTermsAcceptance(userId: string, req: NextRequest) {
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { termsAccepted: true },
+  });
+
+  if (user?.termsAccepted) return;
+
+  const currentTerms = await prisma.termsVersion.findFirst({
+    where: { isActive: true },
+    orderBy: { effectiveDate: 'desc' },
+  });
+
+  if (!currentTerms) return;
+
+  const forwarded = req.headers.get('x-forwarded-for');
+  const ip = forwarded ? forwarded.split(',')[0] : 'unknown';
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: {
+      termsAccepted: true,
+      termsAcceptedAt: new Date(),
+      termsAcceptedVersion: currentTerms.version,
+      termsAcceptedIP: ip,
+    },
+  });
+}
+
+async function runWithRetry<T>(operation: () => Promise<T>, attempts = 3, baseDelayMs = 150): Promise<T> {
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      return await operation();
+    } catch (error: any) {
+      const isRetryable =
+        error instanceof Prisma.PrismaClientKnownRequestError &&
+        retryableErrorCodes.has(error.code || '');
+
+      if (!isRetryable || attempt === attempts) {
+        throw error;
+      }
+
+      const delay = baseDelayMs * attempt;
+      await new Promise((resolve) => setTimeout(resolve, delay));
+    }
+  }
+
+  throw new Error('Retry attempts exceeded');
+}
+
+async function sendOrderEmailsIfNeeded(order: any, shippingAddress: any) {
+  if (order.emailNotificationsSent) {
+    return;
+  }
+
+  try {
+    if (shippingAddress.email) {
+      await sendOrderConfirmationEmail(
+        shippingAddress.email,
+        `${shippingAddress.firstName} ${shippingAddress.lastName}`.trim(),
+        {
+          orderId: order.id,
+          totalAmount: order.grandTotal,
+          currency: order.currency,
+          items: order.subOrders.flatMap((subOrder: any) =>
+            subOrder.items.map((item: any) => ({
+              productTitle: item.product.title_en,
+              quantity: item.quantity,
+              price: item.price,
+            }))
+          ),
+        }
+      );
+    }
+
+    await Promise.all(
+      order.subOrders.map(async (subOrder: any) => {
+        const merchantUser = subOrder?.merchant?.user;
+        if (!merchantUser) return;
+
+        if (merchantUser.email) {
+          await sendOrderNotificationToMerchant(
+            merchantUser.email,
+            merchantUser.name,
+            {
+              orderId: order.id,
+              customerName: `${shippingAddress.firstName} ${shippingAddress.lastName}`.trim(),
+              customerEmail: shippingAddress.email,
+              totalAmount: subOrder.subtotal,
+              currency: order.currency,
+              items: subOrder.items.map((item: any) => ({
+                productTitle: item.product.title_en,
+                quantity: item.quantity,
+                price: item.price,
+              })),
+            }
+          );
+        }
+
+        if (merchantUser.id) {
+          await notifyMerchantOrderPlaced(
+            merchantUser.id,
+            order.id,
+            `${shippingAddress.firstName} ${shippingAddress.lastName}`.trim(),
+            subOrder.subtotal,
+            order.currency
+          );
+        }
+      })
     );
+
+    await prisma.order.update({
+      where: { id: order.id },
+      data: { emailNotificationsSent: true },
+    });
+  } catch (error) {
+    console.error('Error sending order emails:', error);
   }
 }

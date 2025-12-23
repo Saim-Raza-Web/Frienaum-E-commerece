@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getUserFromReq } from '@/lib/apiAuth';
+import { createNotification } from '@/lib/notifications';
 
 function getUserFromNextRequest(req: NextRequest) {
   const cookieHeader = req.headers.get('cookie') || '';
@@ -34,6 +35,38 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     if (!updated) {
       return NextResponse.json({ error: 'Merchant not found' }, { status: 404 });
+    }
+
+    // Send notification to merchant about status change
+    if (updated.userId) {
+      let notificationType: 'MERCHANT_ACTIVATED' | 'MERCHANT_SUSPENDED' | 'MERCHANT_REGISTERED' = 'MERCHANT_REGISTERED';
+      let title = '';
+      let message = '';
+      
+      if (status === 'ACTIVE') {
+        notificationType = 'MERCHANT_ACTIVATED';
+        title = 'Händlerkonto aktiviert';
+        message = `Ihr Händlerkonto "${updated.storeName}" wurde aktiviert. Sie können jetzt Produkte verkaufen.`;
+      } else if (status === 'SUSPENDED') {
+        notificationType = 'MERCHANT_SUSPENDED';
+        title = 'Händlerkonto gesperrt';
+        message = `Ihr Händlerkonto "${updated.storeName}" wurde gesperrt. Bitte kontaktieren Sie den Support für weitere Informationen.`;
+      } else if (status === 'PENDING') {
+        title = 'Händlerkonto ausstehend';
+        message = `Ihr Händlerkonto "${updated.storeName}" ist auf ausstehend gesetzt. Bitte warten Sie auf die Überprüfung.`;
+      }
+
+      if (title && message) {
+        createNotification(
+          updated.userId,
+          notificationType,
+          title,
+          message,
+          { merchantId: updated.id, storeName: updated.storeName }
+        ).catch(err => {
+          console.error('Failed to send merchant status notification:', err);
+        });
+      }
     }
 
     return NextResponse.json(updated);

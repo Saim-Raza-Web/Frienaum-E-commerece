@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getUserFromReq } from '@/lib/apiAuth';
-import { notifyMerchantProductApproved } from '@/lib/notifications';
+import { notifyMerchantProductRejected } from '@/lib/notifications';
 
 function getUserFromNextRequest(req: NextRequest) {
   const cookieHeader = req.headers.get('cookie') || '';
@@ -22,6 +22,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: 'Unauthorized. Admin access required.' }, { status: 401 });
     }
 
+    // Get optional reason from request body
+    const body = await request.json().catch(() => ({}));
+    const reason = body.reason || '';
+
     // Check if product exists
     const product = await prisma.product.findUnique({
       where: { id: productId }
@@ -31,10 +35,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: 'Product not found' }, { status: 404 });
     }
 
-    // Update product status to PUBLISHED
+    // Update product status to DRAFT (rejected)
     const updatedProduct = await prisma.product.update({
       where: { id: productId },
-      data: { status: 'PUBLISHED' },
+      data: { status: 'DRAFT' },
       include: {
         merchant: {
           include: {
@@ -49,31 +53,31 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       }
     });
 
-    // Send notification to merchant about product approval
+    // Send notification to merchant about product rejection
     if (updatedProduct.merchant?.user?.id) {
-      notifyMerchantProductApproved(
+      notifyMerchantProductRejected(
         updatedProduct.merchant.user.id,
         updatedProduct.id,
-        updatedProduct.title_de || updatedProduct.title_en || 'Produkt'
+        updatedProduct.title_de || updatedProduct.title_en || 'Produkt',
+        reason
       ).catch(err => {
-        console.error('Failed to send merchant notification:', err);
+        console.error('Failed to send merchant rejection notification:', err);
       });
     }
 
     return NextResponse.json({
-      message: 'Product approved and published successfully',
+      message: 'Product rejected successfully',
       product: {
         ...updatedProduct,
         category: updatedProduct.category?.name || 'General'
       }
     });
   } catch (error) {
-    console.error('Error approving product:', error);
+    console.error('Error rejecting product:', error);
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { error: `Failed to approve product: ${errorMessage}` },
+      { error: `Failed to reject product: ${errorMessage}` },
       { status: 500 }
     );
   }
 }
-

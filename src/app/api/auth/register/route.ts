@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { signToken } from '@/lib/auth';
 import { setAuthCookie } from '@/lib/cookies';
 import { sendWelcomeEmail } from '@/lib/email';
+import { notifyAdminsMerchantRegistered } from '@/lib/notifications';
 
 export async function POST(req: NextRequest) {
   try {
@@ -92,15 +93,24 @@ export async function POST(req: NextRequest) {
       });
     }
 
-    // If merchant, create Merchant profile
+    // If merchant, create Merchant profile and notify admins
     if (isMerchant) {
       const finalStoreName = (storeName && typeof storeName === 'string' && storeName.trim()) || `${name}'s Store`;
-      await prisma.merchant.create({
+      const createdMerchant = await prisma.merchant.create({
         data: {
           userId: createdUser.id,
           storeName: finalStoreName,
           status: 'PENDING',
         },
+      });
+
+      // Notify all admins about new merchant registration
+      notifyAdminsMerchantRegistered(
+        createdMerchant.id,
+        createdUser.name,
+        finalStoreName
+      ).catch(err => {
+        console.error('Failed to send admin notifications for new merchant:', err);
       });
     }
 

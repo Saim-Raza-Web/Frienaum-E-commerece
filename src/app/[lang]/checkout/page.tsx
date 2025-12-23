@@ -186,9 +186,9 @@ export default function CheckoutPage() {
         <div className="mb-8">
           <Link href="/cart" className="inline-flex items-center text-turquoise-600 hover:text-turquoise-700 mb-4">
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Cart
+            {translate('checkout.backToCart')}
           </Link>
-          <h1 className="text-3xl font-bold text-gray-900">Checkout</h1>
+          <h1 className="text-3xl font-bold text-gray-900">{translate('checkout.title')}</h1>
         </div>
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
@@ -198,51 +198,51 @@ export default function CheckoutPage() {
                 <form onSubmit={handleShippingSubmit} className="space-y-6">
                   {/* Personal Information */}
                   <div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">Personal Information</h3>
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">{translate('checkout.personalInfo')}</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">First Name *</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">{translate('checkout.form.firstNameLabel')}</label>
                         <input
                           type="text"
                           value={formData.firstName}
                           onChange={(e) => handleInputChange('firstName', e.target.value)}
                           className={`input-field ${errors.firstName ? 'border-red-500' : ''}`}
-                          placeholder="John"
+                          placeholder={translate('checkout.form.firstNamePlaceholder') || 'John'}
                         />
                         {errors.firstName && <p className="text-red-500 text-sm mt-1">{errors.firstName}</p>}
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Last Name *</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">{translate('checkout.form.lastNameLabel')}</label>
                         <input
                           type="text"
                           value={formData.lastName}
                           onChange={(e) => handleInputChange('lastName', e.target.value)}
                           className={`input-field ${errors.lastName ? 'border-red-500' : ''}`}
-                          placeholder="Doe"
+                          placeholder={translate('checkout.form.lastNamePlaceholder') || 'Doe'}
                         />
                         {errors.lastName && <p className="text-red-500 text-sm mt-1">{errors.lastName}</p>}
                       </div>
                     </div>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Email Address *</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">{translate('checkout.form.emailLabel')}</label>
                         <input
                           type="email"
                           value={formData.email}
                           onChange={(e) => handleInputChange('email', e.target.value)}
                           className={`input-field ${errors.email ? 'border-red-500' : ''}`}
-                          placeholder="john@example.com"
+                          placeholder={translate('checkout.form.emailPlaceholder') || 'john@example.com'}
                         />
                         {errors.email && <p className="text-red-500 text-sm mt-1">{errors.email}</p>}
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number *</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">{translate('checkout.form.phoneLabel')}</label>
                         <input
                           type="tel"
                           value={formData.phone}
                           onChange={(e) => handleInputChange('phone', e.target.value)}
                           className={`input-field ${errors.phone ? 'border-red-500' : ''}`}
-                          placeholder="(555) 123-4567"
+                          placeholder={translate('checkout.form.phonePlaceholder') || '(555) 123-4567'}
                         />
                         {errors.phone && <p className="text-red-500 text-sm mt-1">{errors.phone}</p>}
                       </div>
@@ -251,66 +251,66 @@ export default function CheckoutPage() {
 
                   {/* Shipping Address */}
                   <div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">Shipping Address</h3>
+                    <h3 className="text-lg font-medium text-gray-900 mb-4">{translate('checkout.shippingAddress')}</h3>
                     <div className="space-y-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Street Address *</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">{translate('checkout.form.addressLabel')}</label>
                         <input
                           type="text"
                           value={formData.address}
                           onChange={(e) => handleInputChange('address', e.target.value)}
                           className={`input-field ${errors.address ? 'border-red-500' : ''}`}
-                          placeholder="123 Main St"
+                          placeholder={translate('checkout.form.addressPlaceholder') || '123 Main St'}
                         />
                         {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address}</p>}
                       </div>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">City *</label>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">{translate('checkout.form.cityLabel')}</label>
                           <input
                             type="text"
                             value={formData.city}
                             onChange={(e) => handleInputChange('city', e.target.value)}
                             className={`input-field ${errors.city ? 'border-red-500' : ''}`}
-                            placeholder="New York"
+                            placeholder={translate('checkout.form.cityPlaceholder') || 'New York'}
                           />
                           {errors.city && <p className="text-red-500 text-sm mt-1">{errors.city}</p>}
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">State *</label>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">{translate('checkout.form.stateLabel')}</label>
                           <input
                             type="text"
                             value={formData.state}
                             onChange={(e) => handleInputChange('state', e.target.value)}
                             className={`input-field ${errors.state ? 'border-red-500' : ''}`}
-                            placeholder="NY"
+                            placeholder={translate('checkout.form.statePlaceholder') || 'NY'}
                           />
                           {errors.state && <p className="text-red-500 text-sm mt-1">{errors.state}</p>}
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">ZIP Code *</label>
+                          <label className="block text-sm font-medium text-gray-700 mb-1">{translate('checkout.form.zipCodeLabel')}</label>
                           <input
                             type="text"
                             value={formData.zipCode}
                             onChange={(e) => handleInputChange('zipCode', e.target.value)}
                             className={`input-field ${errors.zipCode ? 'border-red-500' : ''}`}
-                            placeholder="10001"
+                            placeholder={translate('checkout.form.zipCodePlaceholder') || '10001'}
                           />
                           {errors.zipCode && <p className="text-red-500 text-sm mt-1">{errors.zipCode}</p>}
                         </div>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">Country</label>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">{translate('checkout.form.countryLabel')}</label>
                         <select
                           value={formData.country}
                           onChange={(e) => handleInputChange('country', e.target.value)}
                           className="input-field"
                         >
-                          <option value="United States">United States</option>
-                          <option value="Canada">Canada</option>
-                          <option value="United Kingdom">United Kingdom</option>
-                          <option value="Germany">Germany</option>
-                          <option value="France">France</option>
+                          <option value="United States">{translate('checkout.countries.unitedStates')}</option>
+                          <option value="Canada">{translate('checkout.countries.canada')}</option>
+                          <option value="United Kingdom">{translate('checkout.countries.unitedKingdom')}</option>
+                          <option value="Germany">{translate('checkout.countries.germany')}</option>
+                          <option value="France">{translate('checkout.countries.france')}</option>
                         </select>
                       </div>
                     </div>
@@ -328,15 +328,15 @@ export default function CheckoutPage() {
                         required
                       />
                       <label htmlFor="checkout-terms" className="text-sm text-gray-700">
-                        I accept the{' '}
+                        {translate('checkout.termsLabelPrefix')}{' '}
                         <Link href={`/${currentLocale}/terms`} className="text-primary-warm hover:text-primary-warm-hover underline">
-                          Terms of Service
-                        </Link>
-                        {' '}and{' '}
+                          {translate('checkout.termsOfService')}
+                        </Link>{' '}
+                        {translate('checkout.and')}{' '}
                         <Link href={`/${currentLocale}/privacy`} className="text-primary-warm hover:text-primary-warm-hover underline">
-                          Privacy Policy
+                          {translate('checkout.privacyPolicy')}
                         </Link>
-                        {' '}*
+                        {' '}{translate('checkout.termsSuffix')}
                       </label>
                     </div>
 
@@ -350,7 +350,7 @@ export default function CheckoutPage() {
                     disabled={isLoading || !agreeToTerms}
                     className="w-full btn-primary py-3 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isLoading ? translate('processing') : translate('proceedToPayment')}
+                    {isLoading ? translate('checkout.processing') || translate('processing') : translate('checkout.proceedToPayment')}
                   </button>
                 </form>
               )}
@@ -372,9 +372,9 @@ export default function CheckoutPage() {
 
               {step === 'payment' && paymentData && !stripePromise && (
                 <div className="bg-red-50 text-red-700 p-4 rounded-md">
-                  <h3 className="font-medium mb-2">Payment Unavailable</h3>
+                  <h3 className="font-medium mb-2">{translate('checkout.paymentUnavailableTitle')}</h3>
                   <p className="text-sm">
-                    Stripe payment system is not properly configured. Please contact support or try again later.
+                    {translate('checkout.paymentUnavailableMessage')}
                   </p>
                 </div>
               )}
@@ -384,8 +384,8 @@ export default function CheckoutPage() {
                   <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
                     <CheckCircle className="h-6 w-6 text-green-600" />
                   </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">Order Placed Successfully!</h3>
-                  <p className="text-gray-600 mb-6">Thank you for your purchase. You'll receive an email confirmation shortly.</p>
+                  <h3 className="text-lg font-medium text-gray-900 mb-2">{translate('checkout.successTitle')}</h3>
+                  <p className="text-gray-600 mb-6">{translate('checkout.successMessage')}</p>
                 </div>
               )}
             </div>
@@ -393,7 +393,7 @@ export default function CheckoutPage() {
 
           <div className="lg:col-span-1">
             <div className="bg-white rounded-lg shadow-md p-6 sticky top-24">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4">Order Summary</h2>
+              <h2 className="text-lg font-semibold text-gray-900 mb-4">{translate('checkout.orderSummary')}</h2>
               <div className="space-y-3 mb-6">
                 {cartItems.map((item) => (
                   <div key={item.product.id} className="flex justify-between text-sm">
@@ -404,7 +404,7 @@ export default function CheckoutPage() {
               </div>
               <div className="space-y-3 border-t border-gray-200 pt-4">
                 <div className="flex justify-between text-gray-600">
-                  <span>Subtotal</span>
+                  <span>{translate('checkout.subtotal')}</span>
                   <span>{formatPrice(cartTotal, currentLocale)}</span>
                 </div>
                 <div className="flex justify-between text-gray-600">
@@ -412,14 +412,14 @@ export default function CheckoutPage() {
                   <span>{formatPrice(calculateTax(), currentLocale)}</span>
                 </div>
                 <div className="flex justify-between text-gray-600">
-                  <span>Shipping</span>
+                  <span>{translate('checkout.shipping')}</span>
                   <span className={calculateShipping() === 0 ? 'text-green-600' : ''}>
-                    {calculateShipping() === 0 ? 'Free' : formatPrice(calculateShipping(), currentLocale)}
+                    {calculateShipping() === 0 ? translate('checkout.free') : formatPrice(calculateShipping(), currentLocale)}
                   </span>
                 </div>
                 <div className="border-t border-gray-200 pt-3">
                   <div className="flex justify-between text-lg font-bold text-gray-900">
-                    <span>Total</span>
+                    <span>{translate('checkout.total')}</span>
                     <span className="text-lg font-bold text-gray-900">{formatPrice(total, currentLocale)}</span>
                   </div>
                 </div>

@@ -276,6 +276,7 @@ model Order {
   currency   String      @default("CHF")
   gatewayUsed   PaymentGateway?
   paymentStatus PaymentStatus?
+  emailNotificationsSent Boolean @default(false)
 
   // Back-relations
   subOrders SubOrder[]
@@ -384,4 +385,31 @@ model Rating {
   @@index([customerId])
   @@index([orderItemId])
   @@unique([customerId, orderItemId]) // One rating per customer per order item
+}
+
+// Notification types for admin and merchant notifications
+enum NotificationType {
+  PRODUCT_SUBMITTED      // Merchant submitted product for approval
+  PRODUCT_APPROVED       // Admin approved product
+  PRODUCT_REJECTED       // Admin rejected product
+  MERCHANT_REGISTERED    // New merchant registered
+  MERCHANT_ACTIVATED     // Merchant account activated by admin
+  MERCHANT_SUSPENDED     // Merchant account suspended by admin
+  ORDER_PLACED           // Customer placed an order for a merchant
+}
+
+// Notifications for admin and merchant users
+model Notification {
+  id          String           @id @default(auto()) @map("_id") @db.ObjectId
+  userId      String           @db.ObjectId  // Recipient user ID
+  type        NotificationType
+  title       String
+  message     String
+  data        Json?            // Additional data (productId, merchantId, etc.)
+  isRead      Boolean          @default(false)
+  createdAt   DateTime         @default(now())
+
+  @@index([userId])
+  @@index([isRead])
+  @@index([createdAt])
 }

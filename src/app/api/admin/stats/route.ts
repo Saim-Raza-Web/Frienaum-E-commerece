@@ -32,7 +32,7 @@ export async function GET(request: NextRequest) {
         _sum: { grandTotal: true },
         where: { status: 'DELIVERED' },
       }),
-      prisma.product.count({ where: { merchant: { status: 'ACTIVE' } } }),
+      prisma.product.count({ where: { status: 'PUBLISHED' } }),
     ]);
 
     const totalUsers = allUsers - deletedUsers;

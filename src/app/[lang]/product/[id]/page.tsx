@@ -9,7 +9,6 @@ import { useCart } from '@/context/CartContext';
 import { useTranslation } from '@/i18n/TranslationProvider';
 import { Star, ShoppingCart, Heart, Truck, Shield, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import SmartImage from '@/components/SmartImage';
-import MerchantBlocker from '@/components/MerchantBlocker';
 
 const RatingDisplay = dynamic(() => import('@/components/RatingDisplay'), {
   ssr: false,
@@ -146,9 +145,8 @@ export default function ProductDetailPage() {
   }
 
   return (
-    <MerchantBlocker>
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="min-h-screen bg-gray-50 py-8 sm:py-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Breadcrumb */}
         <nav className="text-sm text-gray-500 mb-8">
           <span>{t('home')}</span>
@@ -356,6 +354,5 @@ export default function ProductDetailPage() {
         </div>
       </div>
     </div>
-    </MerchantBlocker>
   );
 }

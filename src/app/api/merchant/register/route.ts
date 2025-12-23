@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/authOptions';
 import { prisma } from '@/lib/prisma';
 import { sendMerchantWelcomeEmail } from '@/lib/email';
+import { notifyAdminsMerchantRegistered } from '@/lib/notifications';
 
 export async function POST(request: Request) {
   try {
@@ -47,6 +48,13 @@ export async function POST(request: Request) {
     } catch (error) {
       console.error('Error sending welcome email:', error);
     }
+
+    // Send notification to all admins about new merchant registration
+    notifyAdminsMerchantRegistered(
+      created.id,
+      session.user.name || 'Neuer Händler',
+      storeName.trim()
+    ).catch(err => console.error('Failed to send admin notifications:', err));
 
     return NextResponse.json(created, { status: 201 });
   } catch (error) {

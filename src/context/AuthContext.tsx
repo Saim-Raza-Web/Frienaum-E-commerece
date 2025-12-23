@@ -217,6 +217,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           role: data.role,
           // If merchant, pass optional storeName (UI can provide it)
           storeName: data.storeName,
+          // T&C and marketing consents
+          agreeToTerms: data.agreeToTerms,
+          newsletterConsent: data.newsletterConsent,
+          cookiesConsent: data.cookiesConsent,
         }),
       });
 

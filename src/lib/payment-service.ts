@@ -1,12 +1,13 @@
 import { v4 as uuidv4 } from 'uuid';
 import { prisma } from './prisma';
-import { PaymentGateway, PaymentStatus, PayoutStatus } from '@prisma/client';
+import { PaymentGateway, PaymentStatus, PayoutStatus, Prisma } from '@prisma/client';
 import Stripe from 'stripe';
 
 // Real Stripe payment service
 export class PaymentService {
   private stripe?: Stripe;
   private commissionRate = 0.2; // 20% commission
+  private readonly retryableErrorCodes = new Set(['P2034']); // write conflict / deadlock
 
   constructor() {
     // Defer initialization until first use so env changes are picked up reliably
@@ -97,32 +98,51 @@ export class PaymentService {
     if (!order.subOrders || order.subOrders.length === 0) return;
 
     for (const subOrder of order.subOrders) {
-      await prisma.$transaction([
-        // Update merchant's available balance
-        prisma.payoutBalance.upsert({
-          where: { merchantId: subOrder.merchantId },
-          update: {
-            available: { increment: subOrder.payoutAmount },
-            pending: { increment: 0 },
-          },
-          create: {
-            merchantId: subOrder.merchantId,
-            available: subOrder.payoutAmount,
-            pending: 0,
-          },
-        }),
-
-        // Create transaction record
-        prisma.payoutTransaction.create({
-          data: {
-            merchantId: subOrder.merchantId,
-            amount: subOrder.payoutAmount,
-            status: 'PENDING',
-            method: 'PLATFORM',
-          },
-        }),
-      ]);
+      await this.withRetry(async () => {
+        await prisma.$transaction([
+          prisma.payoutBalance.upsert({
+            where: { merchantId: subOrder.merchantId },
+            update: {
+              available: { increment: subOrder.payoutAmount },
+              pending: { increment: 0 },
+            },
+            create: {
+              merchantId: subOrder.merchantId,
+              available: subOrder.payoutAmount,
+              pending: 0,
+            },
+          }),
+          prisma.payoutTransaction.create({
+            data: {
+              merchantId: subOrder.merchantId,
+              amount: subOrder.payoutAmount,
+              status: 'PENDING',
+              method: 'PLATFORM',
+            },
+          }),
+        ]);
+      });
     }
+  }
+
+  private async withRetry<T>(operation: () => Promise<T>, attempts = 3, baseDelayMs = 150): Promise<T> {
+    for (let attempt = 1; attempt <= attempts; attempt++) {
+      try {
+        return await operation();
+      } catch (error: any) {
+        const isRetryable =
+          error instanceof Prisma.PrismaClientKnownRequestError &&
+          this.retryableErrorCodes.has(error.code || '');
+
+        if (!isRetryable || attempt === attempts) {
+          throw error;
+        }
+
+        const delay = baseDelayMs * attempt;
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+    throw new Error('Retry attempts exceeded');
   }
 
   // PayPal methods - also mocked for testing

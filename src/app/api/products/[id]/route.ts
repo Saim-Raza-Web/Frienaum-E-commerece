@@ -124,6 +124,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getUserFromReq } from '@/lib/apiAuth';
 import { sendProductSubmissionForApprovalEmail } from '@/lib/email';
+import { notifyAdminsProductSubmitted } from '@/lib/notifications';
 
 // Helper to get user from request
 function getUserFromNextRequest(req: NextRequest) {
@@ -296,8 +297,11 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     }
   });
 
-  // Send email notification when product is submitted for approval
-  if (wasStatusChangedToPending && previousProduct && previousProduct.status !== 'PENDING' && updated.merchant?.user) {
+  // Send email and notification when product is submitted for approval
+  // Trigger if status is being set to PENDING by a merchant (regardless of previous status)
+  if (status === 'PENDING' && user.role === 'MERCHANT' && updated.merchant?.user) {
+    console.log('Product submitted for approval - sending notifications');
+    
     sendProductSubmissionForApprovalEmail(
       updated.merchant.user.email,
       updated.merchant.user.name || 'Händler',
@@ -306,6 +310,16 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     ).catch(err => {
       console.error('Failed to send product submission email:', err);
       // Don't fail the request if email fails
+    });
+
+    // Send popup notification to all admins
+    notifyAdminsProductSubmitted(
+      updated.id,
+      updated.title_de || updated.title_en || 'Produkt',
+      updated.merchant.user.name || 'Händler',
+      updated.merchant.storeName
+    ).catch(err => {
+      console.error('Failed to send admin notifications:', err);
     });
   }
 

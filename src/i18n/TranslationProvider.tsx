@@ -2,7 +2,9 @@
 
 import React, { createContext, useContext, ReactNode, useEffect, useState } from 'react';
 import { usePathname } from 'next/navigation';
-import { isValidLocale } from './config';
+import { Locale, isValidLocale } from './config';
+import deTranslations from '@/i18n/locales/de/common.json';
+import enTranslations from '@/i18n/locales/en/common.json';
 
 interface TranslationContextType {
   translate: (key: string, params?: Record<string, any>) => string;
@@ -18,16 +20,26 @@ interface TranslationProviderProps {
 }
 
 const DEFAULT_LOCALE = 'de';
+const PRELOADED_TRANSLATIONS: Record<Locale, Record<string, any>> = {
+  de: deTranslations as Record<string, any>,
+  en: enTranslations as Record<string, any>,
+};
+
+const getPreloadedTranslations = (locale: string) => {
+  return PRELOADED_TRANSLATIONS[locale as Locale];
+};
 
 export const TranslationProvider = ({ children, initialLocale }: TranslationProviderProps) => {
   const pathname = usePathname();
   const urlLocaleCandidate = pathname?.split('/')[1];
   const normalizedUrlLocale = isValidLocale(urlLocaleCandidate || '') ? urlLocaleCandidate : undefined;
   // Only allow 'de' or 'en', fallback always to 'de'
-  const startingLocale = normalizedUrlLocale || DEFAULT_LOCALE;
+  const startingLocale = normalizedUrlLocale || initialLocale || DEFAULT_LOCALE;
 
   const [currentLocale, setCurrentLocale] = useState<string>(startingLocale);
-  const [translations, setTranslations] = useState<Record<string, any>>({});
+  const [translations, setTranslations] = useState<Record<string, any>>(
+    getPreloadedTranslations(startingLocale) || {}
+  );
 
   useEffect(() => {
     if (normalizedUrlLocale && currentLocale !== normalizedUrlLocale) {
@@ -39,6 +51,13 @@ export const TranslationProvider = ({ children, initialLocale }: TranslationProv
   useEffect(() => {
     let mounted = true;
     const loadTranslations = async () => {
+      const preloaded = getPreloadedTranslations(currentLocale);
+      if (preloaded) {
+        if (mounted) {
+          setTranslations(preloaded);
+        }
+        return;
+      }
       try {
         const messages = await import(`@/i18n/locales/${currentLocale}/common.json`);
         if (mounted && messages.default) {
@@ -63,33 +82,40 @@ export const TranslationProvider = ({ children, initialLocale }: TranslationProv
     return () => { mounted = false; };
   }, [currentLocale]);
 
-  const translate = (key: string, params?: Record<string, any>): string => {
-    // Handle nested keys like 'admin.panel'
-    const keys = key.split('.');
-    let value: any = translations;
+  const applyParams = (text: string, params?: Record<string, any>) => {
+    if (!params) return text;
+    return text.replace(/\{(\w+)\}/g, (match, paramKey) =>
+      params[paramKey] !== undefined ? String(params[paramKey]) : match
+    );
+  };
 
-    // Check if translations is loaded
+  const translate = (key: string, params?: Record<string, any>): string => {
     if (!translations || Object.keys(translations).length === 0) {
-      return key; // Return key as fallback if translations not loaded yet
+      return key; // translations not ready yet
     }
 
+    // First try nested lookup (admin.panel)
+    const keys = key.split('.');
+    let nestedValue: any = translations;
     for (const k of keys) {
-      if (value && typeof value === 'object' && k in value) {
-        value = value[k];
+      if (nestedValue && typeof nestedValue === 'object' && k in nestedValue) {
+        nestedValue = nestedValue[k];
       } else {
-        // Return the key if translation not found
-        return key;
+        nestedValue = undefined;
+        break;
       }
     }
-
-    if (typeof value === 'string' && params) {
-      // Simple interpolation: replace {key} with params[key]
-      return value.replace(/\{(\w+)\}/g, (match, paramKey) => {
-        return params[paramKey] !== undefined ? String(params[paramKey]) : match;
-      });
+    if (typeof nestedValue === 'string') {
+      return applyParams(nestedValue, params);
     }
 
-    return typeof value === 'string' ? value : key;
+    // Support flat keys stored as "admin.panel"
+    const directValue = translations[key];
+    if (typeof directValue === 'string') {
+      return applyParams(directValue, params);
+    }
+
+    return key;
   };
 
   const setLocale = (locale: string) => {

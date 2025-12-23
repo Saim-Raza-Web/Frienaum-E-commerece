@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getUserFromReq } from '@/lib/apiAuth';
 import { ObjectId } from 'mongodb';
+import { notifyAdminsProductSubmitted } from '@/lib/notifications';
 
 // Helper function to validate MongoDB ObjectId
 function isValidObjectId(id: string | undefined | null): boolean {
@@ -376,6 +377,29 @@ export async function POST(request: NextRequest) {
           }
         }
       : created;
+
+    // Notify admins when merchant creates a product with PENDING status
+    console.log('Product creation notification check:', {
+      productStatus,
+      userRole: user.role,
+      hasMerchant: !!created.merchant,
+      hasMerchantUser: !!created.merchant?.user,
+      merchantStoreName: created.merchant?.storeName
+    });
+    
+    if (productStatus === 'PENDING' && user.role === 'MERCHANT' && created.merchant?.user) {
+      console.log('Sending notification to admins for new product...');
+      notifyAdminsProductSubmitted(
+        created.id,
+        created.title_de || created.title_en || 'Produkt',
+        created.merchant.user.name || 'Händler',
+        created.merchant.storeName
+      ).catch(err => {
+        console.error('Failed to send admin notifications:', err);
+      });
+    } else {
+      console.log('Notification NOT sent. Conditions not met.');
+    }
 
     return NextResponse.json(shapedCreated, { status: 201 });
   } catch (error) {

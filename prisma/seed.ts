@@ -1,29 +1,47 @@
 import { PrismaClient } from "@prisma/client";
-import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log("Creating admin user seed...");
-
-  // Hash password with bcrypt (12 rounds for strong security)
-  const adminPass = await bcrypt.hash("Admin@12345", 12);
-
-  // Create admin user
-  await prisma.user.upsert({
-    where: { email: "admin@store.com" },
-    update: {},
-    create: {
-      email: "admin@store.com",
-      password: adminPass,
-      name: "Admin User",
-      role: "ADMIN",
-    },
+  // Create active terms version if none exists
+  console.log("Checking for active terms version...");
+  const existingTerms = await prisma.termsVersion.findFirst({
+    where: { isActive: true }
   });
 
-  console.log("Admin user seeded successfully!");
-  console.log("Email: admin@store.com");
-  console.log("Password: Admin@12345");
+  if (!existingTerms) {
+    console.log("Creating active terms version...");
+    await prisma.termsVersion.create({
+      data: {
+        version: "1.0",
+        title: "Allgemeine Geschäftsbedingungen v1.0",
+        content: `
+          <h2>1. Geltungsbereich</h2>
+          <p>Diese Allgemeinen Geschäftsbedingungen regeln die Nutzung der Online-Plattform Feinraumshop.</p>
+          
+          <h2>2. Vertragspartner</h2>
+          <p>Feinraumshop ist nicht Verkäuferin der über die Plattform angebotenen Produkte. Ein Kaufvertrag kommt ausschliesslich zwischen der Kundschaft und dem jeweiligen Lieferanten zustande.</p>
+          
+          <h2>3. Preise und Zahlung</h2>
+          <p>Sämtliche Preise werden in Schweizer Franken (CHF) angezeigt.</p>
+          
+          <h2>4. Versand und Lieferung</h2>
+          <p>Versand und Lieferung erfolgen durch den jeweiligen Lieferanten. Standardversand beträgt CHF 8.50.</p>
+          
+          <h2>5. Datenschutz</h2>
+          <p>Wir bearbeiten Personendaten gemäss unserer Datenschutzerklärung.</p>
+          
+          <h2>6. Anwendbares Recht</h2>
+          <p>Es gilt schweizerisches Recht. Gerichtsstand ist Arbon, Schweiz.</p>
+        `,
+        isActive: true,
+        effectiveDate: new Date()
+      }
+    });
+    console.log("Active terms version created successfully!");
+  } else {
+    console.log("Active terms version already exists.");
+  }
 }
 
 main().finally(() => prisma.$disconnect());
