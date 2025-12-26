@@ -703,6 +703,9 @@
   },
   "merchant": {
     "dashboard": "Merchant Dashboard",
+    "merchantDashboard": "Merchant Dashboard",
+    "merchantAccessMessage": "As a merchant, you can access your dashboard to manage products and orders.",
+    "redirecting": "Redirecting to your dashboard...",
     "manageProducts": "Manage your products and track your business",
     "exportData": "Export Data",
     "addProduct": "Add Product",

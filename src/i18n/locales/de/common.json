@@ -744,6 +744,9 @@
   },
   "merchant": {
     "dashboard": "Händler-Dashboard",
+    "merchantDashboard": "Händler-Dashboard",
+    "merchantAccessMessage": "Als Händler haben Sie Zugriff auf Ihr Dashboard, um Produkte und Bestellungen zu verwalten.",
+    "redirecting": "Weiterleitung zu Ihrem Dashboard...",
     "manageProducts": "Verwalten Sie Ihre Produkte und verfolgen Sie Ihr Geschäft",
     "exportData": "Daten exportieren",
     "addProduct": "Produkt hinzufügen",

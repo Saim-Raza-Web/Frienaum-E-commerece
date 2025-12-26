@@ -191,92 +191,98 @@ export default function NotificationBell({ userRole }: NotificationBellProps) {
 
       {/* Dropdown */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-72 sm:w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-50 max-h-[80vh] overflow-hidden">
-          {/* Header */}
-          <div className="flex items-center justify-between px-3 py-2 border-b border-gray-200 bg-gray-50">
-            <h3 className="text-sm font-semibold text-gray-900">Benachrichtigungen</h3>
-            {unreadCount > 0 && (
-              <button
-                onClick={markAllAsRead}
-                className="text-xs text-blue-600 hover:text-blue-800 font-medium whitespace-nowrap"
-              >
-                Alle gelesen
-              </button>
-            )}
-          </div>
+        <>
+          <div
+            className="fixed inset-0 bg-black/10 backdrop-blur-[1px] z-40 sm:hidden"
+            onClick={() => setIsOpen(false)}
+          ></div>
+          <div className="fixed inset-x-4 top-24 sm:absolute sm:inset-auto sm:right-0 sm:top-full sm:mt-2 w-auto sm:w-72 md:w-80 max-w-md sm:max-w-none bg-white rounded-2xl sm:rounded-lg shadow-2xl sm:shadow-xl border border-gray-200 z-50 max-h-[75vh] sm:max-h-[80vh] overflow-hidden">
+            {/* Header */}
+            <div className="flex items-center justify-between px-3 py-2 border-b border-gray-200 bg-gray-50">
+              <h3 className="text-sm font-semibold text-gray-900">Benachrichtigungen</h3>
+              {unreadCount > 0 && (
+                <button
+                  onClick={markAllAsRead}
+                  className="text-xs text-blue-600 hover:text-blue-800 font-medium whitespace-nowrap"
+                >
+                  Alle gelesen
+                </button>
+              )}
+            </div>
 
-          {/* Notifications List */}
-          <div className="overflow-y-auto max-h-[60vh]">
-            {isLoading && notifications.length === 0 ? (
-              <div className="px-4 py-8 text-center text-gray-500">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-3"></div>
-                <p>Lade Benachrichtigungen...</p>
-              </div>
-            ) : notifications.length === 0 ? (
-              <div className="px-4 py-8 text-center text-gray-500">
-                <Bell className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-                <p>Keine Benachrichtigungen</p>
-              </div>
-            ) : (
-              <ul className="divide-y divide-gray-100">
-                {notifications.map((notification) => {
-                  const isExpanded = expandedNotificationId === notification.id;
-                  return (
-                    <li
-                      key={notification.id}
-                      className={`px-3 py-2.5 hover:bg-gray-50 transition-colors cursor-pointer ${
-                        !notification.isRead ? 'bg-blue-50' : ''
-                      } ${isExpanded ? 'bg-gray-100' : ''}`}
-                      onClick={() => {
-                        // Toggle expand/collapse
-                        setExpandedNotificationId(isExpanded ? null : notification.id);
-                        // Mark as read when clicked
-                        if (!notification.isRead) {
-                          markAsRead([notification.id]);
-                        }
-                      }}
-                    >
-                      <div className="flex items-start gap-2">
-                        <div className="flex-shrink-0 mt-0.5">
-                          {getNotificationIcon(notification.type)}
-                        </div>
-                        <div className="flex-1 min-w-0 overflow-hidden">
-                          <p className={`text-xs ${!notification.isRead ? 'font-semibold' : 'font-medium'} text-gray-900 ${isExpanded ? '' : 'truncate'}`}>
-                            {notification.title}
-                          </p>
-                          <p className={`text-xs text-gray-600 mt-0.5 break-words ${isExpanded ? '' : 'line-clamp-2'}`}>
-                            {notification.message}
-                          </p>
-                          {isExpanded && notification.data && (
-                            <div className="mt-2 p-2 bg-gray-50 rounded text-xs text-gray-700">
-                              {notification.data.productTitle && (
-                                <p><span className="font-medium">Produkt:</span> {notification.data.productTitle}</p>
-                              )}
-                              {notification.data.storeName && (
-                                <p><span className="font-medium">Shop:</span> {notification.data.storeName}</p>
-                              )}
-                              {notification.data.merchantName && (
-                                <p><span className="font-medium">Händler:</span> {notification.data.merchantName}</p>
-                              )}
+            {/* Notifications List */}
+            <div className="overflow-y-auto max-h-[60vh]">
+              {isLoading && notifications.length === 0 ? (
+                <div className="px-4 py-8 text-center text-gray-500">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500 mx-auto mb-3"></div>
+                  <p>Lade Benachrichtigungen...</p>
+                </div>
+              ) : notifications.length === 0 ? (
+                <div className="px-4 py-8 text-center text-gray-500">
+                  <Bell className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                  <p>Keine Benachrichtigungen</p>
+                </div>
+              ) : (
+                <ul className="divide-y divide-gray-100">
+                  {notifications.map((notification) => {
+                    const isExpanded = expandedNotificationId === notification.id;
+                    return (
+                      <li
+                        key={notification.id}
+                        className={`px-3 py-2.5 hover:bg-gray-50 transition-colors cursor-pointer ${
+                          !notification.isRead ? 'bg-blue-50' : ''
+                        } ${isExpanded ? 'bg-gray-100' : ''}`}
+                        onClick={() => {
+                          // Toggle expand/collapse
+                          setExpandedNotificationId(isExpanded ? null : notification.id);
+                          // Mark as read when clicked
+                          if (!notification.isRead) {
+                            markAsRead([notification.id]);
+                          }
+                        }}
+                      >
+                        <div className="flex items-start gap-2">
+                          <div className="flex-shrink-0 mt-0.5">
+                            {getNotificationIcon(notification.type)}
+                          </div>
+                          <div className="flex-1 min-w-0 overflow-hidden">
+                            <p className={`text-xs ${!notification.isRead ? 'font-semibold' : 'font-medium'} text-gray-900 ${isExpanded ? '' : 'truncate'}`}>
+                              {notification.title}
+                            </p>
+                            <p className={`text-xs text-gray-600 mt-0.5 break-words ${isExpanded ? '' : 'line-clamp-2'}`}>
+                              {notification.message}
+                            </p>
+                            {isExpanded && notification.data && (
+                              <div className="mt-2 p-2 bg-gray-50 rounded text-xs text-gray-700">
+                                {notification.data.productTitle && (
+                                  <p><span className="font-medium">Produkt:</span> {notification.data.productTitle}</p>
+                                )}
+                                {notification.data.storeName && (
+                                  <p><span className="font-medium">Shop:</span> {notification.data.storeName}</p>
+                                )}
+                                {notification.data.merchantName && (
+                                  <p><span className="font-medium">Händler:</span> {notification.data.merchantName}</p>
+                                )}
+                              </div>
+                            )}
+                            <p className="text-[10px] text-gray-400 mt-1">
+                              {formatTime(notification.createdAt)}
+                            </p>
+                          </div>
+                          {!notification.isRead && (
+                            <div className="flex-shrink-0">
+                              <span className="w-2 h-2 bg-blue-500 rounded-full block"></span>
                             </div>
                           )}
-                          <p className="text-[10px] text-gray-400 mt-1">
-                            {formatTime(notification.createdAt)}
-                          </p>
                         </div>
-                        {!notification.isRead && (
-                          <div className="flex-shrink-0">
-                            <span className="w-2 h-2 bg-blue-500 rounded-full block"></span>
-                          </div>
-                        )}
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </div>
           </div>
-        </div>
+        </>
       )}
     </div>
   );
