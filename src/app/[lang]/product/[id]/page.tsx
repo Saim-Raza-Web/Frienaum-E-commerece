@@ -53,7 +53,9 @@ export default function ProductDetailPage() {
           description: currentLang === 'de' ? (data.desc_de || data.desc_en) : data.desc_en,
           price: data.price,
           originalPrice: data.price,
-          images: [data.imageUrl || '/images/placeholder.jpg'],
+          images: Array.isArray(data.images) && data.images.length
+            ? data.images
+            : [data.imageUrl || '/images/placeholder.jpg'],
           category: data.category || 'Uncategorized',
           rating: data.averageRating || 0,
           reviewCount: data.ratingCount || 0,

@@ -1784,7 +1784,9 @@ function MerchantDashboard() {
                             {products.map((product: any) => (
                               <tr key={product.id} className="hover:bg-gray-50 transition-colors">
                                 <td className="px-3 sm:px-6 py-4">
-                                  <div className="text-sm font-medium text-gray-900 break-words">{product.title_en}</div>
+                                  <div className="text-sm font-medium text-gray-900 break-words">
+                                    {product.title_de || product.title_en || translate('merchant.untitledProduct')}
+                                  </div>
                                 </td>
                                 <td className="px-3 sm:px-6 py-4 text-sm text-gray-900">{formatCurrency(product.price)}</td>
                                 <td className="px-3 sm:px-6 py-4 text-sm text-gray-900">{product.stock}</td>
@@ -2742,12 +2744,12 @@ function MerchantDashboard() {
             <form onSubmit={createProduct} className="p-6 space-y-5 overflow-y-auto">
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-semibold text-gray-900 mb-1.5">{translate('admin.englishTitle') || 'Titel (Englisch)'} <span className="text-gray-500 text-xs">({translate('merchant.optional') || translate('admin.optional') || 'optional'})</span></label>
-                  <input value={newProduct.title_en} onChange={e=>setNewProduct(p=>({...p, title_en: e.target.value}))} className="input-field h-11 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors text-gray-900 font-medium border-2" placeholder={translate('merchant.exampleWirelessHeadphones')} />
-                </div>
-                <div>
                   <label className="block text-sm font-semibold text-gray-900 mb-1.5">{translate('admin.germanTitle') || 'Titel (Deutsch)'} <span className="text-red-500">*</span></label>
                   <input value={newProduct.title_de} onChange={e=>setNewProduct(p=>({...p, title_de: e.target.value}))} className="input-field h-11 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors text-gray-900 font-medium border-2" required placeholder={translate('merchant.exampleGermanTitle') || 'Z.B.: Drahtlose Kopfhörer (erforderlich)'} />
+                </div>
+                <div>
+                  <label className="block text-sm font-semibold text-gray-900 mb-1.5">{translate('admin.englishTitle') || 'Titel (Englisch)'} <span className="text-gray-500 text-xs">({translate('merchant.optional') || translate('admin.optional') || 'optional'})</span></label>
+                  <input value={newProduct.title_en} onChange={e=>setNewProduct(p=>({...p, title_en: e.target.value}))} className="input-field h-11 outline-none focus:outline-none hover:border-gray-400 focus:ring-2 focus:ring-turquoise-500 focus:border-turquoise-500 transition-colors text-gray-900 font-medium border-2" placeholder={translate('merchant.exampleWirelessHeadphones')} />
                 </div>
               </div>
 

@@ -297,9 +297,12 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     }
   });
 
-  // Send email and notification when product is submitted for approval
-  // Trigger if status is being set to PENDING by a merchant (regardless of previous status)
-  if (status === 'PENDING' && user.role === 'MERCHANT' && updated.merchant?.user) {
+  // Determine whether status actually transitioned into PENDING (avoid duplicate notifications)
+  const statusJustBecamePending =
+    wasStatusChangedToPending && previousProduct && previousProduct.status !== 'PENDING';
+
+  // Send email and notification only when product transitions into approval state
+  if (statusJustBecamePending && updated.merchant?.user) {
     console.log('Product submitted for approval - sending notifications');
     
     sendProductSubmissionForApprovalEmail(

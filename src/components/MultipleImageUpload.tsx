@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useRef } from 'react';
-import { Upload, X, Loader2 } from 'lucide-react';
+import { Upload, X, Loader2, ArrowLeft, ArrowRight } from 'lucide-react';
 
 interface MultipleImageUploadProps {
   onImagesChange: (urls: string[]) => void;
@@ -116,6 +116,15 @@ export default function MultipleImageUpload({
     }
   };
 
+  const handleReorder = (fromIndex: number, toIndex: number) => {
+    if (toIndex < 0 || toIndex >= images.length || fromIndex === toIndex) return;
+    const updated = [...images];
+    const [moved] = updated.splice(fromIndex, 1);
+    updated.splice(toIndex, 0, moved);
+    setImages(updated);
+    onImagesChange(updated);
+  };
+
   return (
     <div className={`space-y-3 ${className}`}>
       <input
@@ -147,6 +156,36 @@ export default function MultipleImageUpload({
                 >
                   <X className="w-4 h-4" />
                 </button>
+              )}
+              {!disabled && images.length > 1 && (
+                <div className="absolute bottom-2 left-2 right-2 flex items-center justify-between gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    type="button"
+                    onClick={() => handleReorder(index, index - 1)}
+                    disabled={index === 0}
+                    className={`flex-1 inline-flex items-center justify-center rounded-md px-2 py-1 text-xs font-medium shadow-sm transition-colors ${
+                      index === 0
+                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                        : 'bg-white/90 text-gray-700 hover:bg-white'
+                    }`}
+                    title="Nach links verschieben"
+                  >
+                    <ArrowLeft className="w-4 h-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleReorder(index, index + 1)}
+                    disabled={index === images.length - 1}
+                    className={`flex-1 inline-flex items-center justify-center rounded-md px-2 py-1 text-xs font-medium shadow-sm transition-colors ${
+                      index === images.length - 1
+                        ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                        : 'bg-white/90 text-gray-700 hover:bg-white'
+                    }`}
+                    title="Nach rechts verschieben"
+                  >
+                    <ArrowRight className="w-4 h-4" />
+                  </button>
+                </div>
               )}
               {uploadingIndex === index && (
                 <div className="absolute inset-0 bg-black/50 rounded-lg flex items-center justify-center">

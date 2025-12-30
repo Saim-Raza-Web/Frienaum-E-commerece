@@ -329,13 +329,16 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Determine product status: merchants default to PENDING (can also create as DRAFT), admins can create as PUBLISHED
-    let productStatus = 'PENDING';
+    // Determine product status: merchants create as DRAFT unless they explicitly submit for approval
+    let productStatus: 'DRAFT' | 'PENDING' | 'PUBLISHED' = 'PENDING';
     if (user.role === 'ADMIN') {
-      productStatus = productData.status || 'PUBLISHED';
+      productStatus = (productData.status as 'DRAFT' | 'PENDING' | 'PUBLISHED') || 'PUBLISHED';
     } else if (user.role === 'MERCHANT') {
-      // Merchants can create as DRAFT or PENDING (default PENDING)
-      productStatus = productData.status === 'DRAFT' ? 'DRAFT' : 'PENDING';
+      const requestedStatus =
+        typeof productData.status === 'string'
+          ? (productData.status.toUpperCase() as 'DRAFT' | 'PENDING')
+          : undefined;
+      productStatus = requestedStatus === 'PENDING' ? 'PENDING' : 'DRAFT';
     }
 
     // Create the product
@@ -378,7 +381,7 @@ export async function POST(request: NextRequest) {
         }
       : created;
 
-    // Notify admins when merchant creates a product with PENDING status
+    // Notify admins only when merchants explicitly create a product already marked as PENDING
     console.log('Product creation notification check:', {
       productStatus,
       userRole: user.role,

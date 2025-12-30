@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
-import { Bell, X, Check, Package, Store, CheckCircle, XCircle } from 'lucide-react';
+import { Bell, X, Check, Package, Store, CheckCircle, XCircle, Trash2 } from 'lucide-react';
 
 interface Notification {
   id: string;
@@ -38,6 +38,7 @@ export default function NotificationBell({ userRole }: NotificationBellProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [expandedNotificationId, setExpandedNotificationId] = useState<string | null>(null);
+  const [deletingIds, setDeletingIds] = useState<string[]>([]);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -141,6 +142,48 @@ export default function NotificationBell({ userRole }: NotificationBellProps) {
     }
   };
 
+  const deleteNotifications = async (notificationIds: string[]) => {
+    if (!notificationIds.length) return;
+    setDeletingIds(prev => [...prev, ...notificationIds]);
+    try {
+      const response = await fetch('/api/notifications', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ notificationIds })
+      });
+
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        console.error('Failed to delete notifications:', data);
+        return;
+      }
+
+      setNotifications(prev => prev.filter(n => !notificationIds.includes(n.id)));
+      setDeletingIds(prev => prev.filter(id => !notificationIds.includes(id)));
+
+      if (typeof data.unreadCount === 'number') {
+        setUnreadCount(data.unreadCount);
+      } else {
+        setUnreadCount(prev => {
+          const unreadRemoved = notifications.filter(
+            n => notificationIds.includes(n.id) && !n.isRead
+          ).length;
+          return Math.max(0, prev - unreadRemoved);
+        });
+      }
+    } catch (error) {
+      console.error('Failed to delete notifications:', error);
+    } finally {
+      setDeletingIds(prev => prev.filter(id => !notificationIds.includes(id)));
+    }
+  };
+
+  const deleteAllNotifications = () => {
+    if (!notifications.length) return;
+    deleteNotifications(notifications.map(n => n.id));
+  };
+
   const getNotificationIcon = (type: Notification['type']) => {
     switch (type) {
       case 'PRODUCT_SUBMITTED':
@@ -200,14 +243,25 @@ export default function NotificationBell({ userRole }: NotificationBellProps) {
             {/* Header */}
             <div className="flex items-center justify-between px-3 py-2 border-b border-gray-200 bg-gray-50">
               <h3 className="text-sm font-semibold text-gray-900">Benachrichtigungen</h3>
-              {unreadCount > 0 && (
-                <button
-                  onClick={markAllAsRead}
-                  className="text-xs text-blue-600 hover:text-blue-800 font-medium whitespace-nowrap"
-                >
-                  Alle gelesen
-                </button>
-              )}
+              <div className="flex items-center gap-2">
+                {notifications.length > 0 && (
+                  <button
+                    onClick={deleteAllNotifications}
+                    className="text-xs text-red-600 hover:text-red-800 font-medium whitespace-nowrap"
+                    disabled={deletingIds.length > 0}
+                  >
+                    Alle löschen
+                  </button>
+                )}
+                {unreadCount > 0 && (
+                  <button
+                    onClick={markAllAsRead}
+                    className="text-xs text-blue-600 hover:text-blue-800 font-medium whitespace-nowrap"
+                  >
+                    Alle gelesen
+                  </button>
+                )}
+              </div>
             </div>
 
             {/* Notifications List */}
@@ -269,11 +323,22 @@ export default function NotificationBell({ userRole }: NotificationBellProps) {
                               {formatTime(notification.createdAt)}
                             </p>
                           </div>
-                          {!notification.isRead && (
-                            <div className="flex-shrink-0">
+                          <div className="flex items-center gap-2 pl-2">
+                            {!notification.isRead && (
                               <span className="w-2 h-2 bg-blue-500 rounded-full block"></span>
-                            </div>
-                          )}
+                            )}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteNotifications([notification.id]);
+                              }}
+                              className="p-1 text-gray-400 hover:text-red-600 transition-colors disabled:opacity-50"
+                              title="Benachrichtigung löschen"
+                              disabled={deletingIds.includes(notification.id)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
                         </div>
                       </li>
                     );

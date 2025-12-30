@@ -1,10 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
+import type { NotificationType } from '@prisma/client';
 import { prisma } from '@/lib/prisma';
 import { getUserFromReq } from '@/lib/apiAuth';
 
 function getUserFromNextRequest(req: NextRequest) {
   const cookieHeader = req.headers.get('cookie') || '';
   return getUserFromReq({ headers: { cookie: cookieHeader } } as any);
+}
+
+const merchantHiddenNotificationTypes: NotificationType[] = ['PRODUCT_SUBMITTED'];
+
+function getRoleBasedNotificationFilter(role?: string) {
+  if (role === 'MERCHANT') {
+    return { type: { notIn: merchantHiddenNotificationTypes } };
+  }
+  return {};
 }
 
 // GET /api/notifications - Get notifications for current user
@@ -26,11 +36,14 @@ export async function GET(request: NextRequest) {
       limit
     });
 
+    const baseWhere = {
+      userId: user.id,
+      ...getRoleBasedNotificationFilter(user.role),
+      ...(unreadOnly ? { isRead: false } : {})
+    };
+
     const notifications = await prisma.notification.findMany({
-      where: {
-        userId: user.id,
-        ...(unreadOnly ? { isRead: false } : {})
-      },
+      where: baseWhere,
       orderBy: { createdAt: 'desc' },
       take: limit
     });
@@ -43,8 +56,8 @@ export async function GET(request: NextRequest) {
 
     const unreadCount = await prisma.notification.count({
       where: {
-        userId: user.id,
-        isRead: false
+        ...baseWhere,
+        isRead: true ? false : false
       }
     });
 
@@ -73,10 +86,13 @@ export async function PATCH(request: NextRequest) {
       markAllRead
     });
 
+    const roleFilter = getRoleBasedNotificationFilter(user.role);
+
     if (markAllRead) {
       const result = await prisma.notification.updateMany({
         where: {
           userId: user.id,
+          ...roleFilter,
           isRead: false
         },
         data: { isRead: true }
@@ -86,7 +102,8 @@ export async function PATCH(request: NextRequest) {
       const result = await prisma.notification.updateMany({
         where: {
           id: { in: notificationIds },
-          userId: user.id
+          userId: user.id,
+          ...roleFilter
         },
         data: { isRead: true }
       });
@@ -110,5 +127,61 @@ export async function PATCH(request: NextRequest) {
   } catch (error) {
     console.error('Error updating notifications:', error);
     return NextResponse.json({ error: 'Failed to update notifications' }, { status: 500 });
+  }
+}
+
+// DELETE /api/notifications - Delete notifications for the current user
+export async function DELETE(request: NextRequest) {
+  try {
+    const user = getUserFromNextRequest(request);
+    if (!user) {
+      console.log('DELETE /api/notifications - Unauthorized');
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = await request.json().catch(() => ({}));
+    const { notificationIds, deleteAll } = body;
+
+    console.log('DELETE /api/notifications payload:', {
+      userId: user.id,
+      notificationIds,
+      deleteAll
+    });
+
+    const roleFilter = getRoleBasedNotificationFilter(user.role);
+
+    if (deleteAll) {
+      const result = await prisma.notification.deleteMany({
+        where: { userId: user.id, ...roleFilter }
+      });
+      console.log('DELETE /api/notifications deleteAll result:', result.count);
+    } else if (notificationIds && Array.isArray(notificationIds) && notificationIds.length) {
+      const result = await prisma.notification.deleteMany({
+        where: {
+          id: { in: notificationIds },
+          userId: user.id,
+          ...roleFilter
+        }
+      });
+      console.log('DELETE /api/notifications selective result:', {
+        deleted: result.count,
+        notificationIds
+      });
+    } else {
+      console.log('DELETE /api/notifications - invalid payload');
+      return NextResponse.json({ error: 'Invalid payload' }, { status: 400 });
+    }
+
+    const unreadCount = await prisma.notification.count({
+      where: {
+        userId: user.id,
+        isRead: false
+      }
+    });
+
+    return NextResponse.json({ success: true, unreadCount });
+  } catch (error) {
+    console.error('Error deleting notifications:', error);
+    return NextResponse.json({ error: 'Failed to delete notifications' }, { status: 500 });
   }
 }
