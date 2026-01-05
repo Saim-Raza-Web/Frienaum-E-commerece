@@ -860,6 +860,142 @@ export async function sendProductSubmissionForApprovalEmail(
   }
 }
 
+export async function sendProductApprovalEmail(
+  merchantEmail: string,
+  merchantName: string,
+  productTitle: string,
+  productId: string
+) {
+  try {
+    const mailOptions = {
+      from: `"${process.env.FROM_NAME || 'Feinraum Shop'}" <${process.env.FROM_EMAIL || 'support@feinraumshop.ch'}>`,
+      to: merchantEmail,
+      subject: 'Produkt genehmigt - Feinraum Shop',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; padding: 30px; text-align: center;">
+            <h1 style="margin: 0; font-size: 28px;">Produkt genehmigt!</h1>
+            <p style="margin: 10px 0 0 0; font-size: 16px;">Ihr Produkt wurde erfolgreich genehmigt</p>
+          </div>
+
+          <div style="padding: 30px; background: white;">
+            <p style="font-size: 16px; line-height: 1.6; color: #333;">
+              Hallo ${merchantName},
+            </p>
+
+            <p style="font-size: 16px; line-height: 1.6; color: #333;">
+              Große Neuigkeiten! Ihr Produkt <strong>"${productTitle}"</strong> wurde genehmigt und ist jetzt auf der Plattform veröffentlicht.
+            </p>
+
+            <div style="background: #d4edda; border-left: 4px solid #28a745; padding: 15px; margin: 20px 0; border-radius: 6px;">
+              <p style="margin: 0; color: #155724; font-weight: bold;">
+                ✅ Status: Ihr Produkt ist jetzt live und für Kunden sichtbar!
+              </p>
+            </div>
+
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${APP_BASE_URL}/merchant"
+                 style="background: #28a745; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+                Zum Händler-Dashboard
+              </a>
+            </div>
+          </div>
+
+          <div style="background: #f8f9fa; padding: 20px; text-align: center; color: #666; font-size: 14px;">
+            <p style="margin: 0;">
+              Fragen zu Ihrem Produkt? Kontaktieren Sie unseren Support unter
+              <a href="mailto:merchants@feinraumshop.ch" style="color: #28a745;">merchants@feinraumshop.ch</a>
+            </p>
+            <p style="color: #666; font-size: 14px; line-height: 1.6; margin-top: 10px;">
+              Diese E-Mail wurde von Feinraum Shop gesendet. Bei Fragen kontaktieren Sie bitte unser Support-Team.
+            </p>
+          </div>
+        </div>
+      `
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log(`Product approval email sent successfully to ${merchantEmail}`);
+  } catch (error) {
+    console.error('Error sending product approval email:', error);
+    if (isDevelopment) {
+      console.log('Note: In development mode, emails are logged to console instead of being sent');
+    }
+  }
+}
+
+export async function sendProductRejectionEmail(
+  merchantEmail: string,
+  merchantName: string,
+  productTitle: string,
+  productId: string,
+  reason?: string
+) {
+  try {
+    const mailOptions = {
+      from: `"${process.env.FROM_NAME || 'Feinraum Shop'}" <${process.env.FROM_EMAIL || 'support@feinraumshop.ch'}>`,
+      to: merchantEmail,
+      subject: 'Produkt abgelehnt - Feinraum Shop',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background: linear-gradient(135deg, #dc3545 0%, #c82333 100%); color: white; padding: 30px; text-align: center;">
+            <h1 style="margin: 0; font-size: 28px;">Produkt abgelehnt</h1>
+            <p style="margin: 10px 0 0 0; font-size: 16px;">Ihr Produkt wurde nicht genehmigt</p>
+          </div>
+
+          <div style="padding: 30px; background: white;">
+            <p style="font-size: 16px; line-height: 1.6; color: #333;">
+              Hallo ${merchantName},
+            </p>
+
+            <p style="font-size: 16px; line-height: 1.6; color: #333;">
+              Leider wurde Ihr Produkt <strong>"${productTitle}"</strong> nicht genehmigt.
+            </p>
+
+            ${reason ? `
+            <div style="background: #f8f9fa; padding: 20px; margin: 20px 0; border-radius: 8px; border-left: 4px solid #dc3545;">
+              <h3 style="margin: 0 0 10px 0; color: #333;">Ablehnungsgrund:</h3>
+              <p style="margin: 0; color: #666; line-height: 1.6;">${reason}</p>
+            </div>
+            ` : ''}
+
+            <div style="background: #fff3cd; border-left: 4px solid #ffc107; padding: 15px; margin: 20px 0; border-radius: 6px;">
+              <p style="margin: 0; color: #856404; font-weight: bold;">
+                📋 Nächste Schritte: Bitte überarbeiten Sie Ihr Produkt entsprechend den Richtlinien und reichen Sie es erneut zur Genehmigung ein.
+              </p>
+            </div>
+
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${APP_BASE_URL}/merchant"
+                 style="background: #dc3545; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; font-weight: bold; display: inline-block;">
+                Zum Händler-Dashboard
+              </a>
+            </div>
+          </div>
+
+          <div style="background: #f8f9fa; padding: 20px; text-align: center; color: #666; font-size: 14px;">
+            <p style="margin: 0;">
+              Fragen zur Ablehnung? Kontaktieren Sie unseren Support unter
+              <a href="mailto:merchants@feinraumshop.ch" style="color: #dc3545;">merchants@feinraumshop.ch</a>
+            </p>
+            <p style="color: #666; font-size: 14px; line-height: 1.6; margin-top: 10px;">
+              Diese E-Mail wurde von Feinraum Shop gesendet. Bei Fragen kontaktieren Sie bitte unser Support-Team.
+            </p>
+          </div>
+        </div>
+      `
+    };
+
+    await transporter.sendMail(mailOptions);
+    console.log(`Product rejection email sent successfully to ${merchantEmail}`);
+  } catch (error) {
+    console.error('Error sending product rejection email:', error);
+    if (isDevelopment) {
+      console.log('Note: In development mode, emails are logged to console instead of being sent');
+    }
+  }
+}
+
 export async function sendOrderStatusUpdateToCustomer(orderData: any, oldStatus: string, newStatus: string) {
   try {
     const { customer, order, items } = orderData;

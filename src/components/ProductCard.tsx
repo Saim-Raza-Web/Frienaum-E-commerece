@@ -21,6 +21,10 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
 
   const handleAddToCart = (e: React.MouseEvent) => {
     e.preventDefault();
+    // Prevent adding to cart if product is draft or pending
+    if (product.status === 'DRAFT' || product.status === 'PENDING') {
+      return;
+    }
     if (onAddToCart) {
       onAddToCart(product);
     }
@@ -127,15 +131,22 @@ export default function ProductCard({ product, onAddToCart }: ProductCardProps) 
           <div className="mt-auto">
             <button
               onClick={handleAddToCart}
-              disabled={!product.inStock}
+              disabled={!product.inStock || product.status === 'DRAFT' || product.status === 'PENDING'}
               className={`w-full flex items-center justify-center space-x-1 py-1.5 sm:py-2 px-2 sm:px-3 rounded-lg font-montserrat font-semibold transition-all duration-200 focus:outline-none text-xs ${
-                product.inStock
+                product.inStock && product.status !== 'DRAFT' && product.status !== 'PENDING'
                   ? 'btn-primary'
                   : 'bg-primary-200 text-primary-400 cursor-not-allowed'
               }`}
             >
               <ShoppingCart className="w-3 h-3" />
-              <span className="text-xs">{product.inStock ? translate('addToCart') : translate('outOfStock')}</span>
+              <span className="text-xs">
+                {!product.inStock 
+                  ? translate('outOfStock')
+                  : product.status === 'DRAFT' || product.status === 'PENDING'
+                  ? getTranslation('merchant.statusPending', 'Unavailable')
+                  : translate('addToCart')
+                }
+              </span>
             </button>
           </div>
         </div>

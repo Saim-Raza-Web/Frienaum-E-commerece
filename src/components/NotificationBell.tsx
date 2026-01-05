@@ -39,12 +39,18 @@ export default function NotificationBell({ userRole }: NotificationBellProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [expandedNotificationId, setExpandedNotificationId] = useState<string | null>(null);
   const [deletingIds, setDeletingIds] = useState<string[]>([]);
+  const [popupNotification, setPopupNotification] = useState<Notification | null>(null);
+  const previousNotificationIdsRef = useRef<Set<string>>(new Set());
+  const lastFetchTimeRef = useRef<number>(0);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const popupTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  const fetchNotifications = useCallback(async () => {
+  const fetchNotifications = useCallback(async (showLoading: boolean = true) => {
     try {
-      setIsLoading(true);
+      if (showLoading) {
+        setIsLoading(true);
+      }
       const response = await fetch('/api/notifications?limit=20', {
         credentials: 'include',
         cache: 'no-store'
@@ -55,24 +61,72 @@ export default function NotificationBell({ userRole }: NotificationBellProps) {
       }
 
       const data = await response.json();
-      setNotifications(data.notifications || []);
+      const newNotifications = data.notifications || [];
+      const currentTime = Date.now();
+      
+      // Detect new notifications by comparing with previous set
+      // Check for notifications that are:
+      // 1. Not in previous set (newly created)
+      // 2. Unread
+      // 3. Created recently (within last 2 minutes to catch notifications created between polls)
+      const newNotification = newNotifications.find((n: Notification) => {
+        const isNew = !previousNotificationIdsRef.current.has(n.id);
+        const isUnread = !n.isRead;
+        const notificationTime = new Date(n.createdAt).getTime();
+        // Check if notification was created after last fetch time, or within last 2 minutes
+        const isRecent = notificationTime > (lastFetchTimeRef.current - 120000); // Within last 2 minutes
+        
+        // Show popup if: it's new AND unread AND (recent OR this is first load)
+        if (isNew && isUnread) {
+          if (previousNotificationIdsRef.current.size === 0) {
+            // First load - only show the most recent unread notification
+            return n === newNotifications.find((nn: Notification) => !nn.isRead);
+          }
+          return isRecent;
+        }
+        return false;
+      });
+      
+      if (newNotification) {
+        console.log('New notification detected for popup:', newNotification);
+        // Show popup for new notification
+        setPopupNotification(newNotification);
+        
+        // Auto-hide popup after 5 seconds
+        if (popupTimeoutRef.current) {
+          clearTimeout(popupTimeoutRef.current);
+        }
+        popupTimeoutRef.current = setTimeout(() => {
+          setPopupNotification(null);
+        }, 5000);
+      }
+      
+      // Update previous notification IDs and last fetch time
+      previousNotificationIdsRef.current = new Set(newNotifications.map((n: Notification) => n.id));
+      lastFetchTimeRef.current = currentTime;
+      setNotifications(newNotifications);
       setUnreadCount(data.unreadCount || 0);
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
     } finally {
-      setIsLoading(false);
+      if (showLoading) {
+        setIsLoading(false);
+      }
     }
   }, []);
 
   useEffect(() => {
     fetchNotifications();
 
-    // Poll for new notifications every 30 seconds
-    pollIntervalRef.current = setInterval(fetchNotifications, 30000);
+    // Poll for new notifications every 15 seconds (reduced for faster detection)
+    pollIntervalRef.current = setInterval(fetchNotifications, 15000);
 
     return () => {
       if (pollIntervalRef.current) {
         clearInterval(pollIntervalRef.current);
+      }
+      if (popupTimeoutRef.current) {
+        clearTimeout(popupTimeoutRef.current);
       }
     };
   }, [fetchNotifications]);
@@ -142,46 +196,51 @@ export default function NotificationBell({ userRole }: NotificationBellProps) {
     }
   };
 
-  const deleteNotifications = async (notificationIds: string[]) => {
-    if (!notificationIds.length) return;
-    setDeletingIds(prev => [...prev, ...notificationIds]);
+  const deleteNotifications = async (notificationIds: string[], deleteAll: boolean = false) => {
+    if (!deleteAll && !notificationIds.length) return;
+    setDeletingIds(prev => deleteAll ? [...prev, ...notifications.map(n => n.id)] : [...prev, ...notificationIds]);
     try {
       const response = await fetch('/api/notifications', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ notificationIds })
+        body: JSON.stringify(deleteAll ? { deleteAll: true } : { notificationIds })
       });
 
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {
         console.error('Failed to delete notifications:', data);
+        setDeletingIds(prev => prev.filter(id => !notificationIds.includes(id)));
         return;
       }
 
-      setNotifications(prev => prev.filter(n => !notificationIds.includes(n.id)));
-      setDeletingIds(prev => prev.filter(id => !notificationIds.includes(id)));
-
+      // Clear notifications immediately
+      if (deleteAll) {
+        setNotifications([]);
+        previousNotificationIdsRef.current = new Set();
+      } else {
+        setNotifications(prev => prev.filter(n => !notificationIds.includes(n.id)));
+      }
+      
+      // Update unread count
       if (typeof data.unreadCount === 'number') {
         setUnreadCount(data.unreadCount);
       } else {
-        setUnreadCount(prev => {
-          const unreadRemoved = notifications.filter(
-            n => notificationIds.includes(n.id) && !n.isRead
-          ).length;
-          return Math.max(0, prev - unreadRemoved);
-        });
+        setUnreadCount(0);
       }
+
+      // Refresh notifications after deletion to ensure sync (without showing loading)
+      await fetchNotifications(false);
     } catch (error) {
       console.error('Failed to delete notifications:', error);
     } finally {
-      setDeletingIds(prev => prev.filter(id => !notificationIds.includes(id)));
+      setDeletingIds([]);
     }
   };
 
-  const deleteAllNotifications = () => {
+  const deleteAllNotifications = async () => {
     if (!notifications.length) return;
-    deleteNotifications(notifications.map(n => n.id));
+    await deleteNotifications([], true);
   };
 
   const getNotificationIcon = (type: Notification['type']) => {
@@ -218,6 +277,55 @@ export default function NotificationBell({ userRole }: NotificationBellProps) {
 
   return (
     <div className="relative" ref={dropdownRef}>
+      {/* Popup Notification */}
+      {popupNotification && (
+        <div className="fixed top-20 right-4 sm:right-6 z-[60] w-80 sm:w-96 bg-white rounded-lg shadow-2xl border border-gray-200 animate-in slide-in-from-top-5 duration-300">
+          <div className="p-4">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 mt-0.5">
+                {getNotificationIcon(popupNotification.type)}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-gray-900">
+                      {popupNotification.title}
+                    </p>
+                    <p className="text-xs text-gray-600 mt-1 line-clamp-2">
+                      {popupNotification.message}
+                    </p>
+                  </div>
+                  <button
+                    onClick={() => {
+                      setPopupNotification(null);
+                      if (popupTimeoutRef.current) {
+                        clearTimeout(popupTimeoutRef.current);
+                      }
+                    }}
+                    className="flex-shrink-0 p-1 text-gray-400 hover:text-gray-600 transition-colors"
+                    aria-label="Schließen"
+                  >
+                    <X className="w-4 h-4" />
+                  </button>
+                </div>
+                <button
+                  onClick={() => {
+                    setPopupNotification(null);
+                    setIsOpen(true);
+                    if (popupTimeoutRef.current) {
+                      clearTimeout(popupTimeoutRef.current);
+                    }
+                  }}
+                  className="mt-2 text-xs text-blue-600 hover:text-blue-800 font-medium"
+                >
+                  Alle Benachrichtigungen anzeigen
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Bell Button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
@@ -239,16 +347,17 @@ export default function NotificationBell({ userRole }: NotificationBellProps) {
             className="fixed inset-0 bg-black/10 backdrop-blur-[1px] z-40 sm:hidden"
             onClick={() => setIsOpen(false)}
           ></div>
-          <div className="fixed inset-x-4 top-24 sm:absolute sm:inset-auto sm:right-0 sm:top-full sm:mt-2 w-auto sm:w-72 md:w-80 max-w-md sm:max-w-none bg-white rounded-2xl sm:rounded-lg shadow-2xl sm:shadow-xl border border-gray-200 z-50 max-h-[75vh] sm:max-h-[80vh] overflow-hidden">
+          <div className="fixed inset-x-4 top-24 sm:absolute sm:inset-auto sm:right-0 sm:top-full sm:mt-2 w-[calc(100%-2rem)] sm:w-[28rem] md:w-[32rem] max-w-md sm:max-w-none bg-white rounded-2xl sm:rounded-lg shadow-2xl sm:shadow-xl border border-gray-200 z-50 max-h-[75vh] sm:max-h-[80vh] overflow-hidden min-w-[380px]">
             {/* Header */}
-            <div className="flex items-center justify-between px-3 py-2 border-b border-gray-200 bg-gray-50">
-              <h3 className="text-sm font-semibold text-gray-900">Benachrichtigungen</h3>
-              <div className="flex items-center gap-2">
+            <div className="flex items-center justify-between px-3 sm:px-4 py-2.5 border-b border-gray-200 bg-gray-50 min-h-[48px] gap-3">
+              <h3 className="text-sm sm:text-base font-semibold text-gray-900 flex-shrink-0 truncate max-w-[140px] sm:max-w-none">Benachrichtigungen</h3>
+              <div className="flex items-center gap-2 flex-shrink-0 justify-end">
                 {notifications.length > 0 && (
                   <button
                     onClick={deleteAllNotifications}
-                    className="text-xs text-red-600 hover:text-red-800 font-medium whitespace-nowrap"
+                    className="text-xs sm:text-sm text-white bg-red-600 hover:bg-red-700 font-semibold whitespace-nowrap px-2.5 py-1.5 rounded-md transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-sm hover:shadow flex-shrink-0"
                     disabled={deletingIds.length > 0}
+                    title="Alle Benachrichtigungen löschen"
                   >
                     Alle löschen
                   </button>
@@ -256,7 +365,8 @@ export default function NotificationBell({ userRole }: NotificationBellProps) {
                 {unreadCount > 0 && (
                   <button
                     onClick={markAllAsRead}
-                    className="text-xs text-blue-600 hover:text-blue-800 font-medium whitespace-nowrap"
+                    className="text-xs sm:text-sm text-white bg-blue-600 hover:bg-blue-700 font-semibold whitespace-nowrap px-2.5 py-1.5 rounded-md transition-colors shadow-sm hover:shadow flex-shrink-0"
+                    title="Alle als gelesen markieren"
                   >
                     Alle gelesen
                   </button>

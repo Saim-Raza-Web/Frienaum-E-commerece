@@ -117,6 +117,19 @@ function AdminDashboard() {
   const [showForm, setShowForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [rejectModal, setRejectModal] = useState<{ isOpen: boolean; productId: number | null; reason: string }>({
+    isOpen: false,
+    productId: null,
+    reason: ''
+  });
+
+  // Debug: Log modal state changes
+  useEffect(() => {
+    if (rejectModal.isOpen) {
+      console.log('Reject modal opened:', rejectModal);
+      console.log('Modal should be visible now');
+    }
+  }, [rejectModal.isOpen, rejectModal]);
   const [form, setForm] = useState<any>({
     slug:"", title_en:"", title_de:"", desc_en:"", desc_de:"",
     price:"0", stock:"0", imageUrl:"", images: [], category: translate('admin.generalCategory') || 'General',
@@ -736,6 +749,7 @@ function AdminDashboard() {
   };
 
   return (
+    <>
     <div className="min-h-screen bg-gray-50">
       {/* Header - Responsive design */}
       <div className="bg-white shadow-sm border-b">
@@ -1338,22 +1352,13 @@ function AdminDashboard() {
                                       }}
                                     >{translate('action.approve')}</button>
                                     <button
+                                      type="button"
                                       className="px-3 py-1.5 text-xs rounded bg-red-600 text-white hover:bg-red-700 whitespace-nowrap font-medium"
-                                      onClick={async () => {
-                                        const reason = prompt(translate('admin.rejectReason') || 'Grund für Ablehnung (optional):');
-                                        try {
-                                          const res = await fetch(`/api/admin/products/${p.id}/reject`, { 
-                                            method: 'POST', 
-                                            credentials: 'include',
-                                            headers: { 'Content-Type': 'application/json' },
-                                            body: JSON.stringify({ reason: reason || '' })
-                                          });
-                                          if (!res.ok) throw new Error('Failed to reject');
-                                          await loadProducts();
-                                          alert(translate('admin.productRejected') || 'Produkt abgelehnt');
-                                        } catch (err) {
-                                          alert(translate('admin.errorRejectingProduct') || 'Fehler beim Ablehnen');
-                                        }
+                                      onClick={(e) => {
+                                        e.preventDefault();
+                                        e.stopPropagation();
+                                        console.log('Reject button clicked, product ID:', p.id);
+                                        setRejectModal({ isOpen: true, productId: p.id, reason: '' });
                                       }}
                                     >{translate('action.reject')}</button>
                                   </div>
@@ -1977,7 +1982,98 @@ function AdminDashboard() {
           </div>
         </div>
       )}
+
+      {/* Reject Product Modal */}
+      {rejectModal.isOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4" 
+          style={{ 
+            position: 'fixed', 
+            top: 0, 
+            left: 0, 
+            right: 0, 
+            bottom: 0,
+            zIndex: 99999,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setRejectModal({ isOpen: false, productId: null, reason: '' });
+            }
+          }}
+        >
+          <div 
+            className="bg-white rounded-lg shadow-xl max-w-md w-full p-6" 
+            onClick={(e) => e.stopPropagation()}
+            style={{ 
+              position: 'relative', 
+              zIndex: 100000,
+              backgroundColor: 'white',
+              borderRadius: '0.5rem',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)',
+              maxWidth: '28rem',
+              width: '100%',
+              padding: '1.5rem'
+            }}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">
+                {translateOrFallback('admin.rejectReason', 'Grund für Ablehnung (optional)')}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setRejectModal({ isOpen: false, productId: null, reason: '' })}
+                className="text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <textarea
+              value={rejectModal.reason}
+              onChange={(e) => setRejectModal({ ...rejectModal, reason: e.target.value })}
+              placeholder={translateOrFallback('admin.rejectReasonPlaceholder', 'Geben Sie optional einen Grund für die Ablehnung ein...')}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none"
+              rows={4}
+            />
+            <div className="flex items-center justify-end gap-3 mt-4">
+              <button
+                type="button"
+                onClick={() => setRejectModal({ isOpen: false, productId: null, reason: '' })}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+              >
+                {translateOrFallback('action.cancel', 'Abbrechen')}
+              </button>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!rejectModal.productId) return;
+                  try {
+                    const res = await fetch(`/api/admin/products/${rejectModal.productId}/reject`, { 
+                      method: 'POST', 
+                      credentials: 'include',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ reason: rejectModal.reason || '' })
+                    });
+                    if (!res.ok) throw new Error('Failed to reject');
+                    await loadProducts();
+                    setRejectModal({ isOpen: false, productId: null, reason: '' });
+                    alert(translateOrFallback('admin.productRejected', 'Produkt abgelehnt'));
+                  } catch (err) {
+                    alert(translateOrFallback('admin.errorRejectingProduct', 'Fehler beim Ablehnen'));
+                  }
+                }}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 hover:bg-red-700 rounded-lg transition-colors"
+              >
+                {translateOrFallback('action.reject', 'Ablehnen')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
+    </>
   );
 }
 

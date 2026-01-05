@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getUserFromReq } from '@/lib/apiAuth';
 import { notifyMerchantProductRejected } from '@/lib/notifications';
+import { sendProductRejectionEmail } from '@/lib/email';
 
 function getUserFromNextRequest(req: NextRequest) {
   const cookieHeader = req.headers.get('cookie') || '';
@@ -53,15 +54,30 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       }
     });
 
-    // Send notification to merchant about product rejection
-    if (updatedProduct.merchant?.user?.id) {
+    // Send notification and email to merchant about product rejection
+    if (updatedProduct.merchant?.user?.id && updatedProduct.merchant?.user?.email) {
+      const productTitle = updatedProduct.title_de || updatedProduct.title_en || 'Produkt';
+      const merchantName = updatedProduct.merchant.user.name || 'Händler';
+      
+      // Send notification
       notifyMerchantProductRejected(
         updatedProduct.merchant.user.id,
         updatedProduct.id,
-        updatedProduct.title_de || updatedProduct.title_en || 'Produkt',
+        productTitle,
         reason
       ).catch(err => {
         console.error('Failed to send merchant rejection notification:', err);
+      });
+
+      // Send email
+      sendProductRejectionEmail(
+        updatedProduct.merchant.user.email,
+        merchantName,
+        productTitle,
+        updatedProduct.id,
+        reason
+      ).catch(err => {
+        console.error('Failed to send product rejection email:', err);
       });
     }
 

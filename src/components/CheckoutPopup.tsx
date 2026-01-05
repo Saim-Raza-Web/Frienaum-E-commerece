@@ -588,9 +588,9 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
                     )}
                   </div>
 
-                  <div className="grid grid-cols-3 gap-3">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <div className="grid grid-cols-3 gap-3 items-start">
+                    <div className="flex flex-col">
+                      <label className="block text-sm font-medium text-gray-700 mb-1 min-h-[2.5rem] leading-tight whitespace-normal break-words">
                         {translate('checkout.form.cityLabel')}
                       </label>
                       <input
@@ -607,8 +607,8 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
                         <p className="text-red-500 text-xs mt-1">{addressErrors.city}</p>
                       )}
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <div className="flex flex-col">
+                      <label className="block text-sm font-medium text-gray-700 mb-1 min-h-[2.5rem] leading-tight whitespace-normal break-words">
                         {translate('checkout.form.stateLabel')}
                       </label>
                       <input
@@ -625,8 +625,8 @@ export default function CheckoutPopup({ isOpen, onClose }: { isOpen: boolean; on
                         <p className="text-red-500 text-xs mt-1">{addressErrors.state}</p>
                       )}
                     </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
+                    <div className="flex flex-col">
+                      <label className="block text-sm font-medium text-gray-700 mb-1 min-h-[2.5rem] leading-tight whitespace-normal break-words">
                         {translate('checkout.form.zipCodeLabel')}
                       </label>
                       <input

@@ -171,7 +171,8 @@ function HomePage({ params }: HomePageProps) {
         rating: Number(product.averageRating || 0),
         reviewCount: Number(product.ratingCount || 0),
         inStock: product.stock > 0,
-        tags: []
+        tags: [],
+        status: product.status
       }));
 
       // Take first 5 products as featured

@@ -264,9 +264,9 @@ export default function CheckoutPage() {
                         />
                         {errors.address && <p className="text-red-500 text-sm mt-1">{errors.address}</p>}
                       </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">{translate('checkout.form.cityLabel')}</label>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 items-start">
+                        <div className="flex flex-col">
+                          <label className="block text-sm font-medium text-gray-700 mb-1 min-h-[2.5rem] leading-tight whitespace-normal break-words">{translate('checkout.form.cityLabel')}</label>
                           <input
                             type="text"
                             value={formData.city}
@@ -276,8 +276,8 @@ export default function CheckoutPage() {
                           />
                           {errors.city && <p className="text-red-500 text-sm mt-1">{errors.city}</p>}
                         </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">{translate('checkout.form.stateLabel')}</label>
+                        <div className="flex flex-col">
+                          <label className="block text-sm font-medium text-gray-700 mb-1 min-h-[2.5rem] leading-tight whitespace-normal break-words">{translate('checkout.form.stateLabel')}</label>
                           <input
                             type="text"
                             value={formData.state}
@@ -287,8 +287,8 @@ export default function CheckoutPage() {
                           />
                           {errors.state && <p className="text-red-500 text-sm mt-1">{errors.state}</p>}
                         </div>
-                        <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-1">{translate('checkout.form.zipCodeLabel')}</label>
+                        <div className="flex flex-col">
+                          <label className="block text-sm font-medium text-gray-700 mb-1 min-h-[2.5rem] leading-tight whitespace-normal break-words">{translate('checkout.form.zipCodeLabel')}</label>
                           <input
                             type="text"
                             value={formData.zipCode}

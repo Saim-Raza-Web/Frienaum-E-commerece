@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getUserFromReq } from '@/lib/apiAuth';
 import { notifyMerchantProductApproved } from '@/lib/notifications';
+import { sendProductApprovalEmail } from '@/lib/email';
 
 function getUserFromNextRequest(req: NextRequest) {
   const cookieHeader = req.headers.get('cookie') || '';
@@ -49,14 +50,28 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       }
     });
 
-    // Send notification to merchant about product approval
-    if (updatedProduct.merchant?.user?.id) {
+    // Send notification and email to merchant about product approval
+    if (updatedProduct.merchant?.user?.id && updatedProduct.merchant?.user?.email) {
+      const productTitle = updatedProduct.title_de || updatedProduct.title_en || 'Produkt';
+      const merchantName = updatedProduct.merchant.user.name || 'Händler';
+      
+      // Send notification
       notifyMerchantProductApproved(
         updatedProduct.merchant.user.id,
         updatedProduct.id,
-        updatedProduct.title_de || updatedProduct.title_en || 'Produkt'
+        productTitle
       ).catch(err => {
         console.error('Failed to send merchant notification:', err);
+      });
+
+      // Send email
+      sendProductApprovalEmail(
+        updatedProduct.merchant.user.email,
+        merchantName,
+        productTitle,
+        updatedProduct.id
+      ).catch(err => {
+        console.error('Failed to send product approval email:', err);
       });
     }
 
