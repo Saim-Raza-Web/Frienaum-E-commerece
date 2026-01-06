@@ -25,8 +25,44 @@ export async function GET(request: NextRequest) {
       select: { id: true }
     });
 
+    // If merchant doesn't exist, return empty analytics data instead of error
     if (!merchant) {
-      return NextResponse.json({ error: 'Merchant not found' }, { status: 404 });
+      return NextResponse.json({
+        revenue: {
+          total: 0,
+          monthly: 0,
+          lastMonth: 0,
+          weekly: 0,
+          daily: 0,
+          byStatus: {},
+          monthlyGrowth: 0
+        },
+        orders: {
+          total: 0,
+          monthly: 0,
+          lastMonth: 0,
+          weekly: 0,
+          daily: 0,
+          byStatus: {},
+          growth: 0
+        },
+        customers: {
+          total: 0,
+          newThisMonth: 0,
+          newLastMonth: 0,
+          active: 0,
+          topCustomers: [],
+          growth: 0
+        },
+        products: {
+          total: 0,
+          lowStock: 0,
+          outOfStock: 0,
+          topProducts: [],
+          bestRated: []
+        },
+        salesTrends: []
+      });
     }
 
     const merchantId = merchant.id;

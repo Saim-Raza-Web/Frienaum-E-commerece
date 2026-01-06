@@ -1,6 +1,6 @@
 'use client'; // Marking this file as a client component
 
-import React, { createContext, useContext, ReactNode, useEffect, useState } from 'react';
+import React, { createContext, useContext, ReactNode, useEffect, useState, useTransition } from 'react';
 import { usePathname } from 'next/navigation';
 import { Locale, isValidLocale } from './config';
 import deTranslations from '@/i18n/locales/de/common.json';
@@ -40,12 +40,13 @@ export const TranslationProvider = ({ children, initialLocale }: TranslationProv
   const [translations, setTranslations] = useState<Record<string, any>>(
     getPreloadedTranslations(startingLocale) || {}
   );
+  const [isPending, startTransition] = useTransition();
 
   useEffect(() => {
     if (normalizedUrlLocale && currentLocale !== normalizedUrlLocale) {
       setCurrentLocale(normalizedUrlLocale);
     }
-  }, [normalizedUrlLocale]);
+  }, [normalizedUrlLocale, currentLocale]);
 
   // Load translations when locale changes
   useEffect(() => {
@@ -54,14 +55,14 @@ export const TranslationProvider = ({ children, initialLocale }: TranslationProv
       const preloaded = getPreloadedTranslations(currentLocale);
       if (preloaded) {
         if (mounted) {
-          setTranslations(preloaded);
+          startTransition(() => setTranslations(preloaded));
         }
         return;
       }
       try {
         const messages = await import(`@/i18n/locales/${currentLocale}/common.json`);
         if (mounted && messages.default) {
-          setTranslations(messages.default);
+          startTransition(() => setTranslations(messages.default));
         }
       } catch (error) {
         console.error(`Failed to load translations for locale: ${currentLocale}`, error);
@@ -70,7 +71,7 @@ export const TranslationProvider = ({ children, initialLocale }: TranslationProv
           try {
             const fallbackMessages = await import(`@/i18n/locales/${DEFAULT_LOCALE}/common.json`);
             if (mounted && fallbackMessages.default) {
-              setTranslations(fallbackMessages.default);
+              startTransition(() => setTranslations(fallbackMessages.default));
             }
           } catch (fallbackError) {
             console.error('Failed to load fallback translations', fallbackError);
@@ -80,7 +81,7 @@ export const TranslationProvider = ({ children, initialLocale }: TranslationProv
     };
     loadTranslations();
     return () => { mounted = false; };
-  }, [currentLocale]);
+  }, [currentLocale, startTransition]);
 
   const applyParams = (text: string, params?: Record<string, any>) => {
     if (!params) return text;

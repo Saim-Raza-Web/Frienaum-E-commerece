@@ -183,7 +183,7 @@ export default function MerchantRegistrationPage() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <CheckCircle className="w-16 h-16 text-green-600 mx-auto mb-4" />
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">You're already a merchant!</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">You&apos;re already a merchant!</h1>
           <Link href="/merchant" className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700">
             Go to Merchant Dashboard
           </Link>
@@ -306,7 +306,7 @@ export default function MerchantRegistrationPage() {
               <div className="max-w-2xl mx-auto space-y-6">
                 {/* Benefits */}
                 <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
-                  <h3 className="text-lg font-semibold text-blue-900 mb-4">What you'll get:</h3>
+                  <h3 className="text-lg font-semibold text-blue-900 mb-4">What you&apos;ll get:</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="flex items-center space-x-3">
                       <CheckCircle className="w-5 h-5 text-green-600" />

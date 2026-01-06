@@ -11,7 +11,8 @@ function getUserFromNextRequest(req: NextRequest) {
 const merchantHiddenNotificationTypes: NotificationType[] = ['PRODUCT_SUBMITTED'];
 
 function getRoleBasedNotificationFilter(role?: string) {
-  if (role === 'MERCHANT') {
+  // Handle both uppercase and lowercase role values
+  if (role === 'MERCHANT' || role === 'merchant') {
     return { type: { notIn: merchantHiddenNotificationTypes } };
   }
   return {};
@@ -36,11 +37,16 @@ export async function GET(request: NextRequest) {
       limit
     });
 
-    const baseWhere = {
+    const roleFilter = getRoleBasedNotificationFilter(user.role);
+    
+    const baseWhere: any = {
       userId: user.id,
-      ...getRoleBasedNotificationFilter(user.role),
-      ...(unreadOnly ? { isRead: false } : {})
+      ...roleFilter
     };
+    
+    if (unreadOnly) {
+      baseWhere.isRead = false;
+    }
 
     const notifications = await prisma.notification.findMany({
       where: baseWhere,
@@ -54,17 +60,26 @@ export async function GET(request: NextRequest) {
       title: n.title
     })));
 
+    const unreadCountWhere: any = {
+      userId: user.id,
+      ...roleFilter,
+      isRead: false
+    };
+
     const unreadCount = await prisma.notification.count({
-      where: {
-        ...baseWhere,
-        isRead: true ? false : false
-      }
+      where: unreadCountWhere
     });
 
     return NextResponse.json({ notifications, unreadCount });
   } catch (error) {
     console.error('Error fetching notifications:', error);
-    return NextResponse.json({ error: 'Failed to fetch notifications' }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorDetails = error instanceof Error ? error.stack : String(error);
+    console.error('Error details:', errorDetails);
+    return NextResponse.json({ 
+      error: 'Failed to fetch notifications',
+      details: process.env.NODE_ENV === 'development' ? errorMessage : undefined
+    }, { status: 500 });
   }
 }
 

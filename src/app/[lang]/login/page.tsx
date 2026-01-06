@@ -9,11 +9,6 @@ import { useTranslation } from '@/i18n/TranslationProvider';
 
 export default function LoginPage() {
   const { translate } = useTranslation();
-
-  if (!translate) {
-    return <div>Loading translations...</div>;
-  }
-
   const [isLogin, setIsLogin] = useState(true);
   const [isForgotPassword, setIsForgotPassword] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -77,7 +72,7 @@ export default function LoginPage() {
   // Clear error when switching between login/register
   useEffect(() => {
     clearError();
-  }, [isLogin]);
+  }, [isLogin, clearError]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -190,6 +185,10 @@ export default function LoginPage() {
     resetForm();
   }, [resetForm]);
 
+  if (!translate) {
+    return <div>Loading translations...</div>;
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
@@ -294,7 +293,7 @@ export default function LoginPage() {
                     <label htmlFor="storeName" className="block text-sm font-medium text-gray-700">
                       {translate('Store Name')}
                     </label>
-                    <div className="mt-1 relative">
+                    <div className="mt-1">
                       <input
                         id="storeName"
                         name="storeName"
@@ -302,10 +301,9 @@ export default function LoginPage() {
                         required={!isLogin}
                         value={formData.storeName}
                         onChange={(e) => handleInputChange('storeName', e.target.value)}
-                        className="input-field pl-4"
-                        placeholder=""
+                        className="input-field"
+                        placeholder={translate('Enter your store name')}
                       />
-                      <ShoppingBag className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                     </div>
                   </div>
                 )}

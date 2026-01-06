@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, startTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
 import { sampleProducts } from '@/data/sampleProducts';
@@ -12,7 +12,7 @@ export default function TestCartPage() {
   const isInitialized = useRef(false);
 
   useEffect(() => {
-    setIsClient(true);
+    startTransition(() => setIsClient(true));
   }, []);
 
   useEffect(() => {

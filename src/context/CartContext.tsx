@@ -1,6 +1,14 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  useCallback,
+  ReactNode,
+  startTransition
+} from 'react';
 import { Product } from '@/types';
 import { useAuth } from './AuthContext';
 
@@ -27,18 +35,16 @@ export function CartProvider({ children }: { children: ReactNode }) {
   const { user, isAuthenticated } = useAuth();
   const [storageKey, setStorageKey] = useState<string>('cart_guest');
 
-  const resolveStorageKey = () => (user?.id ? `cart_${user.id}` : 'cart_guest');
-
   // Ensure we only access localStorage on the client
   useEffect(() => {
-    setIsClient(true);
+    startTransition(() => setIsClient(true));
   }, []);
 
   // Update storage key when auth state changes, and migrate guest cart if needed
   useEffect(() => {
     if (!isClient) return;
 
-    const newKey = resolveStorageKey();
+    const newKey = user?.id ? `cart_${user.id}` : 'cart_guest';
 
     if (user?.id) {
       try {
@@ -52,7 +58,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    setStorageKey(newKey);
+    startTransition(() => setStorageKey(newKey));
   }, [user?.id, isClient]);
 
   // Load cart whenever the storage key changes
@@ -63,14 +69,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const savedCart = localStorage.getItem(storageKey);
       if (savedCart) {
         const parsedCart = JSON.parse(savedCart);
-        setCartItems(parsedCart);
+        startTransition(() => setCartItems(parsedCart));
       } else {
-        setCartItems([]);
+        startTransition(() => setCartItems([]));
       }
     } catch (error) {
       console.error('Failed to load cart from localStorage', error);
       localStorage.removeItem(storageKey);
-      setCartItems([]);
+      startTransition(() => setCartItems([]));
     }
   }, [storageKey, isClient]);
 

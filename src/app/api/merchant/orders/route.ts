@@ -35,9 +35,10 @@ export async function GET(request: NextRequest) {
       select: { id: true, status: true }
     });
 
+    // If merchant doesn't exist, return empty array instead of error
     if (!merchant) {
-      console.log('Merchant profile not found for user:', userId);
-      return NextResponse.json({ error: 'Merchant profile not found' }, { status: 404 });
+      console.log('Merchant profile not found for user:', userId, '- returning empty orders');
+      return NextResponse.json([]);
     }
 
     console.log('Found merchant:', merchant.id, 'status:', merchant.status);

@@ -60,13 +60,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(transformedCategories);
   } catch (error) {
     console.error('Error fetching categories:', error);
-    return NextResponse.json(
-      { 
-        error: 'Failed to fetch categories',
-        details: error instanceof Error ? error.message : 'Unknown error occurred'
-      },
-      { status: 500 }
-    );
+    // Return empty array instead of error to prevent frontend crashes
+    return NextResponse.json([]);
   }
 }
 

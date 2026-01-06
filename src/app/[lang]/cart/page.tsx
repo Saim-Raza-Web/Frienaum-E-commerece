@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useCart } from '@/context/CartContext';
@@ -18,7 +18,6 @@ const CheckoutPopup = dynamic(
 
 export default function CartPage() {
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
   const {
     cartItems,
     removeFromCart,
@@ -39,11 +38,6 @@ export default function CartPage() {
       .replace(/\s+/g, '-') // Replace spaces with hyphens
       .replace(/-+/g, '-'); // Replace multiple hyphens with single hyphen
   };
-
-  useEffect(() => {
-    // Set loading to false once cart is loaded
-    setIsLoading(false);
-  }, []);
 
   const calculateSubtotal = () => {
     return cartItems.reduce((total, item) => total + (item.product.price * item.quantity), 0);
@@ -81,17 +75,6 @@ export default function CartPage() {
       updateQuantity(productId, newQuantity);
     }
   };
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-turquoise-500 mx-auto"></div>
-          <p className="mt-4 text-gray-600">{translate('cart.loading')}</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <MerchantBlocker>

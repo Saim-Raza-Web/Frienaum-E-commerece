@@ -1,6 +1,6 @@
 'use client';
 
-import React, { Suspense, useCallback, useEffect, useRef, useState } from 'react';
+import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { useCart } from '@/context/CartContext';
@@ -131,10 +131,13 @@ function HomePage({ params }: HomePageProps) {
   
   // Typing animation state
   const [displayText, setDisplayText] = useState('');
-  const words = lang === 'de' ? ['Wohnen', 'Komfort', 'Eleganz', 'Stil'] : ['Living', 'Comfort', 'Elegance', 'Style'];
+  const words = useMemo(
+    () => (lang === 'de' ? ['Wohnen', 'Komfort', 'Eleganz', 'Stil'] : ['Living', 'Comfort', 'Elegance', 'Style']),
+    [lang]
+  );
 
   // Fetch featured products and categories
-  const fetchFeaturedProducts = async () => {
+  const fetchFeaturedProducts = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
@@ -186,7 +189,7 @@ function HomePage({ params }: HomePageProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [lang]);
 
   // Fetch data on component mount
   useEffect(() => {
@@ -202,7 +205,7 @@ function HomePage({ params }: HomePageProps) {
     return () => {
       window.removeEventListener('ratingChanged', handleRatingChange);
     };
-  }, [lang]);
+  }, [fetchFeaturedProducts]);
 
   // Typing animation effect
   useEffect(() => {
@@ -255,7 +258,7 @@ function HomePage({ params }: HomePageProps) {
     return () => {
       clearTimeout(timeout);
     };
-  }, [lang]); // Add lang dependency to re-run animation when language changes
+  }, [words]);
 
   const fetchTopReviews = useCallback(async () => {
     if (hasRequestedReviews) return;

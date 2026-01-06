@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Star } from 'lucide-react';
 import { useTranslation } from '@/i18n/TranslationProvider';
 
@@ -21,21 +21,17 @@ interface RatingDisplayProps {
 }
 
 export default function RatingDisplay({ productId, className = '' }: RatingDisplayProps) {
-  const { translate: t } = useTranslation();
-  const currentLang = typeof window !== 'undefined' ? (window.location.pathname.match(/^\/(\w{2})\b/)?.[1] || 'de') : 'de';
+  const { translate: t, currentLocale } = useTranslation();
+  const locale = currentLocale || 'de';
   const [ratings, setRatings] = useState<Rating[]>([]);
   const [product, setProduct] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const [hasMore, setHasMore] = useState(false);
 
-  useEffect(() => {
-    fetchRatings();
-  }, [productId, currentPage]);
-
-  const fetchRatings = async () => {
+  const fetchRatings = useCallback(async () => {
     try {
-      const response = await fetch(`/api/products/${productId}/ratings?page=${currentPage}&limit=5&lang=${currentLang}`);
+      const response = await fetch(`/api/products/${productId}/ratings?page=${currentPage}&limit=5&lang=${locale}`);
       if (response.ok) {
         const data = await response.json();
         if (currentPage === 1) {
@@ -51,7 +47,11 @@ export default function RatingDisplay({ productId, className = '' }: RatingDispl
     } finally {
       setLoading(false);
     }
-  };
+  }, [locale, productId, currentPage]);
+
+  useEffect(() => {
+    fetchRatings();
+  }, [fetchRatings]);
 
   const loadMore = () => {
     if (hasMore) {

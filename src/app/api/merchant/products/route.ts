@@ -29,8 +29,9 @@ export async function GET(request: NextRequest) {
 
     const effectiveMerchantId = user.role === 'ADMIN' && queryMerchantId ? queryMerchantId : merchant?.id;
 
+    // If merchant doesn't exist, return empty array instead of error
     if (!effectiveMerchantId) {
-      return NextResponse.json({ error: 'Merchant profile not found' }, { status: 404 });
+      return NextResponse.json([]);
     }
 
     // Return only this merchant's products

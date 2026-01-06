@@ -2,6 +2,7 @@
 
 import React, { useState, useRef } from 'react';
 import { Upload, X, Loader2, ArrowLeft, ArrowRight } from 'lucide-react';
+import SmartImage from '@/components/SmartImage';
 
 interface MultipleImageUploadProps {
   onImagesChange: (urls: string[]) => void;
@@ -142,11 +143,16 @@ export default function MultipleImageUpload({
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
           {images.map((url, index) => (
             <div key={index} className="relative group">
-              <img
-                src={url}
-                alt={`Produktbild ${index + 1}`}
-                className="w-full h-32 sm:h-40 object-cover rounded-lg border-2 border-gray-300 shadow-sm"
-              />
+              <div className="relative w-full h-32 sm:h-40 rounded-lg border-2 border-gray-300 shadow-sm overflow-hidden">
+                <SmartImage
+                  src={url}
+                  alt={`Produktbild ${index + 1}`}
+                  fill
+                  sizes="(max-width: 768px) 50vw, 200px"
+                  className="object-cover"
+                  fallbackSrc="/images/placeholder.jpg"
+                />
+              </div>
               {!disabled && (
                 <button
                   type="button"

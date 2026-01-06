@@ -154,7 +154,7 @@ const ReviewsSlider: React.FC<ReviewsSliderProps> = ({
 
                   {/* Review Text */}
                   <p className="text-gray-700 font-lora text-center mb-4 leading-relaxed">
-                    "{truncateText(review.reviewText)}"
+                    &ldquo;{truncateText(review.reviewText)}&rdquo;
                   </p>
 
                   {/* Customer Name */}
