@@ -45,12 +45,9 @@ export default function NotificationBell({ userRole }: NotificationBellProps) {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const pollIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const popupTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const fetchSeqRef = useRef(0);
-  const recentlyMarkedReadRef = useRef<Map<string, number>>(new Map());
 
   const fetchNotifications = useCallback(async (showLoading: boolean = true) => {
     try {
-      const seq = ++fetchSeqRef.current;
       if (showLoading) {
         setIsLoading(true);
       }
@@ -64,20 +61,7 @@ export default function NotificationBell({ userRole }: NotificationBellProps) {
       }
 
       const data = await response.json();
-      if (seq !== fetchSeqRef.current) {
-        return;
-      }
-
-      const rawNotifications = data.notifications || [];
-      const nowMs = Date.now();
-
-      const newNotifications = rawNotifications.map((n: Notification) => {
-        const markedAt = recentlyMarkedReadRef.current.get(n.id);
-        if (markedAt && nowMs - markedAt < 30000) {
-          return { ...n, isRead: true };
-        }
-        return n;
-      });
+      const newNotifications = data.notifications || [];
       const currentTime = Date.now();
       
       // Detect new notifications by comparing with previous set
@@ -162,9 +146,6 @@ export default function NotificationBell({ userRole }: NotificationBellProps) {
   const markAsRead = async (notificationIds: string[]) => {
     if (!notificationIds.length) return;
     try {
-      const nowMs = Date.now();
-      notificationIds.forEach(id => recentlyMarkedReadRef.current.set(id, nowMs));
-
       const response = await fetch('/api/notifications', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -183,14 +164,6 @@ export default function NotificationBell({ userRole }: NotificationBellProps) {
           notificationIds.includes(n.id) ? { ...n, isRead: true } : n
         )
       );
-
-      setTimeout(() => {
-        const cutoff = Date.now() - 30000;
-        for (const [id, ts] of recentlyMarkedReadRef.current.entries()) {
-          if (ts < cutoff) recentlyMarkedReadRef.current.delete(id);
-        }
-      }, 35000);
-
       if (typeof data.unreadCount === 'number') {
         setUnreadCount(data.unreadCount);
       } else {

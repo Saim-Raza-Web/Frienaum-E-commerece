@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { Package } from 'lucide-react';
-import SmartImage from '@/components/SmartImage';
 
 type OrderStatus = 'PENDING' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED';
 
@@ -206,16 +205,11 @@ export default function MerchantOrdersPage() {
                       {order.items.map((item) => (
                         <div key={item.id} className="flex items-center">
                           {item.product.imageUrl && (
-                            <div className="relative w-16 h-16 rounded overflow-hidden">
-                              <SmartImage
-                                src={item.product.imageUrl}
-                                alt={item.product.title_en}
-                                fill
-                                sizes="64px"
-                                className="object-cover"
-                                fallbackSrc="/images/placeholder.jpg"
-                              />
-                            </div>
+                            <img
+                              src={item.product.imageUrl}
+                              alt={item.product.title_en}
+                              className="w-16 h-16 object-cover rounded"
+                            />
                           )}
                           <div className="ml-4 flex-1">
                             <div className="font-medium">{item.product.title_en}</div>

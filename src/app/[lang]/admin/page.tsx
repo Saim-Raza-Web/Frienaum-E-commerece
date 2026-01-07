@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import {
@@ -197,7 +197,7 @@ function AdminDashboard() {
   const [showOrderModal, setShowOrderModal] = useState(false);
   const [selectedOrder, setSelectedOrder] = useState<AdminOrder | null>(null);
 
-  const loadStats = useCallback(async () => {
+  const loadStats = async () => {
     try {
       setStatsLoading(true);
       setStatsError('');
@@ -210,10 +210,10 @@ function AdminDashboard() {
     } finally {
       setStatsLoading(false);
     }
-  }, [translate]);
+  };
 
   // Fetch categories from database
-  const fetchCategories = useCallback(async () => {
+  const fetchCategories = async () => {
     try {
       setCategoriesLoading(true);
       setCategoriesError(null);
@@ -234,7 +234,7 @@ function AdminDashboard() {
     } finally {
       setCategoriesLoading(false);
     }
-  }, [translate]);
+  };
 
   // Create or update category
   const saveCategory = async () => {
@@ -375,7 +375,7 @@ function AdminDashboard() {
     if (activeTab === 'overview') {
       loadStats();
     }
-  }, [activeTab, loadStats]);
+  }, [activeTab]);
 
   // Users management state
   type AdminUser = {
@@ -393,7 +393,7 @@ function AdminDashboard() {
   const [usersLoading, setUsersLoading] = useState(false);
   const [usersError, setUsersError] = useState('');
 
-  const loadUsers = useCallback(async () => {
+  const loadUsers = async () => {
     try {
       setUsersLoading(true);
       setUsersError('');
@@ -409,9 +409,9 @@ function AdminDashboard() {
     } finally {
       setUsersLoading(false);
     }
-  }, []);
+  };
 
-  const loadOrders = useCallback(async () => {
+  const loadOrders = async () => {
     try {
       setOrdersLoading(true);
       setOrdersError('');
@@ -424,7 +424,7 @@ function AdminDashboard() {
     } finally {
       setOrdersLoading(false);
     }
-  }, []);
+  };
 
   const deleteOrder = async (orderId: string) => {
     if (!confirm('Are you sure you want to delete this order? This action cannot be undone.')) return;
@@ -536,7 +536,7 @@ function AdminDashboard() {
   }, [translate]);
 
   // Product management functions
-  const loadProducts = useCallback(async () => {
+  const loadProducts = async () => {
     try {
       const res = await fetch("/api/products", {
         credentials: 'include',
@@ -553,7 +553,7 @@ function AdminDashboard() {
       console.error("Failed to load products:", error);
       alert(error instanceof Error ? error.message : "Failed to load products");
     }
-  }, []);
+  };
 
   useEffect(() => {
     if (activeTab === 'products') {
@@ -562,25 +562,25 @@ function AdminDashboard() {
       // Ensure merchants list is available for admin merchant selection
       loadUsers();
     }
-  }, [activeTab, loadProducts, fetchCategories, loadUsers]);
+  }, [activeTab]);
 
   useEffect(() => {
     if (activeTab === 'users') {
       loadUsers();
     }
-  }, [activeTab, loadUsers]);
+  }, [activeTab]);
 
   useEffect(() => {
     if (activeTab === 'orders') {
       loadOrders();
     }
-  }, [activeTab, loadOrders]);
+  }, [activeTab]);
 
   useEffect(() => {
     if (activeTab === 'categories') {
       fetchCategories();
     }
-  }, [activeTab, fetchCategories]);
+  }, [activeTab]);
 
   const handleProductImageUpload = (url: string) => {
     setForm((prev: any) => ({ ...prev, imageUrl: url }));
@@ -914,18 +914,7 @@ function AdminDashboard() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                               {viewing.data.latestProducts.map((p: any) => (
                                 <div key={p.id} className="p-3 border rounded-lg flex items-center gap-3">
-                                  {p.imageUrl && (
-                                    <div className="relative w-12 h-12 rounded overflow-hidden">
-                                      <SmartImage
-                                        src={p.imageUrl}
-                                        alt={p.slug}
-                                        fill
-                                        sizes="48px"
-                                        className="object-cover"
-                                        fallbackSrc="/images/placeholder.jpg"
-                                      />
-                                    </div>
-                                  )}
+                                  {p.imageUrl && <img src={p.imageUrl} alt={p.slug} className="w-12 h-12 object-cover rounded" />}
                                   <div className="flex-1">
                                     <p className="font-medium text-sm">{p.title_en}</p>
                                     <p className="text-xs text-gray-500">{formatCurrency(p.price)} • {translate('admin.stock')}: {p.stock}</p>
@@ -1024,7 +1013,7 @@ function AdminDashboard() {
                                 </div>
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
-                                {u.role === 'MERCHANT' || u.merchantId ? (
+                                {u.merchantId ? (
                                   <span>
                                     {(u.storeName || translate('admin.merchant'))}
                                     {u.isDeleted && <span className="ml-2 text-xs text-gray-500">{translate('admin.disabled')}</span>}
@@ -1032,82 +1021,67 @@ function AdminDashboard() {
                                 ) : '—'}
                               </td>
                               <td className="px-6 py-4 whitespace-nowrap">
-                                {u.role === 'MERCHANT' || u.merchantId ? (
+                                {u.merchantId ? (
                                   <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
                                     u.isDeleted ? 'bg-gray-200 text-gray-700' : u.merchantStatus === 'ACTIVE' ? 'bg-green-100 text-green-800' :
                                     u.merchantStatus === 'SUSPENDED' ? 'bg-red-100 text-red-800' :
                                     'bg-yellow-100 text-yellow-800'
                                   }`}>
-                                    {u.isDeleted ? translate('admin.deleted').toUpperCase() : translateMerchantStatus(u.merchantStatus || 'PENDING')}
+                                    {u.isDeleted ? translate('admin.deleted').toUpperCase() : translateMerchantStatus(u.merchantStatus)}
                                   </span>
                                 ) : (
                                   <span className="text-xs text-gray-500">{translate('admin.notAvailable')}</span>
                                 )}
                               </td>
                               <td className="px-4 sm:px-6 py-4 whitespace-nowrap text-sm font-medium">
-                                {u.role === 'MERCHANT' || u.merchantId ? (
+                                {u.merchantId ? (
                                   <div className="flex flex-col sm:flex-row gap-2 sm:gap-2">
-                                    {u.merchantId ? (
-                                      <>
-                                        <div className="flex flex-col sm:flex-row gap-2">
-                                          <button
-                                            className="px-3 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50 btn-touch text-left sm:text-center"
-                                            onClick={() => setMerchantStatus(u.merchantId!, 'PENDING')}
-                                            disabled={u.merchantStatus === 'PENDING' || u.isDeleted}
-                                          >
-                                            {translate('admin.setPending')}
-                                          </button>
-                                          <button
-                                            className="px-3 py-2 rounded-md bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 btn-touch text-left sm:text-center"
-                                            onClick={() => setMerchantStatus(u.merchantId!, 'ACTIVE')}
-                                            disabled={u.merchantStatus === 'ACTIVE' || u.isDeleted}
-                                          >
-                                            {translate('admin.approve')}
-                                          </button>
-                                          <button
-                                            className="px-3 py-2 rounded-md border border-orange-300 text-orange-700 hover:bg-orange-50 disabled:opacity-50 btn-touch text-left sm:text-center"
-                                            onClick={() => setMerchantStatus(u.merchantId!, 'SUSPENDED')}
-                                            disabled={u.merchantStatus === 'SUSPENDED' || u.isDeleted}
-                                          >
-                                            {translate('admin.suspend')}
-                                          </button>
-                                        </div>
-                                        <div className="flex flex-col sm:flex-row gap-2">
-                                          <button
-                                            className="px-3 py-2 rounded-md border border-blue-300 text-blue-700 hover:bg-blue-50 btn-touch text-left sm:text-center"
-                                            onClick={() => openViewMerchant(u.merchantId!)}
-                                            disabled={u.isDeleted}
-                                          >
-                                            {translate('admin.view')}
-                                          </button>
-                                          <button
-                                            className="px-3 py-2 rounded-md border border-red-300 text-red-700 hover:bg-red-50 btn-touch text-left sm:text-center"
-                                            onClick={() => deleteMerchant(u.merchantId!)}
-                                            disabled={u.isDeleted}
-                                          >
-                                            {translate('admin.delete')}
-                                          </button>
-                                          <button
-                                            className="px-3 py-2 rounded-md border border-red-400 text-red-800 hover:bg-red-50 btn-touch text-left sm:text-center"
-                                            onClick={() => deleteUser(u.id)}
-                                            title={translate('admin.deleteUserAndData')}
-                                          >
-                                            {translate('admin.deleteUser')}
-                                          </button>
-                                        </div>
-                                      </>
-                                    ) : (
-                                      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1 sm:gap-2">
-                                        <span className="text-xs text-gray-400">{translate('admin.noMerchantProfile')}</span>
-                                        <button
-                                          className="px-3 py-2 rounded-md border border-red-400 text-red-800 hover:bg-red-50 btn-touch text-left sm:text-center"
-                                          onClick={() => deleteUser(u.id)}
-                                          title={translate('admin.deleteUser')}
-                                        >
-                                          {translate('admin.deleteUser')}
-                                        </button>
-                                      </div>
-                                    )}
+                                    <div className="flex flex-col sm:flex-row gap-2">
+                                      <button
+                                        className="px-3 py-2 rounded-md border border-gray-300 text-gray-700 hover:bg-gray-50 btn-touch text-left sm:text-center"
+                                        onClick={() => setMerchantStatus(u.merchantId!, 'PENDING')}
+                                        disabled={u.merchantStatus === 'PENDING' || u.isDeleted}
+                                      >
+                                        {translate('admin.setPending')}
+                                      </button>
+                                      <button
+                                        className="px-3 py-2 rounded-md bg-green-600 text-white hover:bg-green-700 disabled:opacity-50 btn-touch text-left sm:text-center"
+                                        onClick={() => setMerchantStatus(u.merchantId!, 'ACTIVE')}
+                                        disabled={u.merchantStatus === 'ACTIVE' || u.isDeleted}
+                                      >
+                                        {translate('admin.approve')}
+                                      </button>
+                                      <button
+                                        className="px-3 py-2 rounded-md border border-orange-300 text-orange-700 hover:bg-orange-50 disabled:opacity-50 btn-touch text-left sm:text-center"
+                                        onClick={() => setMerchantStatus(u.merchantId!, 'SUSPENDED')}
+                                        disabled={u.merchantStatus === 'SUSPENDED' || u.isDeleted}
+                                      >
+                                        {translate('admin.suspend')}
+                                      </button>
+                                    </div>
+                                    <div className="flex flex-col sm:flex-row gap-2">
+                                      <button
+                                        className="px-3 py-2 rounded-md border border-blue-300 text-blue-700 hover:bg-blue-50 btn-touch text-left sm:text-center"
+                                        onClick={() => openViewMerchant(u.merchantId!)}
+                                        disabled={u.isDeleted}
+                                      >
+                                        {translate('admin.view')}
+                                      </button>
+                                      <button
+                                        className="px-3 py-2 rounded-md border border-red-300 text-red-700 hover:bg-red-50 btn-touch text-left sm:text-center"
+                                        onClick={() => deleteMerchant(u.merchantId!)}
+                                        disabled={u.isDeleted}
+                                      >
+                                        {translate('admin.delete')}
+                                      </button>
+                                      <button
+                                        className="px-3 py-2 rounded-md border border-red-400 text-red-800 hover:bg-red-50 btn-touch text-left sm:text-center"
+                                        onClick={() => deleteUser(u.id)}
+                                        title={translate('admin.deleteUserAndData')}
+                                      >
+                                        {translate('admin.deleteUser')}
+                                      </button>
+                                    </div>
                                   </div>
                                 ) : (
                                   <div className="flex flex-col sm:flex-row items-start sm:items-center gap-1 sm:gap-2">
@@ -1302,15 +1276,8 @@ function AdminDashboard() {
                         {filteredProducts.map(p=>(
                           <div key={p.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden hover:shadow-md transition-shadow relative flex flex-col h-full">
                             {p.imageUrl && (
-                              <div className="relative w-full h-48 bg-gray-100">
-                                <SmartImage
-                                  src={p.imageUrl}
-                                  alt={p.slug}
-                                  fill
-                                  sizes="(max-width: 768px) 100vw, 400px"
-                                  className="object-contain"
-                                  fallbackSrc="/images/placeholder.jpg"
-                                />
+                              <div className="w-full h-48 bg-gray-100">
+                                <img src={p.imageUrl} alt={p.slug} className="w-full h-full object-contain" />
                               </div>
                             )}
                             <div className="p-6 flex-1 flex flex-col">
@@ -1670,18 +1637,7 @@ function AdminDashboard() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       {products.slice(0,4).map(p => (
                         <div key={p.id} className="flex items-center gap-3">
-                          {p.imageUrl && (
-                            <div className="relative w-10 h-10 rounded overflow-hidden">
-                              <SmartImage
-                                src={p.imageUrl}
-                                alt={p.slug}
-                                fill
-                                sizes="40px"
-                                className="object-cover"
-                                fallbackSrc="/images/placeholder.jpg"
-                              />
-                            </div>
-                          )}
+                          {p.imageUrl && <img src={p.imageUrl} alt={p.slug} className="w-10 h-10 object-cover rounded" />}
                           <div className="flex-1 min-w-0">
                             <div className="text-sm font-medium text-gray-900 truncate" title={p.title_en}>{p.title_en}</div>
                             <div className="text-xs text-gray-500 truncate">{formatCurrency(p.price)} • {p.stock} {translate('admin.inStock')}</div>
@@ -2002,16 +1958,7 @@ function AdminDashboard() {
                           <td className="px-6 py-4 whitespace-nowrap">
                             <div className="flex items-center">
                               {item.product.imageUrl && (
-                                <div className="relative h-10 w-10 rounded-lg overflow-hidden mr-3">
-                                  <SmartImage
-                                    src={item.product.imageUrl}
-                                    alt={item.product.title_en}
-                                    fill
-                                    sizes="40px"
-                                    className="object-cover"
-                                    fallbackSrc="/images/placeholder.jpg"
-                                  />
-                                </div>
+                                <img className="h-10 w-10 rounded-lg object-cover mr-3" src={item.product.imageUrl} alt={item.product.title_en} />
                               )}
                               <div>
                                 <div className="text-sm font-medium text-gray-900">{item.product.title_en}</div>

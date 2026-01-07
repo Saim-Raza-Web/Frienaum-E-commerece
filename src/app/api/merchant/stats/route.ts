@@ -26,14 +26,8 @@ export async function GET(request: NextRequest) {
       select: { id: true }
     });
 
-    // If merchant doesn't exist, return zero values instead of error
     if (!merchant) {
-      return NextResponse.json({
-        totalSales: 0,
-        totalOrders: 0,
-        totalCustomers: 0,
-        totalProducts: 0
-      });
+      return NextResponse.json({ error: 'Merchant not found' }, { status: 404 });
     }
 
     // Get total sales (sum of all successful payments for this merchant)

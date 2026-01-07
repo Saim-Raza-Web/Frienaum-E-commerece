@@ -303,32 +303,27 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
 
   // Send email and notification only when product transitions into approval state
   if (statusJustBecamePending && updated.merchant?.user) {
-    console.log(`Product ${updated.id} submitted for approval - sending notifications`);
+    console.log('Product submitted for approval - sending notifications');
     
-    try {
-      // Send email to merchant
-      console.log(`Sending submission confirmation to merchant ${updated.merchant.user.email}`);
-      await sendProductSubmissionForApprovalEmail(
-        updated.merchant.user.email,
-        updated.merchant.user.name || 'Händler',
-        updated.title_de || updated.title_en || 'Produkt',
-        updated.id
-      );
-      console.log(`Successfully sent submission confirmation for product ${updated.id}`);
+    sendProductSubmissionForApprovalEmail(
+      updated.merchant.user.email,
+      updated.merchant.user.name || 'Händler',
+      updated.title_de || updated.title_en || 'Produkt',
+      updated.id
+    ).catch(err => {
+      console.error('Failed to send product submission email:', err);
+      // Don't fail the request if email fails
+    });
 
-      // Send notifications to all admins
-      console.log(`Notifying admins about product submission ${updated.id}`);
-      await notifyAdminsProductSubmitted(
-        updated.id,
-        updated.title_de || updated.title_en || 'Produkt',
-        updated.merchant.user.name || 'Händler',
-        updated.merchant.storeName
-      );
-      console.log(`Successfully notified admins about product ${updated.id}`);
-    } catch (err) {
-      console.error('Error in notification/email sending:', err);
-      // Don't fail the request if notifications/emails fail
-    }
+    // Send popup notification to all admins
+    notifyAdminsProductSubmitted(
+      updated.id,
+      updated.title_de || updated.title_en || 'Produkt',
+      updated.merchant.user.name || 'Händler',
+      updated.merchant.storeName
+    ).catch(err => {
+      console.error('Failed to send admin notifications:', err);
+    });
   }
 
   return NextResponse.json({

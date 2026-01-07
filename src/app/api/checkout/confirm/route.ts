@@ -7,25 +7,6 @@ import Stripe from 'stripe';
 import { sendOrderConfirmationEmail, sendOrderNotificationToMerchant } from '@/lib/email';
 import { notifyMerchantOrderPlaced } from '@/lib/notifications';
 
-type SplitSubOrderItem = {
-  productId: string;
-  quantity: number;
-  price: number;
-};
-
-type SplitSubOrder = {
-  merchantId: string;
-  subtotal: number;
-  commission: number;
-  payoutAmount: number;
-  items: SplitSubOrderItem[];
-};
-
-type SplitMetadata = {
-  subOrders?: SplitSubOrder[];
-  grandTotal?: number | string;
-};
-
 const orderInclude = {
   subOrders: {
     include: {
@@ -72,9 +53,9 @@ export async function POST(req: NextRequest) {
 
     const metadata = paymentIntent.metadata || {};
     const shippingAddress = metadata.shippingAddress ? JSON.parse(metadata.shippingAddress) : {};
-    const splitData: SplitMetadata = metadata.splitData ? JSON.parse(metadata.splitData) : {};
+    const splitData = metadata.splitData ? JSON.parse(metadata.splitData) : {};
     const currency = metadata.currency || paymentIntent.currency?.toUpperCase() || 'CHF';
-    const subOrders: SplitSubOrder[] = Array.isArray(splitData.subOrders) ? splitData.subOrders : [];
+    const subOrders = Array.isArray(splitData.subOrders) ? splitData.subOrders : [];
 
     if (!subOrders.length) {
       return NextResponse.json({ error: 'Missing split order data' }, { status: 400 });
@@ -158,24 +139,6 @@ export async function POST(req: NextRequest) {
           },
         });
 
-        // Pre-fetch all products to validate before transaction
-        const allProductIds = subOrders.flatMap((so) => so.items.map((item) => item.productId));
-        const products = await tx.product.findMany({
-          where: { id: { in: allProductIds } },
-          select: { id: true }
-        });
-        const productIdsSet = new Set(products.map(p => p.id));
-        
-        // Validate all products exist
-        for (const productId of allProductIds) {
-          if (!productIdsSet.has(productId)) {
-            throw new Error(`Product not found: ${productId}`);
-          }
-        }
-
-        // Collect all order items for batch insert
-        const allOrderItems: any[] = [];
-
         for (const so of subOrders) {
           const subOrder = await tx.subOrder.create({
             data: {
@@ -188,14 +151,20 @@ export async function POST(req: NextRequest) {
             },
           });
 
-          // Collect order items for this subOrder
           for (const item of so.items) {
-            allOrderItems.push({
-              subOrderId: subOrder.id,
-              orderId: order.id,
-              productId: item.productId,
-              quantity: item.quantity,
-              price: item.price,
+            const product = await tx.product.findUnique({ where: { id: item.productId } });
+            if (!product) {
+              throw new Error(`Product not found: ${item.productId}`);
+            }
+
+            await tx.orderItem.create({
+              data: {
+                subOrderId: subOrder.id,
+                orderId: order.id,
+                productId: item.productId,
+                quantity: item.quantity,
+                price: item.price,
+              },
             });
           }
 
@@ -228,13 +197,6 @@ export async function POST(req: NextRequest) {
           });
         }
 
-        // Batch insert all order items at once (much faster)
-        if (allOrderItems.length > 0) {
-          await tx.orderItem.createMany({
-            data: allOrderItems,
-          });
-        }
-
         await tx.payment.create({
           data: {
             orderId: order.id,
@@ -253,9 +215,6 @@ export async function POST(req: NextRequest) {
         });
 
         return { order: orderWithDetails, alreadyProcessed: false };
-      }, {
-        maxWait: 10000, // Maximum time to wait for a transaction slot (10 seconds)
-        timeout: 15000, // Maximum time the transaction can run (15 seconds)
       });
     });
 

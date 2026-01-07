@@ -3,7 +3,6 @@
 import React, { useState, useRef } from 'react';
 import { Upload, X, Loader2 } from 'lucide-react';
 import { useTranslation } from '@/i18n/TranslationProvider';
-import Image from 'next/image';
 
 interface ImageUploadProps {
   onImageUpload: (url: string) => void;
@@ -127,16 +126,11 @@ export default function ImageUpload({
       
       {previewUrl ? (
         <div className="relative group">
-          <div className="relative w-full h-32 rounded-lg border border-gray-200 overflow-hidden">
-            <Image
-              src={previewUrl}
-              alt="Preview"
-              fill
-              sizes="(max-width: 768px) 100vw, 400px"
-              className="object-cover"
-              unoptimized
-            />
-          </div>
+          <img
+            src={previewUrl}
+            alt="Preview"
+            className="w-full h-32 object-cover rounded-lg border border-gray-200"
+          />
           {!disabled && (
             <button
               type="button"

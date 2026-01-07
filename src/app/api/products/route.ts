@@ -391,19 +391,15 @@ export async function POST(request: NextRequest) {
     });
     
     if (productStatus === 'PENDING' && user.role === 'MERCHANT' && created.merchant?.user) {
-      try {
-        console.log(`Sending notification to admins for new product ${created.id}...`);
-        await notifyAdminsProductSubmitted(
-          created.id,
-          created.title_de || created.title_en || 'Produkt',
-          created.merchant.user.name || 'Händler',
-          created.merchant.storeName
-        );
-        console.log(`Successfully sent notification for product ${created.id}`);
-      } catch (err) {
+      console.log('Sending notification to admins for new product...');
+      notifyAdminsProductSubmitted(
+        created.id,
+        created.title_de || created.title_en || 'Produkt',
+        created.merchant.user.name || 'Händler',
+        created.merchant.storeName
+      ).catch(err => {
         console.error('Failed to send admin notifications:', err);
-        // Don't fail the request if notifications fail
-      }
+      });
     } else {
       console.log('Notification NOT sent. Conditions not met.');
     }

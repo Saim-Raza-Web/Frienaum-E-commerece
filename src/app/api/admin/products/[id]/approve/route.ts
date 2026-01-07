@@ -55,29 +55,24 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       const productTitle = updatedProduct.title_de || updatedProduct.title_en || 'Produkt';
       const merchantName = updatedProduct.merchant.user.name || 'Händler';
       
-      try {
-        // Send notification
-        console.log(`Sending approval notification for product ${updatedProduct.id} to merchant ${updatedProduct.merchant.user.id}`);
-        await notifyMerchantProductApproved(
-          updatedProduct.merchant.user.id,
-          updatedProduct.id,
-          productTitle
-        );
-        console.log(`Successfully sent approval notification for product ${updatedProduct.id}`);
+      // Send notification
+      notifyMerchantProductApproved(
+        updatedProduct.merchant.user.id,
+        updatedProduct.id,
+        productTitle
+      ).catch(err => {
+        console.error('Failed to send merchant notification:', err);
+      });
 
-        // Send email
-        console.log(`Sending approval email for product ${updatedProduct.id} to ${updatedProduct.merchant.user.email}`);
-        await sendProductApprovalEmail(
-          updatedProduct.merchant.user.email,
-          merchantName,
-          productTitle,
-          updatedProduct.id
-        );
-        console.log(`Successfully sent approval email for product ${updatedProduct.id}`);
-      } catch (err) {
-        console.error('Error in notification/email sending:', err);
-        // Don't fail the request if notifications/emails fail
-      }
+      // Send email
+      sendProductApprovalEmail(
+        updatedProduct.merchant.user.email,
+        merchantName,
+        productTitle,
+        updatedProduct.id
+      ).catch(err => {
+        console.error('Failed to send product approval email:', err);
+      });
     }
 
     return NextResponse.json({

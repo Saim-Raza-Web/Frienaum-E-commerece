@@ -35,12 +35,12 @@ export default function TermsOfServicePage() {
               </div>
               <div className="text-primary-600 font-lora space-y-4">
                 <p>
-                  Diese Allgemeinen Geschäftsbedingungen (&ldquo;AGB&rdquo;) regeln die Nutzung der Online-Plattform &ldquo;Feinraumshop&rdquo; (nachfolgend &ldquo;Plattform&rdquo;). Betreiberin der Plattform ist Feinraumshop (nachfolgend
-                  &ldquo;Feinraumshop&rdquo;).
+                  Diese Allgemeinen Geschäftsbedingungen ("AGB") regeln die Nutzung der Online-Plattform "Feinraumshop" (nachfolgend "Plattform"). Betreiberin der Plattform ist Feinraumshop (nachfolgend
+                  "Feinraumshop").
                 </p>
                 <p>
-                  Feinraumshop betreibt eine digitale Vermittlungs- und Präsentationsplattform, auf der unabhängige, registrierte Lieferanten bzw. Verkäufer (nachfolgend &ldquo;Lieferanten&rdquo;) Waren und Leistungen gegenüber
-                  Kundinnen und Kunden (nachfolgend &ldquo;Kundschaft&rdquo;) anbieten und über die Plattform Bestellungen entgegengenommen werden können.
+                  Feinraumshop betreibt eine digitale Vermittlungs- und Präsentationsplattform, auf der unabhängige, registrierte Lieferanten bzw. Verkäufer (nachfolgend "Lieferanten") Waren und Leistungen gegenüber
+                  Kundinnen und Kunden (nachfolgend "Kundschaft") anbieten und über die Plattform Bestellungen entgegengenommen werden können.
                 </p>
                 <p>
                   Diese AGB gelten für alle Nutzerinnen und Nutzer der Plattform. Mit dem Zugriff auf die Plattform, der Registrierung, dem Einstellen von Angeboten oder dem Absenden einer Bestellung erklärst du dich mit

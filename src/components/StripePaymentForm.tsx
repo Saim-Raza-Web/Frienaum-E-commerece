@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useStripe, useElements, PaymentElement } from '@stripe/react-stripe-js';
-import { CreditCard, Loader2, CheckCircle } from 'lucide-react';
+import { CreditCard } from 'lucide-react';
 
 interface StripePaymentFormProps {
   clientSecret: string;
@@ -24,8 +24,6 @@ export default function StripePaymentForm({
   const stripe = useStripe();
   const elements = useElements();
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [isProcessing, setIsProcessing] = useState(false);
-  const [isConfirmed, setIsConfirmed] = useState(false);
 
   // Return URL used if 3DS or other next actions are required
   const returnUrl = useMemo(() => {
@@ -41,36 +39,26 @@ export default function StripePaymentForm({
       if (!stripe || !clientSecret) return;
       try {
         const { paymentIntent } = await stripe.retrievePaymentIntent(clientSecret);
-      if (paymentIntent && paymentIntent.status === 'succeeded') {
-        onLoading(true);
-        setIsProcessing(true);
-        const response = await fetch('/api/checkout/confirm', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ paymentIntentId: paymentIntent.id }),
-        });
-        if (!response.ok) {
-          const data = await response.json().catch(() => ({}));
-          throw new Error(data.error || 'Failed to confirm payment');
-        }
-        if (!isMounted) return;
-        setIsConfirmed(true);
-        // Wait a moment to show confirmed state before calling onSuccess
-        setTimeout(() => {
-          if (isMounted) {
-            onSuccess();
+        if (paymentIntent && paymentIntent.status === 'succeeded') {
+          onLoading(true);
+          const response = await fetch('/api/checkout/confirm', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ paymentIntentId: paymentIntent.id }),
+          });
+          if (!response.ok) {
+            const data = await response.json().catch(() => ({}));
+            throw new Error(data.error || 'Failed to confirm payment');
           }
-        }, 1500);
-      }
+          if (!isMounted) return;
+          onSuccess();
+        }
       } catch (err: any) {
         if (!isMounted) return;
         setErrorMessage(err?.message || 'Failed to finalize payment');
         onError(err?.message || 'Failed to finalize payment');
       } finally {
-        if (isMounted) {
-          setIsProcessing(false);
-          onLoading(false);
-        }
+        onLoading(false);
       }
     };
     void finalizeIfSucceeded();
@@ -87,7 +75,6 @@ export default function StripePaymentForm({
     }
 
     onLoading(true);
-    setIsProcessing(true);
     setErrorMessage(null);
     try {
       const { error, paymentIntent } = await stripe.confirmPayment({
@@ -100,7 +87,6 @@ export default function StripePaymentForm({
         const message = error.message || 'Payment failed';
         setErrorMessage(message);
         onError(message);
-        setIsProcessing(false);
         return;
       }
 
@@ -114,20 +100,14 @@ export default function StripePaymentForm({
           const data = await response.json().catch(() => ({}));
           throw new Error(data.error || 'Failed to confirm payment');
         }
-        setIsConfirmed(true);
-        // Wait a moment to show confirmed state before calling onSuccess
-        setTimeout(() => {
-          onSuccess();
-        }, 1500);
+        onSuccess();
       } else {
         // If redirect occurred, the effect above will handle finalization after return
-        setIsProcessing(false);
       }
     } catch (err: any) {
       const message = err?.message || 'Payment failed';
       setErrorMessage(message);
       onError(message);
-      setIsProcessing(false);
     } finally {
       onLoading(false);
     }
@@ -152,25 +132,11 @@ export default function StripePaymentForm({
 
       <button
         type="submit"
-        disabled={!stripe || !elements || isProcessing || isConfirmed}
-        className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2 transition-colors"
+        disabled={!stripe || !elements}
+        className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
       >
-        {isConfirmed ? (
-          <>
-            <CheckCircle className="w-5 h-5" />
-            <span>Bestätigt / Confirmed</span>
-          </>
-        ) : isProcessing ? (
-          <>
-            <Loader2 className="w-5 h-5 animate-spin" />
-            <span>Wird verarbeitet... / Processing...</span>
-          </>
-        ) : (
-          <>
-            <CreditCard className="w-5 h-5" />
-            <span>Pay {(amount / 100).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF</span>
-          </>
-        )}
+        <CreditCard className="w-5 h-5" />
+        <span>Pay {(amount / 100).toLocaleString('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CHF</span>
       </button>
     </form>
   );

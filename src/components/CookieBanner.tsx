@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useMemo, useState, startTransition } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { useTranslation } from '@/i18n/TranslationProvider';
 
 const COOKIE_BANNER_ENABLED = true;
@@ -37,10 +37,10 @@ export default function CookieBanner() {
   useEffect(() => {
     if (!COOKIE_BANNER_ENABLED) return;
     if (storedConsent) {
-      startTransition(() => setPreferences(storedConsent));
+      setPreferences(storedConsent);
       return;
     }
-    startTransition(() => setIsOpen(true));
+    setIsOpen(true);
   }, [storedConsent]);
 
   const handleSave = (updated: ConsentState) => {

@@ -16,11 +16,7 @@ export async function GET(request: NextRequest) {
 
     const merchant = await prisma.merchant.findUnique({ where: { userId: user.id }, select: { id: true } });
     console.log('Customers list - Merchant:', merchant);
-    // If merchant doesn't exist, return empty array instead of error
-    if (!merchant) {
-      console.log('Merchant not found, returning empty customers array');
-      return NextResponse.json([]);
-    }
+    if (!merchant) return NextResponse.json({ error: 'Merchant not found' }, { status: 404 });
 
     // 1) Pull recent orders to compute stats and backfill MerchantCustomer
     const orders = await prisma.order.findMany({

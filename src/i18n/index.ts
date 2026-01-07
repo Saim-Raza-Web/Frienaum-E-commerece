@@ -6,8 +6,8 @@ type Translations = {
 
 const loadTranslations = async (locale: Locale, namespace: string): Promise<Translations> => {
   try {
-    const translationModule = await import(`@/i18n/locales/${locale}/${namespace}.json`);
-    return translationModule.default;
+    const module = await import(`@/i18n/locales/${locale}/${namespace}.json`);
+    return module.default;
   } catch (error) {
     console.error(`Failed to load ${namespace} for locale ${locale}:`, error);
     return {};

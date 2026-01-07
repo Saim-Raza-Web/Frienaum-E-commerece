@@ -11,8 +11,7 @@ function getUserFromNextRequest(req: NextRequest) {
 const merchantHiddenNotificationTypes: NotificationType[] = ['PRODUCT_SUBMITTED'];
 
 function getRoleBasedNotificationFilter(role?: string) {
-  // Handle both uppercase and lowercase role values
-  if (role === 'MERCHANT' || role === 'merchant') {
+  if (role === 'MERCHANT') {
     return { type: { notIn: merchantHiddenNotificationTypes } };
   }
   return {};
@@ -37,16 +36,11 @@ export async function GET(request: NextRequest) {
       limit
     });
 
-    const roleFilter = getRoleBasedNotificationFilter(user.role);
-    
-    const baseWhere: any = {
+    const baseWhere = {
       userId: user.id,
-      ...roleFilter
+      ...getRoleBasedNotificationFilter(user.role),
+      ...(unreadOnly ? { isRead: false } : {})
     };
-    
-    if (unreadOnly) {
-      baseWhere.isRead = false;
-    }
 
     const notifications = await prisma.notification.findMany({
       where: baseWhere,
@@ -60,26 +54,17 @@ export async function GET(request: NextRequest) {
       title: n.title
     })));
 
-    const unreadCountWhere: any = {
-      userId: user.id,
-      ...roleFilter,
-      isRead: false
-    };
-
     const unreadCount = await prisma.notification.count({
-      where: unreadCountWhere
+      where: {
+        ...baseWhere,
+        isRead: true ? false : false
+      }
     });
 
     return NextResponse.json({ notifications, unreadCount });
   } catch (error) {
     console.error('Error fetching notifications:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-    const errorDetails = error instanceof Error ? error.stack : String(error);
-    console.error('Error details:', errorDetails);
-    return NextResponse.json({ 
-      error: 'Failed to fetch notifications',
-      details: process.env.NODE_ENV === 'development' ? errorMessage : undefined
-    }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to fetch notifications' }, { status: 500 });
   }
 }
 
@@ -134,7 +119,6 @@ export async function PATCH(request: NextRequest) {
     const unreadCount = await prisma.notification.count({
       where: {
         userId: user.id,
-        ...roleFilter,
         isRead: false
       }
     });
@@ -191,7 +175,6 @@ export async function DELETE(request: NextRequest) {
     const unreadCount = await prisma.notification.count({
       where: {
         userId: user.id,
-        ...roleFilter,
         isRead: false
       }
     });

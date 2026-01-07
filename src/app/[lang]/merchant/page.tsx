@@ -1,12 +1,10 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback, startTransition } from 'react';
+import React, { useState, useEffect } from 'react';
 import dynamic from 'next/dynamic';
-import Link from 'next/link';
 import { useAuth } from '@/context/AuthContext';
 import { useTranslation } from '@/i18n/TranslationProvider';
 import ProtectedRoute from '@/components/ProtectedRoute';
-import SmartImage from '@/components/SmartImage';
 import {
   TrendingUp,
   ShoppingBag,
@@ -40,9 +38,6 @@ function MerchantDashboard() {
   const { translate } = useTranslation();
   const { user } = useAuth();
   const [merchantStatus, setMerchantStatus] = useState<string>('PENDING');
-  const previousStatusRef = useRef<string>('PENDING');
-  const fetchProductsRef = useRef<null | (() => Promise<void> | void)>(null);
-  const fetchStatsRef = useRef<null | ((setLoadingStats?: ((v: boolean) => void) | undefined) => Promise<void> | void)>(null);
 
   const formatCurrency = (amount: number | string | null | undefined) => {
     const value = typeof amount === 'string' ? parseFloat(amount) : amount ?? 0;
@@ -64,79 +59,35 @@ function MerchantDashboard() {
     });
   }, [user]);
 
-  // Fetch merchant status - with periodic refresh
+  // Fetch categories on component mount
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  // Fetch merchant status
   useEffect(() => {
     const fetchMerchantStatus = async () => {
       try {
-        const response = await fetch('/api/merchant/status', {
+        const response = await fetch('/api/merchant/stats', {
           method: 'GET',
-          credentials: 'include',
-          cache: 'no-store'
+          credentials: 'include'
         });
         if (response.ok) {
           const data = await response.json();
-          const newStatus = data.status || 'PENDING';
-          const previousStatus = previousStatusRef.current;
-          
-          // If status changed to ACTIVE, refresh all data
-          if (newStatus === 'ACTIVE' && previousStatus === 'PENDING') {
-            // Refresh stats
-            fetchStatsRef.current?.();
-            // Refresh products
-            fetchProductsRef.current?.();
-          }
-          
-          previousStatusRef.current = newStatus;
-          setMerchantStatus(newStatus);
-        } else {
-          setMerchantStatus('PENDING');
-          previousStatusRef.current = 'PENDING';
+          // We can infer merchant status from whether they have stats or not
+          // For now, assume all merchants are active. In a real implementation,
+          // you'd have a separate endpoint to get merchant profile including status
+          setMerchantStatus('ACTIVE');
         }
       } catch (error) {
         console.error('Error fetching merchant status:', error);
-        setMerchantStatus('PENDING');
-        previousStatusRef.current = 'PENDING';
       }
     };
 
     if (user?.role === 'merchant' && user?.id) {
-      // Fetch immediately
       fetchMerchantStatus();
-      
-      // Refresh status more frequently when PENDING (every 5 seconds), less when ACTIVE (every 30 seconds)
-      let interval: NodeJS.Timeout;
-      const setupInterval = () => {
-        if (interval) clearInterval(interval);
-        // Use ref to get current status without causing re-render
-        const currentStatus = previousStatusRef.current;
-        const intervalTime = currentStatus === 'PENDING' ? 5000 : 30000;
-        interval = setInterval(fetchMerchantStatus, intervalTime);
-      };
-      
-      setupInterval();
-      
-      // Refresh when window gains focus (user comes back to tab)
-      const handleFocus = () => {
-        fetchMerchantStatus();
-        setupInterval(); // Reset interval with current status
-      };
-      window.addEventListener('focus', handleFocus);
-      
-      // Listen for storage events (in case status changes in another tab)
-      const handleStorageChange = (e: StorageEvent) => {
-        if (e.key === 'merchantStatusChanged') {
-          fetchMerchantStatus();
-        }
-      };
-      window.addEventListener('storage', handleStorageChange);
-      
-      return () => {
-        if (interval) clearInterval(interval);
-        window.removeEventListener('focus', handleFocus);
-        window.removeEventListener('storage', handleStorageChange);
-      };
     }
-  }, [user?.role, user?.id]); // Don't include activeTab to avoid dependency issues
+  }, [user?.role, user?.id]); // More specific dependencies
 
   // State declarations
   const [activeTab, setActiveTab] = useState('overview');
@@ -241,40 +192,21 @@ function MerchantDashboard() {
   };
 
   // Fetch categories from database
-  const fetchCategories = useCallback(async () => {
+  const fetchCategories = async () => {
     try {
       setCategoriesLoading(true);
       const response = await fetch('/api/categories');
       if (!response.ok) {
-        // If error, set empty array instead of throwing
-        console.warn('Failed to fetch categories, using empty array');
-        setCategories([]);
-        return;
+        throw new Error('Failed to fetch categories');
       }
       const data = await response.json();
-      // Handle both array and error response
-      if (Array.isArray(data)) {
-        setCategories(data);
-      } else if (data.error) {
-        // If API returns error object, use empty array
-        console.warn('Categories API returned error:', data.error);
-        setCategories([]);
-      } else {
-        setCategories([]);
-      }
+      setCategories(data);
     } catch (error) {
       console.error('Error fetching categories:', error);
-      // On error, set empty array instead of leaving it undefined
-      setCategories([]);
     } finally {
       setCategoriesLoading(false);
     }
-  }, []);
-
-  // Fetch categories on component mount
-  useEffect(() => {
-    fetchCategories();
-  }, [fetchCategories]);
+  };
 
   // Create new category
   const createCategory = async () => {
@@ -357,70 +289,46 @@ function MerchantDashboard() {
   }, [translate]);
 
   // Fetch stats data
-  const fetchStats = useCallback(
-    async (setLoadingStats: ((v: boolean) => void) | undefined = undefined) => {
-      try {
-        if (setLoadingStats) setLoadingStats(true);
-        setError(null);
-        if (!user) {
-          setError(translate('merchant.pleaseLogIn') || 'Bitte melden Sie sich an, um auf das Händler-Dashboard zuzugreifen');
-          return;
-        }
-        const response = await fetch('/api/merchant/stats', {
-          method: 'GET',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
-          cache: 'no-store'
-        });
-        if (!response.ok) {
-          if (response.status === 401) {
-            throw new Error(translate('merchant.pleaseLogIn') || 'Bitte melden Sie sich an');
-          }
-          if (response.status === 404) {
-            setStats(prevStats => [
-              { ...prevStats[0], value: '0.00 CHF' },
-              { ...prevStats[1], value: '0' },
-              { ...prevStats[2], value: '0' },
-              { ...prevStats[3], value: '0' },
-            ]);
-            return;
-          }
-          throw new Error(`Failed to fetch stats: ${response.statusText}`);
-        }
-        const data = await response.json();
-        if (data && typeof data === 'object') {
-          if (data.error) {
-            setStats(prevStats => [
-              { ...prevStats[0], value: '0.00 CHF' },
-              { ...prevStats[1], value: '0' },
-              { ...prevStats[2], value: '0' },
-              { ...prevStats[3], value: '0' },
-            ]);
-          } else {
-            setStats(prevStats => [
-              { ...prevStats[0], value: new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF' }).format(Number(data.totalSales) || 0) },
-              { ...prevStats[1], value: data.totalOrders?.toString() || '0' },
-              { ...prevStats[2], value: data.totalCustomers?.toString() || '0' },
-              { ...prevStats[3], value: data.totalProducts?.toString() || '0' },
-            ]);
-          }
-        }
-      } catch (err: any) {
-        setError(err?.message || translate('merchant.error') || 'Fehler beim Laden der Statistiken');
-      } finally {
-        if (setLoadingStats) setLoadingStats(false);
+  const fetchStats = async (setLoadingStats: ((v: boolean) => void) | undefined = undefined) => {
+    try {
+      if (setLoadingStats) setLoadingStats(true);
+      setError(null);
+      if (!user) {
+        setError(translate('merchant.pleaseLogIn') || 'Bitte melden Sie sich an, um auf das Händler-Dashboard zuzugreifen');
+        return;
       }
-    },
-    [translate, user]
-  );
-
-  useEffect(() => {
-    fetchStatsRef.current = fetchStats;
-  }, [fetchStats]);
+      const response = await fetch('/api/merchant/stats', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include', // Include cookies for session
+        cache: 'no-store'
+      });
+      if (!response.ok) {
+        if (response.status === 401) {
+          throw new Error(translate('merchant.pleaseLogIn') || 'Bitte melden Sie sich an');
+        }
+        throw new Error(`Failed to fetch stats: ${response.statusText}`);
+      }
+      const data = await response.json();
+      if (data && typeof data === 'object' && !data.error) {
+        setStats(prevStats => [
+          { ...prevStats[0], value: new Intl.NumberFormat('de-CH', { style: 'currency', currency: 'CHF' }).format(Number(data.totalSales) || 0) },
+          { ...prevStats[1], value: data.totalOrders?.toString() || '0' },
+          { ...prevStats[2], value: data.totalCustomers?.toString() || '0' },
+          { ...prevStats[3], value: data.totalProducts?.toString() || '0' },
+        ]);
+      }
+    } catch (error) {
+      console.error('Error fetching stats:', error);
+      setError(error instanceof Error ? error.message : translate('merchant.error') || 'Fehler beim Laden');
+    } finally {
+      if (setLoadingStats) setLoadingStats(false);
+    }
+  };
 
   useEffect(() => {
     fetchStats();
-  }, [user, fetchStats]);
+  }, [user]);
 
   // --- Orders: handlers ---
   const openOrderModal = (order: any) => {
@@ -685,159 +593,114 @@ function MerchantDashboard() {
 
   
 
-  const fetchProducts = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError('');
+  // Fetch products from API
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        setLoading(true);
+        setError('');
 
-      if (!user) {
-        setError(translate('merchant.pleaseLogIn') || 'Bitte melden Sie sich an, um auf das Händler-Dashboard zuzugreifen');
-        return;
-      }
-
-      const response = await fetch('/api/merchant/products', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        credentials: 'include',
-        cache: 'no-store'
-      });
-
-      if (!response.ok) {
-        if (response.status === 401) {
-          throw new Error(translate('merchant.pleaseLogIn') || 'Bitte melden Sie sich an');
-        }
-        if (response.status === 404) {
-          setProducts([]);
-          setError('');
+        // Check if user is authenticated first
+        if (!user) {
+          setError(translate('merchant.pleaseLogIn') || 'Bitte melden Sie sich an, um auf das Händler-Dashboard zuzugreifen');
           return;
         }
-        throw new Error(`Failed to fetch products: ${response.statusText}`);
+
+        const response = await fetch('/api/merchant/products', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include', // Include cookies for session
+          cache: 'no-store'
+        });
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            throw new Error(translate('merchant.pleaseLogIn') || 'Bitte melden Sie sich an');
+          }
+          throw new Error(`Failed to fetch products: ${response.statusText}`);
+        }
+
+        const data = await response.json();
+        setProducts(data);
+      } catch (err) {
+        console.error('Error fetching products:', err);
+        setError(err instanceof Error ? err.message : translate('merchant.error') || 'Fehler beim Laden der Produkte');
+      } finally {
+        setLoading(false);
       }
+    };
 
-      const data = await response.json();
-      setProducts(Array.isArray(data) ? data : []);
-      setError('');
-    } catch (err) {
-      console.error('Error fetching products:', err);
-      setError(err instanceof Error ? err.message : translate('merchant.error') || 'Fehler beim Laden der Produkte');
-    } finally {
-      setLoading(false);
-    }
-  }, [translate, user]);
-
-  useEffect(() => {
-    fetchProductsRef.current = fetchProducts;
-  }, [fetchProducts]);
-
-  useEffect(() => {
     fetchProducts();
-  }, [fetchProducts]);
+  }, [user]); // Add user dependency
 
-  const fetchCustomers = useCallback(async () => {
-    try {
-      setCustomersLoading(true);
-      setCustomersError(null);
-      if (!user) {
-        setCustomersError(translate('merchant.pleaseLogIn') || 'Bitte melden Sie sich an');
-        return;
-      }
-      const response = await fetch('/api/merchant/customers', {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include'
-      });
-      if (!response.ok) {
-        if (response.status === 401) throw new Error(translate('merchant.pleaseLogIn') || 'Bitte melden Sie sich an');
-        if (response.status === 404) {
-          setCustomers([]);
-          setCustomersError(null);
-          return;
-        }
-        throw new Error(`Failed to fetch customers: ${response.statusText}`);
-      }
-      const data = await response.json();
-      setCustomers(Array.isArray(data) ? data : []);
-      setCustomersError(null);
-    } catch (err) {
-      console.error('Error fetching customers:', err);
-      setCustomers([]);
-      setCustomersError(null);
-    } finally {
-      setCustomersLoading(false);
-    }
-  }, [translate, user]);
-
+  // Fetch customers from API
   useEffect(() => {
     if (activeTab !== 'customers') return;
-    fetchCustomers();
-  }, [activeTab, fetchCustomers]);
-
-  // Fetch analytics on tab switch to analytics
-  const fetchAnalytics = useCallback(async () => {
-    try {
-      setAnalyticsLoading(true);
-      setAnalyticsError(null);
-      if (!user) {
-        setAnalyticsError(translate('merchant.pleaseLogIn') || 'Bitte melden Sie sich an');
-        return;
-      }
-      const response = await fetch('/api/merchant/analytics', {
-        method: 'GET',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include'
-      });
-      if (!response.ok) {
-        if (response.status === 401) throw new Error(translate('merchant.pleaseLogIn') || 'Bitte melden Sie sich an');
-        if (response.status === 404) {
-          setAnalytics({
-            revenue: { total: 0, monthly: 0, lastMonth: 0, weekly: 0, daily: 0, byStatus: {}, monthlyGrowth: 0 },
-            orders: { total: 0, monthly: 0, lastMonth: 0, weekly: 0, daily: 0, byStatus: {}, growth: 0 },
-            customers: { total: 0, newThisMonth: 0, newLastMonth: 0, active: 0, topCustomers: [], growth: 0 },
-            products: { total: 0, lowStock: 0, outOfStock: 0, topProducts: [], bestRated: [] },
-            salesTrends: []
-          });
-          setAnalyticsError(null);
+    const fetchCustomers = async () => {
+      try {
+        setCustomersLoading(true);
+        setCustomersError(null);
+        if (!user) {
+          setCustomersError(translate('merchant.pleaseLogIn') || 'Bitte melden Sie sich an');
           return;
         }
-        throw new Error(`Failed to fetch analytics: ${response.statusText}`);
-      }
-      const data = await response.json();
-      if (data && data.error) {
-        setAnalytics({
-          revenue: { total: 0, monthly: 0, lastMonth: 0, weekly: 0, daily: 0, byStatus: {}, monthlyGrowth: 0 },
-          orders: { total: 0, monthly: 0, lastMonth: 0, weekly: 0, daily: 0, byStatus: {}, growth: 0 },
-          customers: { total: 0, newThisMonth: 0, newLastMonth: 0, active: 0, topCustomers: [], growth: 0 },
-          products: { total: 0, lowStock: 0, outOfStock: 0, topProducts: [], bestRated: [] },
-          salesTrends: []
+        const response = await fetch('/api/merchant/customers', {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include'
         });
-      } else {
-        setAnalytics(data);
+        if (!response.ok) {
+          if (response.status === 401) throw new Error(translate('merchant.pleaseLogIn') || 'Bitte melden Sie sich an');
+          throw new Error(`Failed to fetch customers: ${response.statusText}`);
+        }
+        const data = await response.json();
+        setCustomers(data);
+      } catch (err) {
+        console.error('Error fetching customers:', err);
+        setCustomersError(err instanceof Error ? err.message : translate('merchant.error') || 'Fehler beim Laden der Kunden');
+      } finally {
+        setCustomersLoading(false);
       }
-      setAnalyticsError(null);
-    } catch (err) {
-      console.error('Error fetching analytics:', err);
-      setAnalytics({
-        revenue: { total: 0, monthly: 0, lastMonth: 0, weekly: 0, daily: 0, byStatus: {}, monthlyGrowth: 0 },
-        orders: { total: 0, monthly: 0, lastMonth: 0, weekly: 0, daily: 0, byStatus: {}, growth: 0 },
-        customers: { total: 0, newThisMonth: 0, newLastMonth: 0, active: 0, topCustomers: [], growth: 0 },
-        products: { total: 0, lowStock: 0, outOfStock: 0, topProducts: [], bestRated: [] },
-        salesTrends: []
-      });
-      setAnalyticsError(null);
-    } finally {
-      setAnalyticsLoading(false);
-    }
-  }, [translate, user]);
+    };
+    fetchCustomers();
+  }, [user, activeTab]);
 
+  // Fetch analytics on tab switch to analytics
   useEffect(() => {
     if (activeTab !== 'analytics') return;
+    const fetchAnalytics = async () => {
+      try {
+        setAnalyticsLoading(true);
+        setAnalyticsError(null);
+        if (!user) {
+          setAnalyticsError(translate('merchant.pleaseLogIn') || 'Bitte melden Sie sich an');
+          return;
+        }
+        const response = await fetch('/api/merchant/analytics', {
+          method: 'GET',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include'
+        });
+        if (!response.ok) {
+          if (response.status === 401) throw new Error(translate('merchant.pleaseLogIn') || 'Bitte melden Sie sich an');
+          throw new Error(`Failed to fetch analytics: ${response.statusText}`);
+        }
+        const data = await response.json();
+        setAnalytics(data);
+      } catch (err) {
+        console.error('Error fetching analytics:', err);
+        setAnalyticsError(err instanceof Error ? err.message : translate('merchant.errorLoadingAnalytics') || 'Fehler beim Laden der Analytik');
+      } finally {
+        setAnalyticsLoading(false);
+      }
+    };
     fetchAnalytics();
-  }, [activeTab, fetchAnalytics]);
+  }, [user, activeTab]);
 
   // Fetch payouts function
-  const fetchPayouts = useCallback(async () => {
+  const fetchPayouts = async () => {
     try {
       setPayoutsLoading(true);
       setPayoutsError(null);
@@ -848,76 +711,27 @@ function MerchantDashboard() {
       const response = await fetch('/api/merchant/payouts', {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        cache: 'no-store'
+        credentials: 'include'
       });
       if (!response.ok) {
         if (response.status === 401) throw new Error(translate('merchant.pleaseLogIn') || 'Bitte melden Sie sich an');
-        if (response.status === 404) {
-          setPayouts({
-            balance: {
-              available: 0,
-              pending: 0,
-              total: 0
-            },
-            summary: {
-              totalEarnings: 0,
-              pendingEarnings: 0,
-              totalPaidOut: 0
-            },
-            transactions: []
-          });
-          setPayoutsError(null);
-          return;
-        }
         throw new Error(`Failed to fetch payouts: ${response.statusText}`);
       }
       const data = await response.json();
-      if (data && data.error) {
-        setPayouts({
-          balance: {
-            available: 0,
-            pending: 0,
-            total: 0
-          },
-          summary: {
-            totalEarnings: 0,
-            pendingEarnings: 0,
-            totalPaidOut: 0
-          },
-          transactions: []
-        });
-        setPayoutsError(data.error);
-      } else {
-        setPayouts(data);
-        setPayoutsError(null);
-      }
+      setPayouts(data);
     } catch (err) {
       console.error('Error fetching payouts:', err);
-      setPayouts({
-        balance: {
-          available: 0,
-          pending: 0,
-          total: 0
-        },
-        summary: {
-          totalEarnings: 0,
-          pendingEarnings: 0,
-          totalPaidOut: 0
-        },
-        transactions: []
-      });
-      setPayoutsError(null);
+      setPayoutsError(err instanceof Error ? err.message : translate('merchant.error') || 'Fehler beim Laden der Auszahlungen');
     } finally {
       setPayoutsLoading(false);
     }
-  }, [translate, user]);
+  };
 
   // Fetch payouts on tab switch to payouts
   useEffect(() => {
     if (activeTab !== 'payouts') return;
     fetchPayouts();
-  }, [activeTab, fetchPayouts]);
+  }, [user, activeTab]);
 
   const requestPayout = async () => {
     if (!payoutAmount || parseFloat(payoutAmount) <= 0) {
@@ -962,7 +776,7 @@ function MerchantDashboard() {
   };
 
   // Shared fetch orders function so we can reuse in buttons and effects
-  const fetchOrdersData = useCallback(async () => {
+  const fetchOrdersData = async () => {
     try {
       setOrdersLoading(true);
       setOrdersError(null);
@@ -977,37 +791,26 @@ function MerchantDashboard() {
       });
       if (!response.ok) {
         if (response.status === 401) throw new Error(translate('merchant.pleaseLogIn') || 'Bitte melden Sie sich an');
-        if (response.status === 404) {
-          setOrders([]);
-          setOrdersError(null);
-          return;
-        }
         throw new Error(`Failed to fetch orders: ${response.statusText}`);
       }
       const data = await response.json();
-      setOrders(Array.isArray(data) ? data : []);
-      setOrdersError(null);
+      setOrders(data);
     } catch (err) {
       console.error('Error fetching orders:', err);
-      setOrders([]);
-      setOrdersError(null);
+      setOrdersError(err instanceof Error ? err.message : translate('merchant.error') || 'Fehler beim Laden der Bestellungen');
     } finally {
       setOrdersLoading(false);
     }
-  }, [translate, user]);
+  };
 
   // Fetch orders on tab switch to orders or overview (for recent orders)
   useEffect(() => {
     if (activeTab !== 'orders' && activeTab !== 'overview') return;
     fetchOrdersData();
-  }, [activeTab, fetchOrdersData]);
+  }, [user, activeTab]);
 
   // Handle submit for approval
   const handleSubmitForApproval = async (productId: number) => {
-    if (merchantStatus !== 'ACTIVE') {
-      alert(translate('merchant.accountPendingMessage') || 'Ihr Händlerkonto wird noch überprüft. Bitte warten Sie auf die Genehmigung.');
-      return;
-    }
     try {
       const response = await fetch(`/api/products/${productId}`, {
         method: 'PUT',
@@ -1041,10 +844,6 @@ function MerchantDashboard() {
 
   // Handle delete product
   const handleDeleteProduct = async (productId: number) => {
-    if (merchantStatus !== 'ACTIVE') {
-      alert(translate('merchant.accountPendingMessage') || 'Ihr Händlerkonto wird noch überprüft. Bitte warten Sie auf die Genehmigung.');
-      return;
-    }
     if (!confirm(translate('merchant.confirmDeleteProduct'))) return;
 
     try {
@@ -1096,10 +895,6 @@ function MerchantDashboard() {
 
   // Handle edit product
   const handleEditProduct = async (productId: number) => {
-    if (merchantStatus !== 'ACTIVE') {
-      alert(translate('merchant.accountPendingMessage') || 'Ihr Händlerkonto wird noch überprüft. Bitte warten Sie auf die Genehmigung.');
-      return;
-    }
     try {
       const response = await fetch(`/api/products/${productId}`, {
         credentials: 'include'
@@ -1135,10 +930,6 @@ function MerchantDashboard() {
   };
 
   const openAddModal = () => {
-    if (merchantStatus !== 'ACTIVE') {
-      alert(translate('merchant.accountPendingMessage') || 'Ihr Händlerkonto wird noch überprüft. Bitte warten Sie auf die Genehmigung, bevor Sie Produkte hinzufügen können.');
-      return;
-    }
     setShowAddModal(true);
   };
 
@@ -1219,10 +1010,6 @@ function MerchantDashboard() {
 
   const updateProduct = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (merchantStatus !== 'ACTIVE') {
-      alert(translate('merchant.accountPendingMessage') || 'Ihr Händlerkonto wird noch überprüft. Bitte warten Sie auf die Genehmigung.');
-      return;
-    }
     if (!selectedProduct) return;
 
     // Validate German title is required
@@ -1293,18 +1080,12 @@ function MerchantDashboard() {
   // Auto-generate slug from English title when slug is empty
   useEffect(() => {
     if (!newProduct.slug && newProduct.title_en) {
-      startTransition(() => {
-        setNewProduct(p => ({ ...p, slug: toSlug(p.title_en) }));
-      });
+      setNewProduct(p => ({ ...p, slug: toSlug(p.title_en) }));
     }
-  }, [newProduct.slug, newProduct.title_en]);
+  }, [newProduct.title_en]);
 
   const createProduct = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (merchantStatus !== 'ACTIVE') {
-      alert(translate('merchant.accountPendingMessage') || 'Ihr Händlerkonto wird noch überprüft. Bitte warten Sie auf die Genehmigung.');
-      return;
-    }
     if (isProductImageUploading) {
       alert(translate('merchant.waitForImageUploadProduct'));
       return;
@@ -1410,11 +1191,7 @@ function MerchantDashboard() {
               </div>
               <div className="flex items-center space-x-2 sm:space-x-4">
                 <NotificationBell userRole="MERCHANT" />
-                <button 
-                  onClick={openAddModal} 
-                  disabled={merchantStatus !== 'ACTIVE'}
-                  className="btn-primary flex items-center space-x-1 sm:space-x-2 text-sm sm:text-base px-3 sm:px-4 py-2 sm:py-3 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
+                <button onClick={openAddModal} className="btn-primary flex items-center space-x-1 sm:space-x-2 text-sm sm:text-base px-3 sm:px-4 py-2 sm:py-3">
                   <Plus className="w-3 h-3 sm:w-4 sm:h-4" />
                   <span className="hidden sm:inline">{translate('merchant.addProduct')}</span>
                   <span className="sm:hidden">{translate('merchant.add')}</span>
@@ -1727,16 +1504,11 @@ function MerchantDashboard() {
                                 <label className="block text-sm font-medium text-gray-700">{translate('merchant.viewProductImage')}</label>
                                 <div className="mt-1">
                                   {item.product?.imageUrl && (
-                                    <div className="relative w-24 h-24 rounded border shadow-sm overflow-hidden">
-                                      <SmartImage
-                                        src={item.product.imageUrl}
-                                        alt={item.product?.title_en || 'Product image'}
-                                        fill
-                                        sizes="96px"
-                                        className="object-cover"
-                                        fallbackSrc="/images/placeholder.jpg"
-                                      />
-                                    </div>
+                                    <img
+                                      src={item.product.imageUrl}
+                                      alt={item.product?.title_en}
+                                      className="w-24 h-24 object-cover rounded border shadow-sm"
+                                    />
                                   )}
                                   <input
                                     type="url"
@@ -1951,11 +1723,7 @@ function MerchantDashboard() {
                   <div className="px-6 py-4 border-b border-gray-200">
                     <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
                       <h2 className="text-xl font-semibold text-gray-900">{translate('merchant.productManagement')}</h2>
-                      <button 
-                        onClick={openAddModal} 
-                        disabled={merchantStatus !== 'ACTIVE'}
-                        className="btn-primary flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
+                      <button onClick={openAddModal} className="btn-primary flex items-center space-x-2">
                         <Plus className="w-4 h-4" />
                         <span>{translate('merchant.addProduct')}</span>
                       </button>
@@ -1983,10 +1751,7 @@ function MerchantDashboard() {
                               <p>{error}</p>
                               {!user && (
                                 <p className="mt-1">
-                                  {translate('merchant.pleaseLogIn')}{' '}
-                                  <Link href="/login" className="underline hover:no-underline">
-                                    {translate('merchant.logInAsMerchant')}
-                                  </Link>
+                                  {translate('merchant.pleaseLogIn')} <a href="/login" className="underline hover:no-underline">{translate('merchant.logInAsMerchant')}</a>
                                 </p>
                               )}
                             </div>
@@ -2055,17 +1820,15 @@ function MerchantDashboard() {
                                       </button>
                                       <button
                                         onClick={() => handleEditProduct(product.id)}
-                                        disabled={merchantStatus !== 'ACTIVE'}
-                                        className="text-primary-600 hover:text-primary-900 hover:bg-primary-50 text-left sm:text-center px-2 py-1.5 rounded transition-colors btn-touch text-sm font-medium min-h-[36px] disabled:opacity-50 disabled:cursor-not-allowed"
-                                        title={merchantStatus !== 'ACTIVE' ? translate('merchant.accountPendingMessage') || 'Ihr Händlerkonto wird noch überprüft' : translate('merchant.edit')}
+                                        className="text-primary-600 hover:text-primary-900 hover:bg-primary-50 text-left sm:text-center px-2 py-1.5 rounded transition-colors btn-touch text-sm font-medium min-h-[36px]"
+                                        title={translate('merchant.edit')}
                                       >
                                         {translate('merchant.edit')}
                                       </button>
                                       <button
                                         onClick={() => handleDeleteProduct(product.id)}
-                                        disabled={merchantStatus !== 'ACTIVE'}
-                                        className="text-red-600 hover:text-red-900 hover:bg-red-50 font-semibold text-left sm:text-center px-2 py-1.5 rounded border border-red-300 transition-colors btn-touch text-sm min-h-[36px] disabled:opacity-50 disabled:cursor-not-allowed"
-                                        title={merchantStatus !== 'ACTIVE' ? translate('merchant.accountPendingMessage') || 'Ihr Händlerkonto wird noch überprüft' : translate('merchant.delete')}
+                                        className="text-red-600 hover:text-red-900 hover:bg-red-50 font-semibold text-left sm:text-center px-2 py-1.5 rounded border border-red-300 transition-colors btn-touch text-sm min-h-[36px]"
+                                        title={translate('merchant.delete')}
                                       >
                                         {translate('merchant.delete')}
                                       </button>
@@ -2073,9 +1836,8 @@ function MerchantDashboard() {
                                     {(product.status === 'DRAFT' || product.status === 'PENDING') && (
                                       <button
                                         onClick={() => handleSubmitForApproval(product.id)}
-                                        disabled={merchantStatus !== 'ACTIVE'}
-                                        className="text-sm text-blue-600 hover:text-blue-900 hover:bg-blue-50 font-medium text-left px-2 py-1.5 rounded transition-colors btn-touch w-full sm:w-auto min-h-[36px] disabled:opacity-50 disabled:cursor-not-allowed"
-                                        title={merchantStatus !== 'ACTIVE' ? translate('merchant.accountPendingMessage') || 'Ihr Händlerkonto wird noch überprüft' : translate('merchant.submitForApproval')}
+                                        className="text-sm text-blue-600 hover:text-blue-900 hover:bg-blue-50 font-medium text-left px-2 py-1.5 rounded transition-colors btn-touch w-full sm:w-auto min-h-[36px]"
+                                        title={translate('merchant.submitForApproval')}
                                       >
                                         {translate('merchant.submitForApproval')}
                                       </button>
@@ -2137,11 +1899,7 @@ function MerchantDashboard() {
                               <p>{customersError}</p>
                               {!user && (
                                 <p className="mt-1">
-                                  Please{' '}
-                                  <Link href="/login" className="underline hover:no-underline">
-                                    log in
-                                  </Link>{' '}
-                                  as a merchant to access this dashboard.
+                                  Please <a href="/login" className="underline hover:no-underline">log in</a> as a merchant to access this dashboard.
                                 </p>
                               )}
                             </div>
@@ -2757,28 +2515,19 @@ function MerchantDashboard() {
                     <div className="mt-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
                       {selectedProduct.images && selectedProduct.images.length > 0 ? (
                         selectedProduct.images.map((imgUrl: string, index: number) => (
-                          <div key={index} className="relative w-full h-64 rounded-lg border-2 border-gray-300 shadow-md overflow-hidden">
-                            <SmartImage
-                              src={imgUrl}
-                              alt={`${selectedProduct.title_en} - Bild ${index + 1}`}
-                              fill
-                              sizes="(max-width: 768px) 100vw, 600px"
-                              className="object-cover"
-                              fallbackSrc="/images/placeholder.jpg"
-                            />
-                          </div>
+                          <img
+                            key={index}
+                            src={imgUrl}
+                            alt={`${selectedProduct.title_en} - Bild ${index + 1}`}
+                            className="w-full h-64 object-cover rounded-lg border-2 border-gray-300 shadow-md"
+                          />
                         ))
                       ) : selectedProduct.imageUrl ? (
-                        <div className="relative w-full h-64 rounded-lg border-2 border-gray-300 shadow-md overflow-hidden">
-                          <SmartImage
-                            src={selectedProduct.imageUrl}
-                            alt={selectedProduct.title_en}
-                            fill
-                            sizes="(max-width: 768px) 100vw, 600px"
-                            className="object-cover"
-                            fallbackSrc="/images/placeholder.jpg"
-                          />
-                        </div>
+                        <img
+                          src={selectedProduct.imageUrl}
+                          alt={selectedProduct.title_en}
+                          className="w-full h-64 object-cover rounded-lg border-2 border-gray-300 shadow-md"
+                        />
                       ) : null}
                     </div>
                   </div>
@@ -2816,8 +2565,7 @@ function MerchantDashboard() {
                     closeViewModal();
                     handleEditProduct(selectedProduct.id);
                   }}
-                  disabled={merchantStatus !== 'ACTIVE'}
-                  className="btn-primary focus:outline-none w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="btn-primary focus:outline-none w-full sm:w-auto"
                 >
                   {translate('merchant.edit')}
               </button>
