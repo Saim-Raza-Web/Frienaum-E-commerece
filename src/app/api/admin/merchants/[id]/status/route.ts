@@ -57,15 +57,19 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       }
 
       if (title && message) {
-        createNotification(
-          updated.userId,
-          notificationType,
-          title,
-          message,
-          { merchantId: updated.id, storeName: updated.storeName }
-        ).catch(err => {
+        try {
+          await createNotification(
+            updated.userId,
+            notificationType,
+            title,
+            message,
+            { merchantId: updated.id, storeName: updated.storeName }
+          );
+          console.log(`Successfully sent ${notificationType} notification to merchant ${updated.id}`);
+        } catch (err) {
           console.error('Failed to send merchant status notification:', err);
-        });
+          // Don't fail the request if notification fails
+        }
       }
     }
 

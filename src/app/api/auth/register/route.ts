@@ -105,7 +105,7 @@ export async function POST(req: NextRequest) {
       });
 
       // Notify all admins about new merchant registration
-      notifyAdminsMerchantRegistered(
+      await notifyAdminsMerchantRegistered(
         createdMerchant.id,
         createdUser.name,
         finalStoreName

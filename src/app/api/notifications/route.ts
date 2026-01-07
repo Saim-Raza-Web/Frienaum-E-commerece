@@ -134,6 +134,7 @@ export async function PATCH(request: NextRequest) {
     const unreadCount = await prisma.notification.count({
       where: {
         userId: user.id,
+        ...roleFilter,
         isRead: false
       }
     });
@@ -190,6 +191,7 @@ export async function DELETE(request: NextRequest) {
     const unreadCount = await prisma.notification.count({
       where: {
         userId: user.id,
+        ...roleFilter,
         isRead: false
       }
     });

@@ -50,7 +50,7 @@ export async function POST(request: Request) {
     }
 
     // Send notification to all admins about new merchant registration
-    notifyAdminsMerchantRegistered(
+    await notifyAdminsMerchantRegistered(
       created.id,
       session.user.name || 'Neuer Händler',
       storeName.trim()
